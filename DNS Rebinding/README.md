@@ -1,77 +1,77 @@
 # DNS Rebinding
 
-> DNS rebinding changes the IP address of an attacker controlled machine name to the IP address of a target application, bypassing the [same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy) and thus allowing the browser to make arbitrary requests to the target application and read their responses.
+> DNS rebinding thay đổi địa chỉ IP của một tên máy chủ do kẻ tấn công kiểm soát thành địa chỉ IP của ứng dụng mục tiêu, qua đó vượt qua [chính sách cùng nguồn gốc (same-origin policy)](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy) và cho phép trình duyệt gửi các yêu cầu tùy ý đến ứng dụng mục tiêu cũng như đọc được phản hồi của chúng.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-* [Protection Bypasses](#protection-bypasses)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
+* [Vượt Qua Các Cơ Chế Bảo Vệ](#protection-bypasses)
     * [0.0.0.0](#0000)
     * [CNAME](#cname)
     * [localhost](#localhost)
-* [References](#references)
+* [Tài Liệu Tham Khảo](#references)
 
-## Tools
+## Công cụ
 
-* [nccgroup/singularity](https://github.com/nccgroup/singularity) - A DNS rebinding attack framework.
+* [nccgroup/singularity](https://github.com/nccgroup/singularity) - Một framework tấn công DNS rebinding.
 * [rebind.it](http://rebind.it/) - Singularity of Origin Web Client.
-* [taviso/rbndr](https://github.com/taviso/rbndr) - Simple DNS Rebinding Service
-* [taviso/rebinder](https://lock.cmpxchg8b.com/rebinder.html) - rbndr Tool Helper
+* [taviso/rbndr](https://github.com/taviso/rbndr) - Dịch vụ DNS Rebinding đơn giản
+* [taviso/rebinder](https://lock.cmpxchg8b.com/rebinder.html) - Công cụ hỗ trợ rbndr
 
-## Methodology
+## Phương pháp
 
-**Setup Phase**:
+**Giai đoạn thiết lập**:
 
-* Register a malicious domain (e.g., `malicious.com`).
-* Configure a custom DNS server capable of resolving `malicious.com` to different IP addresses.
+* Đăng ký một tên miền độc hại (ví dụ: `malicious.com`).
+* Cấu hình một máy chủ DNS tùy chỉnh có khả năng phân giải `malicious.com` sang các địa chỉ IP khác nhau.
 
-**Initial Victim Interaction**:
+**Tương tác ban đầu với nạn nhân**:
 
-* Create a webpage on `malicious.com` containing malicious JavaScript or another exploit mechanism.
-* Entice the victim to visit the malicious webpage (e.g., via phishing, social engineering, or advertisements).
+* Tạo một trang web trên `malicious.com` chứa JavaScript độc hại hoặc một cơ chế khai thác khác.
+* Dụ nạn nhân truy cập vào trang web độc hại đó (ví dụ: thông qua lừa đảo (phishing), kỹ thuật tấn công phi kỹ thuật (social engineering), hoặc quảng cáo).
 
-**Initial DNS Resolution**:
+**Phân giải DNS ban đầu**:
 
-* When the victim's browser accesses `malicious.com`, it queries the attacker's DNS server for the IP address.
-* The DNS server resolves `malicious.com` to an initial, legitimate-looking IP address (e.g., 203.0.113.1).
+* Khi trình duyệt của nạn nhân truy cập `malicious.com`, nó sẽ truy vấn máy chủ DNS của kẻ tấn công để lấy địa chỉ IP.
+* Máy chủ DNS phân giải `malicious.com` thành một địa chỉ IP ban đầu, trông có vẻ hợp lệ (ví dụ: 203.0.113.1).
 
-**Rebinding to Internal IP**:
+**Rebinding sang IP nội bộ**:
 
-* After the browser's initial request, the attacker's DNS server updates the resolution for `malicious.com` to a private or internal IP address (e.g., 192.168.1.1, corresponding to the victim’s router or other internal devices).
+* Sau yêu cầu ban đầu của trình duyệt, máy chủ DNS của kẻ tấn công sẽ cập nhật kết quả phân giải cho `malicious.com` thành một địa chỉ IP riêng tư hoặc nội bộ (ví dụ: 192.168.1.1, tương ứng với router của nạn nhân hoặc các thiết bị nội bộ khác).
 
-This is often achieved by setting a very short TTL (time-to-live) for the initial DNS response, forcing the browser to re-resolve the domain.
+Điều này thường đạt được bằng cách đặt thời gian TTL (time-to-live) rất ngắn cho phản hồi DNS ban đầu, buộc trình duyệt phải phân giải lại tên miền.
 
-**Same-Origin Exploitation:**
+**Khai thác cùng nguồn gốc:**
 
-The browser treats subsequent responses as coming from the same origin (`malicious.com`).
+Trình duyệt coi các phản hồi tiếp theo là đến từ cùng một nguồn gốc (`malicious.com`).
 
-Malicious JavaScript running in the victim's browser can now make requests to internal IP addresses or local services (e.g., 192.168.1.1 or 127.0.0.1), bypassing same-origin policy restrictions.
+JavaScript độc hại đang chạy trong trình duyệt của nạn nhân giờ đây có thể gửi yêu cầu đến các địa chỉ IP nội bộ hoặc dịch vụ cục bộ (ví dụ: 192.168.1.1 hoặc 127.0.0.1), qua đó vượt qua các giới hạn của chính sách cùng nguồn gốc.
 
-**Example:**
+**Ví dụ:**
 
-1. Register a domain.
-2. [Setup Singularity of Origin](https://github.com/nccgroup/singularity/wiki/Setup-and-Installation).
-3. Edit the [autoattack HTML page](https://github.com/nccgroup/singularity/blob/master/html/autoattack.html) for your needs.
-4. Browse to `http://rebinder.your.domain:8080/autoattack.html`.
-5. Wait for the attack to finish (it can take few seconds/minutes).
+1. Đăng ký một tên miền.
+2. [Thiết lập Singularity of Origin](https://github.com/nccgroup/singularity/wiki/Setup-and-Installation).
+3. Chỉnh sửa [trang HTML autoattack](https://github.com/nccgroup/singularity/blob/master/html/autoattack.html) theo nhu cầu của bạn.
+4. Truy cập `http://rebinder.your.domain:8080/autoattack.html`.
+5. Chờ cuộc tấn công hoàn tất (có thể mất vài giây/phút).
 
-## Protection Bypasses
+## Vượt Qua Các Cơ Chế Bảo Vệ
 
-> Most DNS protections are implemented in the form of blocking DNS responses containing unwanted IP addresses at the perimeter, when DNS responses enter the internal network. The most common form of protection is to block private IP addresses as defined in RFC 1918 (i.e. 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16). Some tools allow to additionally block localhost (127.0.0.0/8), local (internal) networks, or 0.0.0.0/0 network ranges.
+> Hầu hết các cơ chế bảo vệ DNS được triển khai dưới dạng chặn các phản hồi DNS chứa địa chỉ IP không mong muốn tại vành đai mạng, khi phản hồi DNS đi vào mạng nội bộ. Hình thức bảo vệ phổ biến nhất là chặn các địa chỉ IP riêng tư theo định nghĩa trong RFC 1918 (tức là 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16). Một số công cụ cho phép chặn thêm localhost (127.0.0.0/8), mạng nội bộ (local), hoặc dải mạng 0.0.0.0/0.
 
-In the case where DNS protection are enabled (generally disabled by default), NCC Group has documented multiple [DNS protection bypasses](https://github.com/nccgroup/singularity/wiki/Protection-Bypasses) that can be used.
+Trong trường hợp cơ chế bảo vệ DNS được bật (thường mặc định là tắt), NCC Group đã ghi lại nhiều [cách vượt qua bảo vệ DNS](https://github.com/nccgroup/singularity/wiki/Protection-Bypasses) có thể sử dụng.
 
 ### 0.0.0.0
 
-We can use the IP address 0.0.0.0 to access the localhost (127.0.0.1) to bypass filters blocking DNS responses containing 127.0.0.1 or 127.0.0.0/8.
+Ta có thể dùng địa chỉ IP 0.0.0.0 để truy cập localhost (127.0.0.1) nhằm vượt qua các bộ lọc chặn phản hồi DNS chứa 127.0.0.1 hoặc 127.0.0.0/8.
 
 ### CNAME
 
-We can use DNS CNAME records to bypass a DNS protection solution that blocks all internal IP addresses.
-Since our response will only return a CNAME of an internal server,
-the rule filtering internal IP addresses will not be applied.
-Then, the local, internal DNS server will resolve the CNAME.
+Ta có thể dùng bản ghi DNS CNAME để vượt qua giải pháp bảo vệ DNS chặn tất cả các địa chỉ IP nội bộ.
+Vì phản hồi của chúng ta chỉ trả về một CNAME của máy chủ nội bộ,
+quy tắc lọc địa chỉ IP nội bộ sẽ không được áp dụng.
+Sau đó, máy chủ DNS nội bộ cục bộ sẽ phân giải CNAME đó.
 
 ```bash
 $ dig cname.example.com +noall +answer
@@ -82,7 +82,7 @@ cname.example.com.            381     IN      CNAME   target.local.
 
 ### localhost
 
-We can use "localhost" as a DNS CNAME record to bypass filters blocking DNS responses containing 127.0.0.1.
+Ta có thể dùng "localhost" làm bản ghi DNS CNAME để vượt qua các bộ lọc chặn phản hồi DNS chứa 127.0.0.1.
 
 ```bash
 $ dig www.example.com +noall +answer
@@ -91,6 +91,6 @@ $ dig www.example.com +noall +answer
 localhost.example.com.            381     IN      CNAME   localhost.
 ```
 
-## References
+## Tài Liệu Tham Khảo
 
 * [How Do DNS Rebinding Attacks Work? - NCC Group - April 9, 2019](https://github.com/nccgroup/singularity/wiki/How-Do-DNS-Rebinding-Attacks-Work%3F)
