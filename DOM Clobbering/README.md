@@ -1,23 +1,23 @@
 # DOM Clobbering
 
-> DOM Clobbering is a technique where global variables can be overwritten or "clobbered" by naming HTML elements with certain IDs or names. This can cause unexpected behavior in scripts and potentially lead to security vulnerabilities.
+> DOM Clobbering là một kỹ thuật trong đó các biến toàn cục (global variables) có thể bị ghi đè hoặc "làm nhiễu" (clobbered) bằng cách đặt tên cho các phần tử HTML với những ID hoặc name nhất định. Điều này có thể gây ra hành vi bất thường trong các đoạn script và tiềm ẩn nguy cơ dẫn đến lỗ hổng bảo mật.
 
-## Summary
+## Tóm tắt
 
-- [Tools](#tools)
-- [Methodology](#methodology)
-- [Labs](#labs)
-- [References](#references)
+- [Công cụ](#tools)
+- [Phương pháp](#methodology)
+- [Bài Lab](#labs)
+- [Tài Liệu Tham Khảo](#references)
 
-## Tools
+## Công cụ
 
-- [SoheilKhodayari/DOMClobbering](https://domclob.xyz/domc_markups/list) - Comprehensive List of DOM Clobbering Payloads for Mobile and Desktop Web Browsers
-- [yeswehack/Dom-Explorer](https://github.com/yeswehack/Dom-Explorer) - A web-based tool designed for testing various HTML parsers and sanitizers.
-- [yeswehack/Dom-Explorer Live](https://yeswehack.github.io/Dom-Explorer/dom-explorer#eyJpbnB1dCI6IiIsInBpcGVsaW5lcyI6W3siaWQiOiJ0ZGpvZjYwNSIsIm5hbWUiOiJEb20gVHJlZSIsInBpcGVzIjpbeyJuYW1lIjoiRG9tUGFyc2VyIiwiaWQiOiJhYjU1anN2YyIsImhpZGUiOmZhbHNlLCJza2lwIjpmYWxzZSwib3B0cyI6eyJ0eXBlIjoidGV4dC9odG1sIiwic2VsZWN0b3IiOiJib2R5Iiwib3V0cHV0IjoiaW5uZXJIVE1MIiwiYWRkRG9jdHlwZSI6dHJ1ZX19XX1dfQ==) - Reveal how browsers parse HTML and find mutated XSS vulnerabilities
+- [SoheilKhodayari/DOMClobbering](https://domclob.xyz/domc_markups/list) - Danh sách toàn diện các payload DOM Clobbering cho trình duyệt web trên di động và desktop
+- [yeswehack/Dom-Explorer](https://github.com/yeswehack/Dom-Explorer) - Một công cụ web được thiết kế để kiểm thử nhiều loại trình phân tích cú pháp (parser) và bộ lọc (sanitizer) HTML khác nhau.
+- [yeswehack/Dom-Explorer Live](https://yeswehack.github.io/Dom-Explorer/dom-explorer#eyJpbnB1dCI6IiIsInBpcGVsaW5lcyI6W3siaWQiOiJ0ZGpvZjYwNSIsIm5hbWUiOiJEb20gVHJlZSIsInBpcGVzIjpbeyJuYW1lIjoiRG9tUGFyc2VyIiwiaWQiOiJhYjU1anN2YyIsImhpZGUiOmZhbHNlLCJza2lwIjpmYWxzZSwib3B0cyI6eyJ0eXBlIjoidGV4dC9odG1sIiwic2VsZWN0b3IiOiJib2R5Iiwib3V0cHV0IjoiaW5uZXJIVE1MIiwiYWRkRG9jdHlwZSI6dHJ1ZX19XX1dfQ==) - Cho thấy cách trình duyệt phân tích cú pháp HTML và phát hiện các lỗ hổng XSS bị biến đổi (mutated XSS)
 
-## Methodology
+## Phương pháp
 
-Exploitation requires any kind of `HTML injection` in the page.
+Việc khai thác đòi hỏi phải có bất kỳ hình thức `HTML injection` nào trên trang.
 
 - Clobbering `x.y.value`
 
@@ -29,7 +29,7 @@ Exploitation requires any kind of `HTML injection` in the page.
     <script>alert(x.y.value);</script>
     ```
 
-- Clobbering `x.y` using ID and name attributes together to form a DOM collection
+- Clobbering `x.y` bằng cách dùng thuộc tính ID và name cùng nhau để tạo thành một tập hợp (collection) DOM
 
     ```html
     // Payload
@@ -39,7 +39,7 @@ Exploitation requires any kind of `HTML injection` in the page.
     <script>alert(x.y)</script>
     ```
 
-- Clobbering `x.y.z` - 3 levels deep
+- Clobbering `x.y.z` - sâu 3 cấp
 
     ```html
     // Payload
@@ -50,7 +50,7 @@ Exploitation requires any kind of `HTML injection` in the page.
     <script>alert(x.y.z)</script>
     ```
 
-- Clobbering `a.b.c.d` - more than 3 levels
+- Clobbering `a.b.c.d` - hơn 3 cấp
 
     ```html
     // Payload
@@ -62,7 +62,7 @@ Exploitation requires any kind of `HTML injection` in the page.
     <script>alert(a.b.c.d)</script>
     ```
 
-- Clobbering `forEach` (Chrome only)
+- Clobbering `forEach` (chỉ trên Chrome)
 
     ```html
     // Payload
@@ -75,7 +75,7 @@ Exploitation requires any kind of `HTML injection` in the page.
     <script>x.y.forEach(element=>alert(element))</script>
     ```
 
-- Clobbering `document.getElementById()` using `<html>` or `<body>` tag with the same `id` attribute
+- Clobbering `document.getElementById()` bằng cách dùng thẻ `<html>` hoặc `<body>` có cùng thuộc tính `id`
 
     ```html
     // Payloads
@@ -102,7 +102,7 @@ Exploitation requires any kind of `HTML injection` in the page.
     </script>
     ```
 
-- Clobbering (Firefox only)
+- Clobbering (chỉ trên Firefox)
 
     ```html
     // Payload
@@ -114,7 +114,7 @@ Exploitation requires any kind of `HTML injection` in the page.
     </script>
     ```
 
-- Clobbering (Chrome only)
+- Clobbering (chỉ trên Chrome)
 
     ```html
     // Payload
@@ -126,17 +126,17 @@ Exploitation requires any kind of `HTML injection` in the page.
     </script>
     ```
 
-## Tricks
+## Mẹo
 
-- DomPurify allows the protocol `cid:`, which doesn't encode double quote (`"`): `<a id=defaultAvatar><a id=defaultAvatar name=avatar href="cid:&quot;onerror=alert(1)//">`
+- DomPurify cho phép giao thức `cid:`, giao thức này không mã hóa dấu ngoặc kép (`"`): `<a id=defaultAvatar><a id=defaultAvatar name=avatar href="cid:&quot;onerror=alert(1)//">`
 
-## Labs
+## Bài Lab
 
 - [PortSwigger - Exploiting DOM clobbering to enable XSS](https://portswigger.net/web-security/dom-based/dom-clobbering/lab-dom-xss-exploiting-dom-clobbering)
 - [PortSwigger - Clobbering DOM attributes to bypass HTML filters](https://portswigger.net/web-security/dom-based/dom-clobbering/lab-dom-clobbering-attributes-to-bypass-html-filters)
 - [PortSwigger - DOM clobbering test case protected by CSP](https://portswigger-labs.net/dom-invader/testcases/augmented-dom-script-dom-clobbering-csp/)
 
-## References
+## Tài Liệu Tham Khảo
 
 - [Bypassing CSP via DOM clobbering - Gareth Heyes - June 5, 2023](https://web.archive.org/web/20251114182213/https://portswigger.net/research/bypassing-csp-via-dom-clobbering)
 - [DOM Clobbering - HackTricks - January 27, 2023](https://web.archive.org/web/20241215205040/https://book.hacktricks.xyz/pentesting-web/xss-cross-site-scripting/dom-clobbering)
