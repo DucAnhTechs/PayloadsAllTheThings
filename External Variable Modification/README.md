@@ -1,30 +1,20 @@
-# External Variable Modification
-
-> External Variable Modification Vulnerability occurs when a web application improperly handles user input, allowing attackers to overwrite internal variables. In PHP, functions like extract($_GET), extract($_POST), or import_request_variables() can be abused if they import user-controlled data into the global scope without proper validation. This can lead to security issues such as unauthorized changes to application logic, privilege escalation, or bypassing security controls.
-
-## Summary
-
-* [Methodology](#methodology)
-    * [Overwriting Critical Variables](#overwriting-critical-variables)
-    * [Poisoning File Inclusion](#poisoning-file-inclusion)
-    * [Global Variable Injection](#global-variable-injection)
-* [Remediations](#remediations)
-* [References](#references)
-
-## Methodology
-
-The `extract()` function in PHP imports variables from an array into the current symbol table. While it may seem convenient, it can introduce serious security risks, especially when handling user-supplied data.
-
-* It allows overwriting existing variables.
-* It can lead to **variable pollution**, impacting security mechanisms.
-* It can be used as a **gadget** to trigger other vulnerabilities like Remote Code Execution (RCE) and Local File Inclusion (LFI).
-
-By default, `extract()` uses `EXTR_OVERWRITE`, meaning it **replaces existing variables** if they share the same name as keys in the input array.
-
-### Overwriting Critical Variables
-
-If `extract()` is used in a script that relies on specific variables, an attacker can manipulate them.
-
+# External Variable Modification (Sửa Đổi Biến Bên Ngoài)
+> Lỗ hổng External Variable Modification xảy ra khi một ứng dụng web xử lý đầu vào của người dùng không đúng cách, cho phép kẻ tấn công ghi đè lên các biến nội bộ. Trong PHP, các hàm như extract($_GET), extract($_POST), hoặc import_request_variables() có thể bị lợi dụng nếu chúng nhập dữ liệu do người dùng kiểm soát vào phạm vi toàn cục (global scope) mà không có kiểm tra hợp lệ đúng cách. Điều này có thể dẫn đến các vấn đề bảo mật như thay đổi trái phép logic ứng dụng, leo thang đặc quyền, hoặc vượt qua các cơ chế kiểm soát bảo mật.
+## Tóm tắt
+* [Phương pháp](#methodology)
+    * [Ghi đè các biến quan trọng](#overwriting-critical-variables)
+    * [Đầu độc File Inclusion](#poisoning-file-inclusion)
+    * [Chèn biến toàn cục (Global Variable Injection)](#global-variable-injection)
+* [Biện pháp khắc phục](#remediations)
+* [Tài liệu tham khảo](#references)
+## Phương pháp
+Hàm `extract()` trong PHP nhập các biến từ một mảng vào bảng ký hiệu (symbol table) hiện tại. Mặc dù có vẻ tiện lợi, nó có thể gây ra những rủi ro bảo mật nghiêm trọng, đặc biệt khi xử lý dữ liệu do người dùng cung cấp.
+* Nó cho phép ghi đè lên các biến đã tồn tại.
+* Nó có thể dẫn đến **ô nhiễm biến** (variable pollution), ảnh hưởng đến các cơ chế bảo mật.
+* Nó có thể được dùng như một **gadget** để kích hoạt các lỗ hổng khác như Remote Code Execution (RCE) và Local File Inclusion (LFI).
+Mặc định, `extract()` sử dụng `EXTR_OVERWRITE`, nghĩa là nó **thay thế các biến đã tồn tại** nếu chúng có cùng tên với các khóa trong mảng đầu vào.
+### Ghi đè các biến quan trọng
+Nếu `extract()` được sử dụng trong một script phụ thuộc vào các biến cụ thể, kẻ tấn công có thể thao túng chúng.
 ```php
 <?php
     $authenticated = false;
@@ -36,20 +26,14 @@ If `extract()` is used in a script that relies on specific variables, an attacke
     }
 ?>
 ```
-
-**Exploitation:**
-
-In this example, the use of `extract($_GET)` allow an attacker to set the `$authenticated` variable to `true`:
-
+**Khai thác:**
+Trong ví dụ này, việc sử dụng `extract($_GET)` cho phép kẻ tấn công đặt biến `$authenticated` thành `true`:
 ```ps1
 http://example.com/vuln.php?authenticated=true
 http://example.com/vuln.php?authenticated=1
 ```
-
-### Poisoning File Inclusion
-
-If `extract()` is combined with file inclusion, attackers can control file paths.
-
+### Đầu độc File Inclusion
+Nếu `extract()` được kết hợp với file inclusion, kẻ tấn công có thể kiểm soát đường dẫn tệp.
 ```php
 <?php
     $page = "config.php";
@@ -57,39 +41,26 @@ If `extract()` is combined with file inclusion, attackers can control file paths
     include "$page";
 ?>
 ```
-
-**Exploitation:**
-
+**Khai thác:**
 ```ps1
 http://example.com/vuln.php?page=../../etc/passwd
 ```
-
-### Global Variable Injection
-
-:warning: As of PHP 8.1.0, write access to the entire `$GLOBALS` array is no longer supported.
-
-Overwriting `$GLOBALS` when an application calls `extract` function on untrusted value:
-
+### Chèn biến toàn cục (Global Variable Injection)
+:warning: Kể từ PHP 8.1.0, quyền ghi vào toàn bộ mảng `$GLOBALS` không còn được hỗ trợ nữa.
+Ghi đè `$GLOBALS` khi một ứng dụng gọi hàm `extract` trên giá trị không đáng tin cậy:
 ```php
 extract($_GET);
 ```
-
-An attacker can manipulate **global variables**:
-
+Kẻ tấn công có thể thao túng các **biến toàn cục**:
 ```ps1
 http://example.com/vuln.php?GLOBALS[admin]=1
 ```
-
-## Remediations
-
-Use `EXTR_SKIP` to prevent overwriting:
-
+## Biện pháp khắc phục
+Sử dụng `EXTR_SKIP` để ngăn chặn việc ghi đè:
 ```php
 extract($_GET, EXTR_SKIP);
 ```
-
-## References
-
+## Tài liệu tham khảo
 * [CWE-473: PHP External Variable Modification - Common Weakness Enumeration - November 19, 2024](https://web.archive.org/web/20260210044429/https://cwe.mitre.org/data/definitions/473.html)
 * [CWE-621: Variable Extraction Error - Common Weakness Enumeration - November 19, 2024](https://web.archive.org/web/20260223131419/https://cwe.mitre.org/data/definitions/621.html)
 * [Function extract - PHP Documentation - March 21, 2001](https://web.archive.org/web/20260210044429/https://www.php.net/manual/en/function.extract.php)
