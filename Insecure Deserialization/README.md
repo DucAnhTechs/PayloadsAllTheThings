@@ -1,17 +1,17 @@
 # Insecure Deserialization
 
-> Serialization is the process of turning some object into a data format that can be restored later. People often serialize objects in order to save them to storage, or to send as part of communications. Deserialization is the reverse of that process -- taking data structured from some format, and rebuilding it into an object - OWASP
+> Serialization là quá trình chuyển đổi một object thành một định dạng dữ liệu có thể được khôi phục lại sau này. Người ta thường serialize object để lưu trữ hoặc gửi chúng trong quá trình giao tiếp. Deserialization là quá trình ngược lại — lấy dữ liệu được cấu trúc theo một định dạng nhất định và xây dựng lại thành một object — OWASP.
 
-## Summary
+## Tóm tắt
 
-* [Deserialization Identifier](#deserialization-identifier)
+* [Nhận diện Deserialization](#nhận-diện-deserialization)
 * [POP Gadgets](#pop-gadgets)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#tài-liệu-tham-khảo)
 
-## Deserialization Identifier
+## Nhận diện Deserialization
 
-Check the following sub-sections, located in other chapters :
+Kiểm tra các phần sau, được trình bày trong những chapter khác:
 
 * [Java deserialization : ysoserial, ...](Java.md)
 * [PHP (Object injection) : phpggc, ...](PHP.md)
@@ -19,25 +19,25 @@ Check the following sub-sections, located in other chapters :
 * [Python : pickle, PyYAML, ...](Python.md)
 * [.NET : ysoserial.net, ...](DotNET.md)
 
-| Object Type     | Header (Hex)               | Header (Base64) | Indicators                                                   |
-| --------------- | -------------------------- | --------------- | ------------------------------------------------------------ |
-| .NET ViewState  | `FF 01`                    | `/w`            | Commonly found inside hidden inputs around HTML forms        |
-| BinaryFormatter | `0001 0000 00FF FFFF FF01` | `AAEAAAD`       | Base64 decode and check for the long `FF FF FF FF` sequence. |
-| Java Serialized | `AC ED`                    | `rO`            | Base64 decode and check first bytes.                         |
-| PHP Serialized  | `4F 3A`                    | `Tz`            | Prefixes like `O:, a:, s:, i:, b:` and length indicators.    |
-| Python Pickle   | `80 04 95`                 | `gASV`          | Text: opcodes like `(lp0, S'Test'`.                          |
-| Ruby Marshal    | `04 08`                    | `BAgK`          | Base64 decode and look for `\x04\x08` at the start.          |
+| Loại Object     | Header (Hex)               | Header (Base64) | Dấu hiệu nhận diện                                                        |
+| --------------- | -------------------------- | --------------- | ------------------------------------------------------------------------- |
+| .NET ViewState  | `FF 01`                    | `/w`            | Thường được tìm thấy bên trong các hidden input nằm xung quanh HTML form. |
+| BinaryFormatter | `0001 0000 00FF FFFF FF01` | `AAEAAAD`       | Base64 decode và kiểm tra chuỗi `FF FF FF FF` dài.                        |
+| Java Serialized | `AC ED`                    | `rO`            | Base64 decode và kiểm tra các byte đầu tiên.                              |
+| PHP Serialized  | `4F 3A`                    | `Tz`            | Các prefix như `O:, a:, s:, i:, b:` và các length indicator.              |
+| Python Pickle   | `80 04 95`                 | `gASV`          | Text: các opcode như `(lp0, S'Test'`.                                     |
+| Ruby Marshal    | `04 08`                    | `BAgK`          | Base64 decode và tìm `\x04\x08` ở phần đầu.                               |
 
 ## POP Gadgets
 
-> A POP (Property Oriented Programming) gadget is a piece of code implemented by an application's class, that can be called during the deserialization process.
+> Một POP (Property Oriented Programming) gadget là một đoạn code được triển khai bởi class của ứng dụng, có thể được gọi trong quá trình deserialization.
 
-POP gadgets characteristics:
+Đặc điểm của POP gadget:
 
-* Can be serialized
-* Has public/accessible properties
-* Implements specific vulnerable methods
-* Has access to other "callable" classes
+* Có thể được serialize.
+* Có các property public/có thể truy cập.
+* Triển khai các method dễ bị tổn thương cụ thể.
+* Có quyền truy cập tới các class khác có thể `"callable"`.
 
 ## Labs
 
@@ -53,7 +53,7 @@ POP gadgets characteristics:
 * [PortSwigger - Using PHAR deserialization to deploy a custom gadget chain](https://portswigger.net/web-security/deserialization/exploiting/lab-deserialization-using-phar-deserialization-to-deploy-a-custom-gadget-chain)
 * [NickstaDB - DeserLab](https://github.com/NickstaDB/DeserLab)
 
-## References
+## Tài liệu tham khảo
 
 * [ExploitDB Introduction - Abdelazim Mohammed(@intx0x80) - May 27, 2018](https://web.archive.org/web/20180527082635/https://www.exploit-db.com/docs/english/44756-deserialization-vulnerability.pdf)
 * [Exploiting insecure deserialization vulnerabilities - PortSwigger - July 25, 2020](https://web.archive.org/web/20200725143552/https://portswigger.net/web-security/deserialization/exploiting)
