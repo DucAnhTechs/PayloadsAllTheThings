@@ -1,69 +1,69 @@
 # HTTP Parameter Pollution
 
-> HTTP Parameter Pollution (HPP) is a Web attack evasion technique that allows an attacker to craft a HTTP request in order to manipulate web logics or retrieve hidden information. This evasion technique is based on splitting an attack vector between multiple instances of a parameter with the same name (?param1=value&param1=value). As there is no formal way of parsing HTTP parameters, individual web technologies have their own unique way of parsing and reading URL parameters with the same name. Some taking the first occurrence, some taking the last occurrence, and some reading it as an array. This behavior is abused by the attacker in order to bypass pattern-based security mechanisms.
+> HTTP Parameter Pollution (HPP) là một kỹ thuật né tránh tấn công web cho phép kẻ tấn công tạo ra một request HTTP để thao túng logic web hoặc lấy thông tin ẩn. Kỹ thuật né tránh này dựa trên việc chia một vector tấn công giữa nhiều thực thể của một tham số có cùng tên (?param1=value&param1=value). Vì không có cách chính thức nào để phân tích cú pháp các tham số HTTP, mỗi công nghệ web riêng lẻ có cách phân tích cú pháp và đọc các tham số URL có cùng tên theo cách riêng của nó. Một số lấy lần xuất hiện đầu tiên, một số lấy lần xuất hiện cuối cùng, và một số đọc nó như một mảng. Hành vi này bị kẻ tấn công lợi dụng để vượt qua các cơ chế bảo mật dựa trên mẫu (pattern-based).
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [Parameter Pollution Table](#parameter-pollution-table)
-    * [Parameter Pollution Payloads](#parameter-pollution-payloads)
-* [References](#references)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
+    * [Bảng Parameter Pollution](#parameter-pollution-table)
+    * [Các Payload Parameter Pollution](#parameter-pollution-payloads)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* **Burp Suite**: Manually modify requests to test duplicate parameters.
-* **OWASP ZAP**: Intercept and manipulate HTTP parameters.
+* **Burp Suite**: Chỉnh sửa request thủ công để kiểm tra các tham số trùng lặp.
+* **OWASP ZAP**: Chặn và thao túng các tham số HTTP.
 
-## Methodology
+## Phương pháp
 
-HTTP Parameter Pollution (HPP) is a web security vulnerability where an attacker injects multiple instances of the same HTTP parameter into a request. The server's behavior when processing duplicate parameters can vary, potentially leading to unexpected or exploitable behavior.
+HTTP Parameter Pollution (HPP) là một lỗ hổng bảo mật web trong đó kẻ tấn công chèn nhiều thực thể của cùng một tham số HTTP vào một request. Hành vi của server khi xử lý các tham số trùng lặp có thể khác nhau, có khả năng dẫn đến hành vi bất ngờ hoặc có thể bị khai thác.
 
-HPP can target two levels:
+HPP có thể nhắm mục tiêu vào hai cấp độ:
 
-* Client-Side HPP: Exploits JavaScript code running on the client (browser).
-* Server-Side HPP: Exploits how the server processes multiple parameters with the same name.
+* Client-Side HPP: Khai thác mã JavaScript đang chạy trên client (trình duyệt).
+* Server-Side HPP: Khai thác cách server xử lý nhiều tham số có cùng tên.
 
-**Examples**:
+**Ví dụ**:
 
 ```ps1
 /app?debug=false&debug=true
 /transfer?amount=1&amount=5000
 ```
 
-### Parameter Pollution Table
+### Bảng Parameter Pollution
 
-When ?par1=a&par1=b
+Khi ?par1=a&par1=b
 
-| Technology                                      | Parsing Result           | outcome (par1=) |
+| Công nghệ                                      | Kết quả phân tích cú pháp           | kết quả (par1=) |
 | ----------------------------------------------- | ------------------------ | --------------- |
-| ASP.NET/IIS                                     | All occurrences          | a,b             |
-| ASP/IIS                                         | All occurrences          | a,b             |
-| Golang net/http - `r.URL.Query().Get("param")`  | First occurrence         | a               |
-| Golang net/http - `r.URL.Query()["param"]`      | All occurrences in array | ['a','b']       |
-| IBM HTTP Server                                 | First occurrence         | a               |
-| IBM Lotus Domino                                | First occurrence         | a               |
-| JSP,Servlet/Tomcat                              | First occurrence         | a               |
-| mod_wsgi (Python)/Apache                        | First occurrence         | a               |
-| Nodejs                                          | All occurrences          | a,b             |
-| Perl CGI/Apache                                 | First occurrence         | a               |
-| Perl CGI/Apache                                 | First occurrence         | a               |
-| PHP/Apache                                      | Last occurrence          | b               |
-| PHP/Zues                                        | Last occurrence          | b               |
-| Python Django                                   | Last occurrence          | b               |
-| Python Flask                                    | First occurrence         | a               |
-| Python/Zope                                     | All occurrences in array | ['a','b']       |
-| Ruby on Rails                                   | Last occurrence          | b               |
+| ASP.NET/IIS                                     | Tất cả các lần xuất hiện          | a,b             |
+| ASP/IIS                                         | Tất cả các lần xuất hiện          | a,b             |
+| Golang net/http - `r.URL.Query().Get("param")`  | Lần xuất hiện đầu tiên         | a               |
+| Golang net/http - `r.URL.Query()["param"]`      | Tất cả các lần xuất hiện trong mảng | ['a','b']       |
+| IBM HTTP Server                                 | Lần xuất hiện đầu tiên         | a               |
+| IBM Lotus Domino                                | Lần xuất hiện đầu tiên         | a               |
+| JSP,Servlet/Tomcat                              | Lần xuất hiện đầu tiên         | a               |
+| mod_wsgi (Python)/Apache                        | Lần xuất hiện đầu tiên         | a               |
+| Nodejs                                          | Tất cả các lần xuất hiện          | a,b             |
+| Perl CGI/Apache                                 | Lần xuất hiện đầu tiên         | a               |
+| Perl CGI/Apache                                 | Lần xuất hiện đầu tiên         | a               |
+| PHP/Apache                                      | Lần xuất hiện cuối cùng          | b               |
+| PHP/Zues                                        | Lần xuất hiện cuối cùng          | b               |
+| Python Django                                   | Lần xuất hiện cuối cùng          | b               |
+| Python Flask                                    | Lần xuất hiện đầu tiên         | a               |
+| Python/Zope                                     | Tất cả các lần xuất hiện trong mảng | ['a','b']       |
+| Ruby on Rails                                   | Lần xuất hiện cuối cùng          | b               |
 
-### Parameter Pollution Payloads
+### Các Payload Parameter Pollution
 
-* Duplicate Parameters:
+* Tham số trùng lặp:
 
     ```ps1
     param=value1&param=value2
     ```
 
-* Array Injection:
+* Chèn mảng (Array Injection):
 
     ```ps1
     param[]=value1
@@ -72,19 +72,19 @@ When ?par1=a&par1=b
     param=value1&param[]=value2
     ```
 
-* Encoded Injection:
+* Chèn dạng mã hóa (Encoded Injection):
 
     ```ps1
     param=value1%26other=value2
     ```
 
-* Nested Injection:
+* Chèn lồng nhau (Nested Injection):
 
     ```ps1
     param[key1]=value1&param[key2]=value2
     ```
 
-* JSON Injection:
+* Chèn JSON (JSON Injection):
 
     ```ps1
     {
@@ -93,7 +93,7 @@ When ?par1=a&par1=b
     }
     ```
 
-## References
+## Tài liệu tham khảo
 
 * [How to Detect HTTP Parameter Pollution Attacks - Acunetix - January 9, 2024](https://web.archive.org/web/20260112091623/https://www.acunetix.com/blog/whitepaper-http-parameter-pollution/)
 * [HTTP Parameter Pollution - Itamar Verta - December 20, 2023](https://web.archive.org/web/20190721110154/https://www.imperva.com/learn/application-security/http-parameter-pollution/)
