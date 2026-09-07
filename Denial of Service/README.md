@@ -1,54 +1,54 @@
-# Denial of Service
+# Từ Chối Dịch Vụ (Denial of Service)
 
-> A Denial of Service (DoS) attack aims to make a service unavailable by overwhelming it with a flood of illegitimate requests or exploiting vulnerabilities in the target's software to crash or degrade performance. In a Distributed Denial of Service (DDoS), attackers use multiple sources (often compromised machines) to perform the attack simultaneously.
+> Một cuộc tấn công từ chối dịch vụ (Denial of Service - DoS) nhằm mục đích làm cho một dịch vụ không thể sử dụng được bằng cách làm quá tải dịch vụ đó với một lượng lớn yêu cầu không hợp lệ, hoặc khai thác các lỗ hổng trong phần mềm của mục tiêu để làm sập hoặc suy giảm hiệu năng. Trong tấn công từ chối dịch vụ phân tán (Distributed Denial of Service - DDoS), kẻ tấn công sử dụng nhiều nguồn (thường là các máy đã bị xâm nhập) để thực hiện cuộc tấn công đồng thời.
 
-## Summary
+## Tóm tắt
 
-* [Methodology](#methodology)
-    * [Locking Customer Accounts](#locking-customer-accounts)
-    * [File Limits on FileSystem](#file-limits-on-filesystem)
-    * [Memory Exhaustion - Technology Related](#memory-exhaustion---technology-related)
-* [References](#references)
+* [Phương pháp](#methodology)
+    * [Khóa Tài Khoản Khách Hàng](#locking-customer-accounts)
+    * [Giới Hạn File Trên Hệ Thống Tệp](#file-limits-on-filesystem)
+    * [Cạn Kiệt Bộ Nhớ - Liên Quan Đến Công Nghệ](#memory-exhaustion---technology-related)
+* [Tài Liệu Tham Khảo](#references)
 
-## Methodology
+## Phương pháp
 
-Here are some examples of Denial of Service (DoS) attacks. These examples should serve as a reference for understanding the concept, but any DoS testing should be conducted cautiously, as it can disrupt the target environment and potentially result in loss of access or exposure of sensitive data.
+Dưới đây là một số ví dụ về các cuộc tấn công từ chối dịch vụ (DoS). Những ví dụ này nhằm mục đích tham khảo để hiểu khái niệm, nhưng bất kỳ hoạt động kiểm thử DoS nào cũng cần được tiến hành một cách thận trọng, vì nó có thể gây gián đoạn môi trường mục tiêu và có khả năng dẫn đến mất quyền truy cập hoặc lộ dữ liệu nhạy cảm.
 
-### Locking Customer Accounts
+### Khóa Tài Khoản Khách Hàng
 
-Example of Denial of Service that can occur when testing customer accounts.
-Be very careful as this is most likely **out-of-scope** and can have a high impact on the business.
+Ví dụ về tình huống từ chối dịch vụ có thể xảy ra khi kiểm thử tài khoản khách hàng.
+Hãy hết sức cẩn thận vì đây rất có thể là **nằm ngoài phạm vi (out-of-scope)** và có thể gây ảnh hưởng nghiêm trọng đến doanh nghiệp.
 
-* Multiple attempts on the login page when the account is temporary/indefinitely banned after X bad attempts.
+* Thực hiện nhiều lần thử trên trang đăng nhập khi tài khoản bị khóa tạm thời/vĩnh viễn sau X lần thử sai.
 
     ```ps1
     for i in {1..100}; do curl -X POST -d "username=user&password=wrong" <target_login_url>; done
     ```
 
-### File Limits on FileSystem
+### Giới Hạn File Trên Hệ Thống Tệp
 
-When a process is writing a file on the server, try to reach the maximum number of files allowed by the filesystem format. The system should output a message: `No space left on device` when the limit is reached.
+Khi một tiến trình đang ghi file trên máy chủ, hãy thử đạt tới số lượng file tối đa mà định dạng hệ thống tệp cho phép. Hệ thống sẽ xuất ra thông báo: `No space left on device` khi đạt tới giới hạn.
 
-| Filesystem | Maximum Inodes             |
+| Hệ thống tệp | Số Inode Tối Đa            |
 | ---------- | -------------------------- |
-| BTRFS      | 2^64 (~18 quintillion)     |
-| EXT4       | ~4 billion                 |
-| FAT32      | ~268 million files         |
-| NTFS       | ~4.2 billion (MFT entries) |
-| XFS        | Dynamic (disk size)        |
-| ZFS        | ~281 trillion              |
+| BTRFS      | 2^64 (~18 tỷ tỷ)     |
+| EXT4       | ~4 tỷ                 |
+| FAT32      | ~268 triệu file         |
+| NTFS       | ~4,2 tỷ (mục MFT) |
+| XFS        | Động (theo dung lượng ổ đĩa)        |
+| ZFS        | ~281 nghìn tỷ                  |
 
-An alternative of this technique would be to fill a file used by the application until it reaches the maximum size allowed by the filesystem, for example it can occur on a SQLite database or a log file.
+Một cách khác của kỹ thuật này là làm đầy một file được ứng dụng sử dụng cho đến khi đạt kích thước tối đa mà hệ thống tệp cho phép, ví dụ điều này có thể xảy ra với một cơ sở dữ liệu SQLite hoặc một file log.
 
-FAT32 has a significant limitation of **4 GB**, which is why it's often replaced with exFAT or NTFS for larger files.
+FAT32 có một giới hạn đáng kể là **4 GB**, đây là lý do vì sao nó thường được thay thế bằng exFAT hoặc NTFS đối với các file lớn hơn.
 
-Modern filesystems like BTRFS, ZFS, and XFS support exabyte-scale files, well beyond current storage capacities, making them future-proof for large datasets.
+Các hệ thống tệp hiện đại như BTRFS, ZFS và XFS hỗ trợ file có kích thước lên đến exabyte, vượt xa dung lượng lưu trữ hiện tại, giúp chúng phù hợp lâu dài với các tập dữ liệu lớn.
 
-### Memory Exhaustion - Technology Related
+### Cạn Kiệt Bộ Nhớ - Liên Quan Đến Công Nghệ
 
-Depending on the technology used by the website, an attacker may have the ability to trigger specific functions or paradigm that will consume a huge chunk of memory.
+Tùy thuộc vào công nghệ mà trang web sử dụng, kẻ tấn công có thể có khả năng kích hoạt các hàm hoặc mô hình cụ thể khiến hệ thống tiêu tốn một lượng lớn bộ nhớ.
 
-* **XML External Entity**: Billion laughs attack/XML bomb
+* **XML External Entity**: Tấn công Billion laughs/XML bomb
 
     ```xml
     <?xml version="1.0"?>
@@ -68,7 +68,7 @@ Depending on the technology used by the website, an attacker may have the abilit
     <lolz>&lol9;</lolz>
     ```
 
-* **GraphQL**: Deeply-nested GraphQL queries.
+* **GraphQL**: Các truy vấn GraphQL lồng nhau sâu.
 
     ```ps1
     query { 
@@ -86,16 +86,16 @@ Depending on the technology used by the website, an attacker may have the abilit
     }
     ```
 
-* **Image Resizing**: try to send invalid pictures with modified headers, e.g: abnormal size, big number of pixels.
-* **SVG handling**: SVG file format is based on XML, try the billion laughs attack.
+* **Thay đổi kích thước ảnh**: thử gửi các hình ảnh không hợp lệ với header đã bị chỉnh sửa, ví dụ: kích thước bất thường, số lượng pixel lớn.
+* **Xử lý SVG**: Định dạng file SVG dựa trên XML, hãy thử tấn công billion laughs.
 * **Regular Expression**: ReDoS
-* **Fork Bomb**: rapidly creates new processes in a loop, consuming system resources until the machine becomes unresponsive.
+* **Fork Bomb**: liên tục tạo ra các tiến trình mới trong một vòng lặp, tiêu tốn tài nguyên hệ thống cho đến khi máy trở nên không phản hồi.
 
     ```ps1
     :(){ :|:& };:
     ```
 
-## References
+## Tài Liệu Tham Khảo
 
 * [DEF CON 32 - Practical Exploitation of DoS in Bug Bounty - Roni Lupin Carta - October 16, 2024](https://web.archive.org/web/20241115121102/https://youtu.be/b7WlUofPJpU)
 * [Denial of Service Cheat Sheet - OWASP Cheat Sheet Series - July 16, 2019](https://web.archive.org/web/20260303124303/https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html)
