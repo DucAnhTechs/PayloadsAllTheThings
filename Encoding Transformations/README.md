@@ -1,32 +1,32 @@
-# Encoding and Transformations
+# Encoding and Transformations (Mã Hóa và Biến Đổi)
 
-> Encoding and Transformations are techniques that change how data is represented or transferred without altering its core meaning. Common examples include URL encoding, Base64, HTML entity encoding, and Unicode transformations. Attackers use these methods as gadgets to bypass input filters, evade web application firewalls, or break out of sanitization routines.
+> Encoding and Transformations là các kỹ thuật làm thay đổi cách dữ liệu được biểu diễn hoặc truyền tải mà không làm thay đổi ý nghĩa cốt lõi của nó. Các ví dụ phổ biến bao gồm URL encoding, Base64, HTML entity encoding, và Unicode transformations. Kẻ tấn công sử dụng các phương pháp này như những công cụ để vượt qua bộ lọc đầu vào, né tránh tường lửa ứng dụng web (WAF), hoặc thoát khỏi các quy trình khử trùng (sanitization).
 
-## Summary
+## Tóm tắt
 
 * [Unicode](#unicode)
     * [Unicode Normalization](#unicode-normalization)
     * [Punycode](#punycode)
 * [Base64](#base64)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
 ## Unicode
 
-Unicode is a universal character encoding standard used to represent text from virtually every writing system in the world. Each character (letters, numbers, symbols, emojis) is assigned a unique code point (for example, U+0041 for "A"). Unicode encoding formats like UTF-8 and UTF-16 specify how these code points are stored as bytes.
+Unicode là một tiêu chuẩn mã hóa ký tự phổ quát dùng để biểu diễn văn bản từ hầu hết mọi hệ thống chữ viết trên thế giới. Mỗi ký tự (chữ cái, số, ký hiệu, emoji) được gán một điểm mã (code point) duy nhất (ví dụ: U+0041 cho chữ "A"). Các định dạng mã hóa Unicode như UTF-8 và UTF-16 quy định cách các điểm mã này được lưu trữ dưới dạng byte.
 
 ### Unicode Normalization
 
-Unicode normalization is the process of converting Unicode text into a standardized, consistent form so that equivalent characters are represented the same way in memory.
+Unicode normalization là quá trình chuyển đổi văn bản Unicode thành một dạng chuẩn hóa, nhất quán để các ký tự tương đương được biểu diễn giống nhau trong bộ nhớ.
 
-[Unicode Normalization reference table](https://appcheck-ng.com/wp-content/uploads/unicode_normalization.html)
+[Bảng tham chiếu Unicode Normalization](https://appcheck-ng.com/wp-content/uploads/unicode_normalization.html)
 
-* **NFC** (Normalization Form Canonical Composition): Combines decomposed sequences into precomposed characters where possible.
-* **NFD** (Normalization Form Canonical Decomposition): Breaks characters into their decomposed forms (base + combining marks).
-* **NFKC** (Normalization Form Compatibility Composition): Like NFC, but also replaces characters with compatibility equivalents (may change appearance/format).
-* **NFKD** (Normalization Form Compatibility Decomposition): Like NFD, but also decomposes compatibility characters.
+* **NFC** (Normalization Form Canonical Composition): Kết hợp các chuỗi đã phân tách thành các ký tự đã tổng hợp sẵn khi có thể.
+* **NFD** (Normalization Form Canonical Decomposition): Tách các ký tự thành dạng phân tách của chúng (ký tự gốc + dấu kết hợp).
+* **NFKC** (Normalization Form Compatibility Composition): Giống NFC, nhưng cũng thay thế các ký tự bằng các dạng tương đương tương thích (có thể làm thay đổi hình thức/định dạng).
+* **NFKD** (Normalization Form Compatibility Decomposition): Giống NFD, nhưng cũng phân tách các ký tự tương thích.
 
-| Character     | Payload               | After Normalization   |
+| Ký tự     | Payload               | Sau khi chuẩn hóa   |
 | ------------- | --------------------- | --------------------- |
 | `‥` (U+2025)  | `‥/‥/‥/etc/passwd`    | `../../../etc/passwd` |
 | `︰` (U+FE30) | `︰/︰/︰/etc/passwd` | `../../../etc/passwd` |
@@ -54,16 +54,16 @@ print ('NFKD: ' + unicodedata.normalize('NFKD', string))
 
 ### Punycode
 
-Punycode is a way to represent Unicode characters (including non-ASCII letters, symbols, and scripts) using only the limited set of ASCII characters (letters, digits, and hyphens).
+Punycode là một cách để biểu diễn các ký tự Unicode (bao gồm chữ cái, ký hiệu và hệ chữ viết không thuộc ASCII) chỉ bằng tập hợp giới hạn các ký tự ASCII (chữ cái, chữ số và dấu gạch nối).
 
-It's mainly used in the Domain Name System (DNS), which traditionally supports only ASCII. Punycode allows internationalized domain names (IDNs), so that domain names can include characters from many languages by converting them into a safe ASCII form.
+Nó chủ yếu được dùng trong Hệ thống Tên Miền (DNS), vốn theo truyền thống chỉ hỗ trợ ASCII. Punycode cho phép các tên miền quốc tế hóa (IDN), nhờ đó tên miền có thể chứa các ký tự từ nhiều ngôn ngữ khác nhau bằng cách chuyển đổi chúng sang dạng ASCII an toàn.
 
-| Visible in Browser (IDN support) | Actual ASCII (Punycode) |
+| Hiển thị trên trình duyệt (hỗ trợ IDN) | ASCII thực tế (Punycode) |
 | -------------------------------- | ----------------------- |
 | раypal.com                       | xn--ypal-43d9g.com      |
 | paypal.com                       | paypal.com              |
 
-In MySQL, similar character are treated as equal. This behavior can be abused in Password Reset, Forgot Password, and OAuth Provider sections.
+Trong MySQL, các ký tự tương tự nhau được coi là bằng nhau. Hành vi này có thể bị lợi dụng trong các phần Password Reset, Forgot Password và OAuth Provider.
 
 ```sql
 SELECT 'a' = 'ᵃ';
@@ -74,7 +74,7 @@ SELECT 'a' = 'ᵃ';
 +-------------+
 ```
 
-This trick works the SQL query uses `COLLATE utf8mb4_0900_as_cs`.
+Thủ thuật này hoạt động khi câu truy vấn SQL sử dụng `COLLATE utf8mb4_0900_as_cs`.
 
 ```sql
 SELECT 'a' = 'ᵃ' COLLATE utf8mb4_0900_as_cs;
@@ -87,7 +87,7 @@ SELECT 'a' = 'ᵃ' COLLATE utf8mb4_0900_as_cs;
 
 ## Base64
 
-Base64 encoding is a method for converting binary data (like images or files) or text with special characters into a readable string that uses only ASCII characters (A-Z, a-z, 0-9, +, and /). Every 3 bytes of input are divided into 4 groups of 6 bits and mapped to 4 Base64 characters. If the input isn't a multiple of 3 bytes, the output is padded with `=` characters.
+Base64 encoding là một phương pháp chuyển đổi dữ liệu nhị phân (như hình ảnh hoặc tệp) hoặc văn bản có ký tự đặc biệt thành một chuỗi có thể đọc được chỉ sử dụng các ký tự ASCII (A-Z, a-z, 0-9, +, và /). Mỗi 3 byte đầu vào được chia thành 4 nhóm 6 bit và ánh xạ thành 4 ký tự Base64. Nếu đầu vào không phải là bội số của 3 byte, đầu ra sẽ được đệm thêm bằng các ký tự `=`.
 
 ```ps1
 echo -n admin | base64                            
@@ -102,7 +102,7 @@ admin
 * [NahamCon - Puny-Code: 0-Click Account Takeover](https://github.com/VoorivexTeam/white-box-challenges/tree/main/punycode)
 * [PentesterLab - Unicode and NFKC](https://pentesterlab.com/exercises/unicode-transform)
 
-## References
+## Tài liệu tham khảo
 
 * [Puny-Code, 0-Click Account Takeover - Voorivex - June 1, 2025](https://web.archive.org/web/20251211233427/https://blog.voorivex.team/puny-code-0-click-account-takeover)
 * [Unicode normalization vulnerabilities - Lazar - September 30, 2021](https://web.archive.org/web/20251224043224/https://lazarv.com/posts/unicode-normalization-vulnerabilities/)
