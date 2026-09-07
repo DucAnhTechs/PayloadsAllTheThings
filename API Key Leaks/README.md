@@ -1,70 +1,70 @@
-# API Key and Token Leaks
+# Rò rỉ API Key và Token
 
-> API keys and tokens are forms of authentication commonly used to manage permissions and access to both public and private services. Leaking these sensitive pieces of data can lead to unauthorized access, compromised security, and potential data breaches.
+> API key và token là các hình thức xác thực thường được dùng để quản lý quyền truy cập vào các dịch vụ công khai và riêng tư. Việc để rò rỉ những dữ liệu nhạy cảm này có thể dẫn đến truy cập trái phép, làm suy yếu bảo mật, và có nguy cơ gây ra rò rỉ dữ liệu.
 
-## Summary
+## Mục lục
 
-- [Tools](#tools)
-- [Methodology](#methodology)
-    - [Common Causes of Leaks](#common-causes-of-leaks)
-    - [Validate The API Key](#validate-the-api-key)
-- [Reducing The Attack Surface](#reducing-the-attack-surface)
-- [References](#references)
+- [Công cụ](#tools)
+- [Phương pháp](#methodology)
+    - [Các nguyên nhân phổ biến gây rò rỉ](#common-causes-of-leaks)
+    - [Xác thực API Key](#validate-the-api-key)
+- [Giảm thiểu bề mặt tấn công](#reducing-the-attack-surface)
+- [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-- [aquasecurity/trivy](https://github.com/aquasecurity/trivy) - General purpose vulnerability and misconfiguration scanner which also searches for API keys/secrets.
-- [blacklanternsecurity/badsecrets](https://github.com/blacklanternsecurity/badsecrets) - A library for detecting known or weak secrets on across many platforms.
-- [irsdl/crapsecrets](https://github.com/irsdl/crapsecrets) - A library for detecting known secrets across many web frameworks.
-- [d0ge/sign-saboteur](https://github.com/d0ge/sign-saboteur) - SignSaboteur is a Burp Suite extension for editing, signing, verifying various signed web tokens.
-- [mazen160/secrets-patterns-db](https://github.com/mazen160/secrets-patterns-db) - Secrets Patterns DB: The largest open-source Database for detecting secrets, API keys, passwords, tokens, and more.
-- [momenbasel/KeyFinder](https://github.com/momenbasel/KeyFinder) - is a tool that let you find keys while surfing the web.
-- [streaak/keyhacks](https://github.com/streaak/keyhacks) - is a repository which shows quick ways in which API keys leaked by a bug bounty program can be checked to see if they're valid.
-- [trufflesecurity/truffleHog](https://github.com/trufflesecurity/truffleHog) - Find credentials all over the place.
-- [projectdiscovery/nuclei-templates](https://github.com/projectdiscovery/nuclei-templates) - Use these templates to test an API token against many API service endpoints.
+- [aquasecurity/trivy](https://github.com/aquasecurity/trivy) - Công cụ quét lỗ hổng và cấu hình sai đa năng, cũng có khả năng tìm kiếm API key/secret.
+- [blacklanternsecurity/badsecrets](https://github.com/blacklanternsecurity/badsecrets) - Thư viện phát hiện các secret đã biết hoặc yếu trên nhiều nền tảng.
+- [irsdl/crapsecrets](https://github.com/irsdl/crapsecrets) - Thư viện phát hiện các secret đã biết trên nhiều framework web.
+- [d0ge/sign-saboteur](https://github.com/d0ge/sign-saboteur) - SignSaboteur là extension của Burp Suite dùng để chỉnh sửa, ký, xác minh nhiều loại web token đã được ký.
+- [mazen160/secrets-patterns-db](https://github.com/mazen160/secrets-patterns-db) - Secrets Patterns DB: Cơ sở dữ liệu mã nguồn mở lớn nhất để phát hiện secret, API key, mật khẩu, token, v.v.
+- [momenbasel/KeyFinder](https://github.com/momenbasel/KeyFinder) - Công cụ giúp bạn tìm key trong khi lướt web.
+- [streaak/keyhacks](https://github.com/streaak/keyhacks) - Repository cho thấy các cách nhanh chóng để kiểm tra tính hợp lệ của API key bị rò rỉ trong chương trình bug bounty.
+- [trufflesecurity/truffleHog](https://github.com/trufflesecurity/truffleHog) - Tìm kiếm credential ở mọi nơi.
+- [projectdiscovery/nuclei-templates](https://github.com/projectdiscovery/nuclei-templates) - Sử dụng các template này để kiểm tra một API token trên nhiều endpoint dịch vụ API.
 
     ```powershell
     nuclei -t token-spray/ -var token=token_list.txt
     ```
 
-## Methodology
+## Phương pháp
 
-- **API Keys**: Unique identifiers used to authenticate requests associated with your project or application.
-- **Tokens**: Security tokens (like OAuth tokens) that grant access to protected resources.
+- **API Key**: Định danh duy nhất dùng để xác thực các request liên quan đến project hoặc ứng dụng của bạn.
+- **Token**: Các security token (như OAuth token) cấp quyền truy cập vào tài nguyên được bảo vệ.
 
-### Common Causes of Leaks
+### Các nguyên nhân phổ biến gây rò rỉ
 
-- **Hardcoding in Source Code**: Developers may unintentionally leave API keys or tokens directly in the source code.
+- **Hardcode trong mã nguồn**: Lập trình viên có thể vô tình để lại API key hoặc token trực tiếp trong mã nguồn.
 
     ```py
-    # Example of hardcoded API key
+    # Ví dụ về API key bị hardcode
     api_key = "1234567890abcdef"
     ```
 
-- **Public Repositories**: Accidentally committing sensitive keys and tokens to publicly accessible version control systems like GitHub.
+- **Repository công khai**: Vô tình commit các key và token nhạy cảm lên hệ thống quản lý phiên bản công khai như GitHub.
 
     ```ps1
-    ## Scan a Github Organization
+    ## Quét một tổ chức trên Github
     docker run --rm -it -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --org=trufflesecurity
     
-    ## Scan a GitHub Repository, its Issues and Pull Requests
+    ## Quét một Repository GitHub, các Issue và Pull Request của nó
     docker run --rm -it -v "$PWD:/pwd" trufflesecurity/trufflehog:latest github --repo https://github.com/trufflesecurity/test_keys --issue-comments --pr-comments
     ```
 
-- **Hardcoding in Docker Images**: API keys and credentials might be hardcoded in Docker images hosted on DockerHub or private registries.
+- **Hardcode trong Docker Image**: API key và credential có thể bị hardcode trong các Docker image được lưu trữ trên DockerHub hoặc registry riêng.
 
     ```ps1
-    # Scan a Docker image for verified secrets
+    # Quét một Docker image để tìm secret đã được xác minh
     docker run --rm -it -v "$PWD:/pwd" trufflesecurity/trufflehog:latest docker --image trufflesecurity/secrets
     ```
 
-- **Logs and Debug Information**: Keys and tokens might be inadvertently logged or printed during debugging processes.
+- **Log và thông tin Debug**: Key và token có thể vô tình bị ghi log hoặc in ra trong quá trình debug.
 
-- **Configuration Files**: Including keys and tokens in publicly accessible configuration files (e.g., .env files, config.json, settings.py, or .aws/credentials.).
+- **File cấu hình**: Bao gồm key và token trong các file cấu hình có thể truy cập công khai (ví dụ: file .env, config.json, settings.py, hoặc .aws/credentials).
 
-### Validate The API Key
+### Xác thực API Key
 
-If assistance is needed in identifying the service that generated the token, [mazen160/secrets-patterns-db](https://github.com/mazen160/secrets-patterns-db) can be consulted. It is the largest open-source database for detecting secrets, API keys, passwords, tokens, and more. This database contains regex patterns for various secrets.
+Nếu cần hỗ trợ xác định dịch vụ đã tạo ra token, có thể tham khảo [mazen160/secrets-patterns-db](https://github.com/mazen160/secrets-patterns-db). Đây là cơ sở dữ liệu mã nguồn mở lớn nhất để phát hiện secret, API key, mật khẩu, token, v.v. Cơ sở dữ liệu này chứa các mẫu regex cho nhiều loại secret khác nhau.
 
 ```yaml
 patterns:
@@ -78,19 +78,19 @@ patterns:
       confidence: high
 ```
 
-Use [streaak/keyhacks](https://github.com/streaak/keyhacks) or read the documentation of the service to find a quick way to verify the validity of an API key.
+Sử dụng [streaak/keyhacks](https://github.com/streaak/keyhacks) hoặc đọc tài liệu của dịch vụ để tìm cách nhanh chóng xác minh tính hợp lệ của một API key.
 
-- **Example**: Telegram Bot API Token
+- **Ví dụ**: Telegram Bot API Token
 
     ```ps1
     curl https://api.telegram.org/bot<TOKEN>/getMe
     ```
 
-## Reducing The Attack Surface
+## Giảm thiểu bề mặt tấn công
 
-Check the existence of a private key or AWS credentials before committing your changes in a GitHub repository.
+Kiểm tra sự tồn tại của private key hoặc AWS credential trước khi commit thay đổi của bạn vào repository GitHub.
 
-Add these lines to your `.pre-commit-config.yaml` file.
+Thêm các dòng sau vào file `.pre-commit-config.yaml` của bạn.
 
 ```yml
 -   repo: https://github.com/pre-commit/pre-commit-hooks
@@ -100,7 +100,7 @@ Add these lines to your `.pre-commit-config.yaml` file.
     -   id: detect-private-key
 ```
 
-## References
+## Tài liệu tham khảo
 
 - [Finding Hidden API Keys & How to Use Them - Sumit Jain - August 24, 2019](https://web.archive.org/web/20191012175520/https://medium.com/@sumitcfe/finding-hidden-api-keys-how-to-use-them-11b1e5d0f01d)
 - [Introducing SignSaboteur: Forge Signed Web Tokens with Ease - Zakhar Fedotkin - May 22, 2024](https://web.archive.org/web/20240522172244/https://portswigger.net/research/introducing-signsaboteur-forge-signed-web-tokens-with-ease)
