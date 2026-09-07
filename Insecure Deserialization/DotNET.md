@@ -1,11 +1,11 @@
 # .NET Deserialization
 
-> .NET serialization is the process of converting an object’s state into a format that can be easily stored or transmitted, such as XML, JSON, or binary. This serialized data can then be saved to a file, sent over a network, or stored in a database. Later, it can be deserialized to reconstruct the original object with its data intact. Serialization is widely used in .NET for tasks like caching, data transfer between applications, and session state management.
+> Serialization trong .NET là quá trình chuyển đổi trạng thái của một đối tượng thành một định dạng có thể dễ dàng lưu trữ hoặc truyền tải, chẳng hạn như XML, JSON hoặc binary. Dữ liệu đã serialize này sau đó có thể được lưu vào file, gửi qua mạng, hoặc lưu trữ trong cơ sở dữ liệu. Sau đó, nó có thể được deserialize để tái tạo lại đối tượng ban đầu cùng với dữ liệu nguyên vẹn. Serialization được sử dụng rộng rãi trong .NET cho các tác vụ như caching, truyền dữ liệu giữa các ứng dụng, và quản lý session state.
 
-## Summary
+## Tóm tắt
 
-* [Detection](#detection)
-* [Tools](#tools)
+* [Phát hiện](#detection)
+* [Công cụ](#tools)
 * [Formatters](#formatters)
     * [XmlSerializer](#xmlserializer)
     * [DataContractSerializer](#datacontractserializer)
@@ -14,21 +14,21 @@
     * [JSON.NET](#jsonnet)
     * [BinaryFormatter](#binaryformatter)
 * [POP Gadgets](#pop-gadgets)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Detection
+## Phát hiện
 
-| Data           | Description          |
+| Dữ liệu           | Mô tả          |
 | -------------- | -------------------- |
 | `AAEAAD` (Hex) | .NET BinaryFormatter |
 | `FF01` (Hex)   | .NET ViewState       |
 | `/w` (Base64)  | .NET ViewState       |
 
-Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
+Ví dụ: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
 
-## Tools
+## Công cụ
 
-* [pwntester/ysoserial.net](https://github.com/pwntester/ysoserial.net) - Deserialization payload generator for a variety of .NET formatters
+* [pwntester/ysoserial.net](https://github.com/pwntester/ysoserial.net) - Công cụ tạo payload deserialization cho nhiều loại .NET formatters khác nhau
 
     ```ps1
     cat my_long_cmd.txt | ysoserial.exe -o raw -g WindowsIdentity -f Json.Net -s
@@ -37,7 +37,7 @@ Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
     ./ysoserial.exe -f BinaryFormatter -g PSObject -o base64 -c "calc" -t
     ```
 
-* [irsdl/ysonet](https://github.com/irsdl/ysonet) - Deserialization payload generator for a variety of .NET formatters
+* [irsdl/ysonet](https://github.com/irsdl/ysonet) - Công cụ tạo payload deserialization cho nhiều loại .NET formatters khác nhau
 
     ```ps1
     cat my_long_cmd.txt | ysonet.exe -o raw -g WindowsIdentity -f Json.Net -s
@@ -49,13 +49,13 @@ Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
 ## Formatters
 
 ![NETNativeFormatters.png](https://github.com/swisskyrepo/PayloadsAllTheThings/raw/master/Insecure%20Deserialization/Images/NETNativeFormatters.png?raw=true)
-.NET Native Formatters from [pwntester/attacking-net-serialization](https://speakerdeck.com/pwntester/attacking-net-serialization?slide=15)
+Các Native Formatters của .NET từ [pwntester/attacking-net-serialization](https://speakerdeck.com/pwntester/attacking-net-serialization?slide=15)
 
 ### XmlSerializer
 
-* In C# source code, look for `XmlSerializer(typeof(<TYPE>));`.
-* The attacker must control the **type** of the XmlSerializer.
-* Payload output: **XML**
+* Trong mã nguồn C#, tìm `XmlSerializer(typeof(<TYPE>));`.
+* Kẻ tấn công phải kiểm soát được **type** của XmlSerializer.
+* Đầu ra payload: **XML**
 
 ```xml
 .\ysoserial.exe -g ObjectDataProvider -f XmlSerializer -c "calc.exe"
@@ -78,18 +78,18 @@ Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
 
 ### DataContractSerializer
 
-> The DataContractSerializer deserializes in a loosely coupled way. It never reads common language runtime (CLR) type and assembly names from the incoming data. The security model for the XmlSerializer is similar to that of the DataContractSerializer, and differs mostly in details. For example, the XmlIncludeAttribute attribute is used for type inclusion instead of the KnownTypeAttribute attribute.
+> DataContractSerializer thực hiện deserialize theo cách lỏng lẻo (loosely coupled). Nó không bao giờ đọc thông tin về type và assembly của common language runtime (CLR) từ dữ liệu đầu vào. Mô hình bảo mật của XmlSerializer tương tự như của DataContractSerializer, và chỉ khác nhau chủ yếu ở các chi tiết. Ví dụ, thuộc tính XmlIncludeAttribute được dùng để bao gồm type thay vì thuộc tính KnownTypeAttribute.
 
-* In C# source code, look for `DataContractSerializer(typeof(<TYPE>))`.
-* Payload output: **XML**
-* Data **Type** must be user-controlled to be exploitable
+* Trong mã nguồn C#, tìm `DataContractSerializer(typeof(<TYPE>))`.
+* Đầu ra payload: **XML**
+* **Type** của dữ liệu phải do người dùng kiểm soát thì mới khai thác được
 
 ### NetDataContractSerializer
 
-> It extends the `System.Runtime.Serialization.XmlObjectSerializer` class and is capable of serializing any type annotated with serializable attribute as `BinaryFormatter`.
+> Nó kế thừa class `System.Runtime.Serialization.XmlObjectSerializer` và có khả năng serialize bất kỳ type nào được đánh dấu bằng thuộc tính serializable giống như `BinaryFormatter`.
 
-* In C# source code, look for `NetDataContractSerializer().ReadObject()`.
-* Payload output: **XML**
+* Trong mã nguồn C#, tìm `NetDataContractSerializer().ReadObject()`.
+* Đầu ra payload: **XML**
 
 ```ps1
 .\ysoserial.exe -f NetDataContractSerializer -g TypeConfuseDelegate -c "calc.exe" -o base64 -t
@@ -97,7 +97,7 @@ Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
 
 ### LosFormatter
 
-* Use `BinaryFormatter` internally.
+* Sử dụng `BinaryFormatter` bên trong.
 
 ```ps1
 .\ysoserial.exe -f LosFormatter -g TypeConfuseDelegate -c "calc.exe" -o base64 -t
@@ -105,8 +105,8 @@ Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
 
 ### JSON.NET
 
-* In C# source code, look for `JsonConvert.DeserializeObject<Expected>(json, new JsonSerializerSettings`.
-* Payload output: **JSON**
+* Trong mã nguồn C#, tìm `JsonConvert.DeserializeObject<Expected>(json, new JsonSerializerSettings`.
+* Đầu ra payload: **JSON**
 
 ```ps1
 .\ysoserial.exe -f Json.Net -g ObjectDataProvider -o raw -c "calc.exe" -t
@@ -123,11 +123,11 @@ Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
 
 ### BinaryFormatter
 
-> The BinaryFormatter type is dangerous and is not recommended for data processing. Applications should stop using BinaryFormatter as soon as possible, even if they believe the data they're processing to be trustworthy. BinaryFormatter is insecure and can’t be made secure.
+> Kiểu BinaryFormatter rất nguy hiểm và không được khuyến khích sử dụng để xử lý dữ liệu. Các ứng dụng nên ngừng sử dụng BinaryFormatter càng sớm càng tốt, ngay cả khi họ tin rằng dữ liệu họ đang xử lý là đáng tin cậy. BinaryFormatter không an toàn và không thể được làm cho an toàn.
 
-* In C# source code, look for `System.Runtime.Serialization.Binary.BinaryFormatter`.
-* Exploitation requires `[Serializable]` or `ISerializable` interface.
-* Payload output: **Binary**
+* Trong mã nguồn C#, tìm `System.Runtime.Serialization.Binary.BinaryFormatter`.
+* Việc khai thác yêu cầu interface `[Serializable]` hoặc `ISerializable`.
+* Đầu ra payload: **Binary**
 
 ```ps1
 ./ysoserial.exe -f BinaryFormatter -g PSObject -o base64 -c "calc" -t
@@ -135,28 +135,28 @@ Example: `AAEAAAD/////AQAAAAAAAAAMAgAAAF9TeXN0ZW0u[...]0KPC9PYmpzPgs=`
 
 ## POP Gadgets
 
-These gadgets must have the following properties:
+Các gadget này phải có các đặc tính sau:
 
 * Serializable
-* Public/settable variables
-* Magic "functions": Get/Set, OnSerialisation, Constructors/Destructors
+* Có các biến public/settable
+* Các "hàm" magic: Get/Set, OnSerialisation, Constructors/Destructors
 
-You must carefully select your **gadgets** for a targeted **formatter**.
+Bạn phải lựa chọn cẩn thận các **gadget** phù hợp với **formatter** mục tiêu.
 
-List of popular gadgets used in common payloads.
+Danh sách các gadget phổ biến được dùng trong các payload thông dụng.
 
-* **ObjectDataProvider** from `C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\PresentationFramework.dll`
-    * Use `MethodParameters` to set arbitrary parameters
-    * Use `MethodName` to call an arbitrary function
+* **ObjectDataProvider** từ `C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\PresentationFramework.dll`
+    * Dùng `MethodParameters` để thiết lập các tham số tùy ý
+    * Dùng `MethodName` để gọi một hàm bất kỳ
 * **ExpandedWrapper**
-    * Specify the `object types` of the objects that are encapsulated
+    * Chỉ định `object types` của các đối tượng được bao bọc bên trong
 
     ```cs
     ExpandedWrapper<Process, ObjectDataProvider> myExpWrap = new ExpandedWrapper<Process, ObjectDataProvider>();
     ```
 
 * **System.Configuration.Install.AssemblyInstaller**
-    * Execute payload with Assembly.Load
+    * Thực thi payload bằng Assembly.Load
 
     ```cs
     // System.Configuration.Install.AssemblyInstaller
@@ -168,7 +168,7 @@ List of popular gadgets used in common payloads.
     }
     ```
 
-## References
+## Tài liệu tham khảo
 
 * [ARE YOU MY TYPE? Breaking .NET sandboxes through Serialization - Slides - James Forshaw - September 20, 2012](https://web.archive.org/web/20120920142257/https://media.blackhat.com/bh-us-12/Briefings/Forshaw/BH_US_12_Forshaw_Are_You_My_Type_Slides.pdf)
 * [ARE YOU MY TYPE? Breaking .NET sandboxes through Serialization - White Paper - James Forshaw - September 20, 2012](https://web.archive.org/web/20260216023308/https://media.blackhat.com/bh-us-12/Briefings/Forshaw/BH_US_12_Forshaw_Are_You_My_Type_WP.pdf)
