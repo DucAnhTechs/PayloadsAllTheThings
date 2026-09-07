@@ -1,65 +1,65 @@
 # Client Side Path Traversal
 
-> Client-Side Path Traversal (CSPT), sometimes also referred to as "On-site Request Forgery," is a vulnerability that can be exploited as a tool for CSRF or XSS attacks.  
-> It takes advantage of the client side's ability to make requests using fetch to a URL, where multiple "../" characters can be injected. After normalization, these characters redirect the request to a different URL, potentially leading to security breaches.  
-> Since every request is initiated from within the frontend of the application, the browser automatically includes cookies and other authentication mechanisms, making them available for exploitation in these attacks.
+> Client-Side Path Traversal (CSPT), đôi khi còn được gọi là "On-site Request Forgery", là một lỗ hổng có thể bị khai thác như một công cụ cho các cuộc tấn công CSRF hoặc XSS.  
+> Nó lợi dụng khả năng của phía client trong việc thực hiện các request bằng fetch tới một URL, trong đó nhiều ký tự "../" có thể được chèn vào. Sau khi được chuẩn hóa (normalization), các ký tự này sẽ chuyển hướng request đến một URL khác, có thể dẫn đến các lỗ hổng bảo mật.  
+> Vì mọi request đều được khởi tạo từ bên trong frontend của ứng dụng, trình duyệt sẽ tự động đính kèm cookie và các cơ chế xác thực khác, khiến chúng có thể bị khai thác trong các cuộc tấn công này.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
     * [CSPT to XSS](#cspt-to-xss)
     * [CSPT to CSRF](#cspt-to-xss)
-* [Labs](#labs)
-* [References](#references)
+* [Bài lab](#labs)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* [doyensec/CSPTBurpExtension](https://github.com/doyensec/CSPTBurpExtension) - CSPT is an open-source Burp Suite extension to find and exploit Client-Side Path Traversal.
+* [doyensec/CSPTBurpExtension](https://github.com/doyensec/CSPTBurpExtension) - CSPT là một extension mã nguồn mở cho Burp Suite dùng để tìm và khai thác Client-Side Path Traversal.
 
-## Methodology
+## Phương pháp
 
 ### CSPT to XSS
 
 ![cspt-query-param](https://matanber.com/images/blog/cspt-query-param.png)
 
-A post-serving page calls the fetch function, sending a request to a URL with attacker-controlled input which is not properly encoded in its path, allowing the attacker to inject `../` sequences to the path and make the request get sent to an arbitrary endpoint. This behavior is referred to as a CSPT vulnerability.
+Một trang được phục vụ sau đó gọi hàm fetch, gửi một request đến một URL với dữ liệu đầu vào do kẻ tấn công kiểm soát mà không được mã hóa đúng cách trong đường dẫn (path), cho phép kẻ tấn công chèn các chuỗi `../` vào đường dẫn và khiến request được gửi đến một endpoint tùy ý. Hành vi này được gọi là lỗ hổng CSPT.
 
-**Example**:
+**Ví dụ**:
 
-* The page `https://example.com/static/cms/news.html` takes a `newsitemid` as parameter
-* Then fetch the content of `https://example.com/newitems/<newsitemid>`
-* A text injection was also discovered in `https://example.com/pricing/default.js` via the `cb` parameter
-* Final payload is `https://example.com/static/cms/news.html?newsitemid=../pricing/default.js?cb=alert(document.domain)//`
+* Trang `https://example.com/static/cms/news.html` nhận tham số `newsitemid`
+* Sau đó fetch nội dung của `https://example.com/newitems/<newsitemid>`
+* Một lỗi chèn văn bản (text injection) cũng được phát hiện tại `https://example.com/pricing/default.js` thông qua tham số `cb`
+* Payload cuối cùng là `https://example.com/static/cms/news.html?newsitemid=../pricing/default.js?cb=alert(document.domain)//`
 
 ### CSPT to CSRF
 
-A CSPT is redirecting legitimate HTTP requests, allowing the front end to add necessary tokens for API calls, such as authentication or CSRF tokens. This capability can potentially be exploited to circumvent existing CSRF protection measures.
+CSPT sẽ chuyển hướng các HTTP request hợp lệ, cho phép frontend thêm các token cần thiết cho các lệnh gọi API, chẳng hạn như token xác thực hoặc CSRF. Khả năng này có thể bị khai thác để vượt qua các biện pháp bảo vệ CSRF hiện có.
 
 |                                             | CSRF               | CSPT2CSRF          |
 | ------------------------------------------- | -----------------  | ------------------ |
 | POST CSRF ?                                 | :white_check_mark: | :white_check_mark: |
-| Can control the body ?                      | :white_check_mark: | :x:                |
-| Can work with anti-CSRF token ?             | :x:                | :white_check_mark: |
-| Can work with Samesite=Lax ?                | :x:                | :white_check_mark: |
+| Có thể kiểm soát body không ?               | :white_check_mark: | :x:                |
+| Có thể hoạt động với anti-CSRF token không ? | :x:                | :white_check_mark: |
+| Có thể hoạt động với Samesite=Lax không ?   | :x:                | :white_check_mark: |
 | GET / PATCH / PUT / DELETE CSRF ?           | :x:                | :white_check_mark: |
-| 1-click CSRF ?                              | :x:                | :white_check_mark: |
-| Does impact depend on source and on sinks ? | :x:                | :white_check_mark: |
+| CSRF chỉ với 1 cú click ?                   | :x:                | :white_check_mark: |
+| Mức độ ảnh hưởng có phụ thuộc vào source và sink không ? | :x:                | :white_check_mark: |
 
-Real-World Scenarios:
+Các kịch bản thực tế:
 
-* 1-click CSPT2CSRF in Rocket.Chat
-* CVE-2023-45316: CSPT2CSRF with a POST sink in Mattermost : `/<team>/channels/channelname?telem_action=under_control&forceRHSOpen&telem_run_id=../../../../../../api/v4/caches/invalidate`
-* CVE-2023-6458: CSPT2CSRF with a GET sink in Mattermost
+* CSPT2CSRF chỉ với 1 cú click trong Rocket.Chat
+* CVE-2023-45316: CSPT2CSRF với sink POST trong Mattermost : `/<team>/channels/channelname?telem_action=under_control&forceRHSOpen&telem_run_id=../../../../../../api/v4/caches/invalidate`
+* CVE-2023-6458: CSPT2CSRF với sink GET trong Mattermost
 * [Client Side Path Manipulation - erasec.be](https://www.erasec.be/blog/client-side-path-manipulation/): CSPT2CSRF `https://example.com/signup/invite?email=foo%40bar.com&inviteCode=123456789/../../../cards/123e4567-e89b-42d3-a456-556642440000/cancel?a=`
-* [CVE-2023-5123 : CSPT2CSRF in Grafana’s JSON API Plugin](https://medium.com/@maxime.escourbiac/grafana-cve-2023-5123-write-up-74e1be7ef652)
+* [CVE-2023-5123 : CSPT2CSRF trong plugin JSON API của Grafana](https://medium.com/@maxime.escourbiac/grafana-cve-2023-5123-write-up-74e1be7ef652)
 
-## Labs
+## Bài lab
 
-* [doyensec/CSPTPlayground](https://github.com/doyensec/CSPTPlayground) - CSPTPlayground is an open-source playground to find and exploit Client-Side Path Traversal (CSPT).
+* [doyensec/CSPTPlayground](https://github.com/doyensec/CSPTPlayground) - CSPTPlayground là một playground mã nguồn mở để tìm và khai thác Client-Side Path Traversal (CSPT).
 * [Root Me - CSPT - The Ruler](https://www.root-me.org/en/Challenges/Web-Client/CSPT-The-Ruler)
 
-## References
+## Tài liệu tham khảo
 
 * [Exploiting Client-Side Path Traversal to Perform Cross-Site Request Forgery - Introducing CSPT2CSRF - Maxence Schmitt - July 2, 2024](https://web.archive.org/web/20260222183040/https://blog.doyensec.com/2024/07/02/cspt2csrf.html)
 * [Exploiting Client-Side Path Traversal - CSRF is dead, long live CSRF - Whitepaper - Maxence Schmitt - July 2, 2024](https://web.archive.org/web/20240702212818/https://www.doyensec.com/resources/Doyensec_CSPT2CSRF_Whitepaper.pdf)
