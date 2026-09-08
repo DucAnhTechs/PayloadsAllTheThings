@@ -1,40 +1,41 @@
 # SAML Injection
 
-> SAML (Security Assertion Markup Language) is an open standard for exchanging authentication and authorization data between parties, in particular, between an identity provider and a service provider. While SAML is widely used to facilitate single sign-on (SSO) and other federated authentication scenarios, improper implementation or misconfiguration can expose systems to various vulnerabilities.
+> SAML (Security Assertion Markup Language) là một tiêu chuẩn mở được sử dụng để trao đổi dữ liệu xác thực và phân quyền giữa các bên, đặc biệt là giữa Identity Provider và Service Provider. Mặc dù SAML được sử dụng rộng rãi để hỗ trợ Single Sign-On (SSO) và các kịch bản xác thực liên kết khác, việc triển khai không đúng hoặc cấu hình sai có thể khiến hệ thống gặp nhiều loại lỗ hổng khác nhau.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [Invalid Signature](#invalid-signature)
-    * [Signature Stripping](#signature-stripping)
-    * [XML Signature Wrapping Attacks](#xml-signature-wrapping-attacks)
-    * [XML Comment Handling](#xml-comment-handling)
-    * [XML External Entity](#xml-external-entity)
-    * [Extensible Stylesheet Language Transformation](#extensible-stylesheet-language-transformation)
-* [References](#references)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
 
-## Tools
+  * [Invalid Signature](#invalid-signature)
+  * [Signature Stripping](#signature-stripping)
+  * [XML Signature Wrapping Attacks](#xml-signature-wrapping-attacks)
+  * [XML Comment Handling](#xml-comment-handling)
+  * [XML External Entity](#xml-external-entity)
+  * [Extensible Stylesheet Language Transformation](#extensible-stylesheet-language-transformation)
+* [Tài liệu tham khảo](#references)
 
-* [CompassSecurity/SAMLRaider](https://github.com/SAMLRaider/SAMLRaider) - SAML2 Burp Extension.
-* [d0ge/XSW](https://github.com/d0ge/XSW) - XML Signature Wrapping Burp Suite Extensions.
-* [ZAP Addon/SAML Support](https://www.zaproxy.org/docs/desktop/addons/saml-support/) - Allows to detect, show, edit, and fuzz SAML requests.
+## Công cụ
 
-## Methodology
+* [CompassSecurity/SAMLRaider](https://github.com/SAMLRaider/SAMLRaider) - Extension SAML2 cho Burp.
+* https://github.com/d0ge/XSW - Extension XML Signature Wrapping cho Burp Suite.
+* [ZAP Addon/SAML Support](https://www.zaproxy.org/docs/desktop/addons/saml-support/) - Cho phép phát hiện, hiển thị, chỉnh sửa và fuzz SAML request.
 
-A SAML Response should contain the `<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"`.
+## Phương pháp
+
+Một SAML Response phải chứa `<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"`.
 
 ### Invalid Signature
 
-Signatures which are not signed by a real CA are prone to cloning. Ensure the signature is signed by a real CA. If the certificate is self-signed, you may be able to clone the certificate or create your own self-signed certificate to replace it.
+Các signature không được ký bởi một CA hợp lệ có nguy cơ bị clone. Hãy đảm bảo signature được ký bởi một CA hợp lệ. Nếu certificate là self-signed, bạn có thể clone certificate hoặc tạo certificate self-signed của riêng mình để thay thế nó.
 
 ### Signature Stripping
 
-> [...]accepting unsigned SAML assertions is accepting a username without checking the password - @ilektrojohn
+> [...]chấp nhận các SAML assertion không có signature cũng giống như chấp nhận username mà không kiểm tra password - @ilektrojohn
 
-The goal is to forge a well formed SAML Assertion without signing it. For some default configurations if the signature section is omitted from a SAML response, then no signature verification is performed.
+Mục tiêu là tạo một SAML Assertion hợp lệ về mặt cấu trúc nhưng không ký nó. Với một số cấu hình mặc định, nếu phần signature bị loại bỏ khỏi SAML response thì quá trình xác minh signature sẽ không được thực hiện.
 
-Example of SAML assertion where `NameID=admin` without signature.
+Ví dụ về SAML assertion trong đó `NameID=admin` nhưng không có signature.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -67,22 +68,22 @@ Example of SAML assertion where `NameID=admin` without signature.
 
 ### XML Signature Wrapping Attacks
 
-XML Signature Wrapping (XSW) attack, some implementations check for a valid signature and match it to a valid assertion, but do not check for multiple assertions, multiple signatures, or behave differently depending on the order of assertions.
+Tấn công XML Signature Wrapping (XSW) xảy ra khi một số implementation kiểm tra signature hợp lệ và liên kết nó với một assertion hợp lệ, nhưng không kiểm tra sự tồn tại của nhiều assertion, nhiều signature hoặc xử lý khác nhau tùy thuộc vào thứ tự của các assertion.
 
-* **XSW1**: Applies to SAML Response messages. Add a cloned unsigned copy of the Response after the existing signature.
-* **XSW2**: Applies to SAML Response messages. Add a cloned unsigned copy of the Response before the existing signature.
-* **XSW3**: Applies to SAML Assertion messages. Add a cloned unsigned copy of the Assertion before the existing Assertion.
-* **XSW4**: Applies to SAML Assertion messages. Add a cloned unsigned copy of the Assertion within the existing Assertion.
-* **XSW5**: Applies to SAML Assertion messages. Change a value in the signed copy of the Assertion and adds a copy of the original Assertion with the signature removed at the end of the SAML message.
-* **XSW6**: Applies to SAML Assertion messages. Change a value in the signed copy of the Assertion and adds a copy of the original Assertion with the signature removed after the original signature.
-* **XSW7**: Applies to SAML Assertion messages. Add an “Extensions” block with a cloned unsigned assertion.
-* **XSW8**: Applies to SAML Assertion messages. Add an “Object” block containing a copy of the original assertion with the signature removed.
+* **XSW1**: Áp dụng cho SAML Response message. Thêm một bản sao của Response không có signature sau signature hiện tại.
+* **XSW2**: Áp dụng cho SAML Response message. Thêm một bản sao của Response không có signature trước signature hiện tại.
+* **XSW3**: Áp dụng cho SAML Assertion message. Thêm một bản sao của Assertion không có signature trước Assertion hiện tại.
+* **XSW4**: Áp dụng cho SAML Assertion message. Thêm một bản sao của Assertion không có signature bên trong Assertion hiện tại.
+* **XSW5**: Áp dụng cho SAML Assertion message. Thay đổi một giá trị trong bản sao Assertion đã được ký và thêm một bản sao của Assertion gốc đã loại bỏ signature ở cuối SAML message.
+* **XSW6**: Áp dụng cho SAML Assertion message. Thay đổi một giá trị trong bản sao Assertion đã được ký và thêm một bản sao của Assertion gốc đã loại bỏ signature sau signature gốc.
+* **XSW7**: Áp dụng cho SAML Assertion message. Thêm một block “Extensions” chứa một assertion không có signature được clone.
+* **XSW8**: Áp dụng cho SAML Assertion message. Thêm một block “Object” chứa bản sao của assertion gốc đã loại bỏ signature.
 
-In the following example, these terms are used.
+Trong ví dụ dưới đây, các thuật ngữ này được sử dụng.
 
 * **FA**: Forged Assertion
 * **LA**: Legitimate Assertion
-* **LAS**: Signature of the Legitimate Assertion
+* **LAS**: Signature của Legitimate Assertion
 
 ```xml
 <SAMLResponse>
@@ -99,11 +100,11 @@ In the following example, these terms are used.
 </SAMLResponse>
 ```
 
-In the Github Enterprise vulnerability, this request would verify and create a sessions for `Attacker` instead of `Legitimate User`, even if `FA` is not signed.
+Trong lỗ hổng của Github Enterprise, request này sẽ được xác minh và tạo session cho `Attacker` thay vì `Legitimate User`, ngay cả khi `FA` không được ký.
 
 ### XML Comment Handling
 
-A threat actor who already has authenticated access into a SSO system can authenticate as another user without that individual’s SSO password. This [vulnerability](https://www.bleepstatic.com/images/news/u/986406/attacks/Vulnerabilities/SAML-flaw.png) has multiple CVE in the following libraries and products.
+Một threat actor đã có quyền authenticated access vào một hệ thống SSO có thể xác thực với tư cách một user khác mà không cần password SSO của user đó. [Lỗ hổng](https://www.bleepstatic.com/images/news/u/986406/attacks/Vulnerabilities/SAML-flaw.png) này xuất hiện với nhiều CVE trong các library và product sau.
 
 * OneLogin - python-saml - CVE-2017-11427
 * OneLogin - ruby-saml - CVE-2017-11428
@@ -112,7 +113,7 @@ A threat actor who already has authenticated access into a SSO system can authen
 * Shibboleth - CVE-2018-0489
 * Duo Network Gateway - CVE-2018-7340
 
-Researchers have noticed that if an attacker inserts a comment inside the username field in such a way that it breaks the username, the attacker might gain access to a legitimate user's account.
+Các nhà nghiên cứu nhận thấy rằng nếu attacker chèn một comment vào bên trong trường username theo cách làm phá vỡ username, attacker có thể giành quyền truy cập vào tài khoản của một user hợp lệ.
 
 ```xml
 <SAMLResponse>
@@ -122,16 +123,16 @@ Researchers have noticed that if an attacker inserts a comment inside the userna
             <NameID>user@user.com<!--XMLCOMMENT-->.evil.com</NameID>
 ```
 
-Where `user@user.com` is the first part of the username, and `.evil.com` is the second.
+Trong đó `user@user.com` là phần đầu tiên của username và `.evil.com` là phần thứ hai.
 
 ### XML External Entity
 
-An alternative exploitation would use `XML entities` to bypass the signature verification, since the content will not change, except during XML parsing.
+Một phương pháp khai thác khác là sử dụng `XML entities` để bypass quá trình xác minh signature, vì nội dung sẽ không thay đổi, ngoại trừ trong quá trình XML parsing.
 
-In the following example:
+Trong ví dụ dưới đây:
 
-* `&s;` will resolve to the string `"s"`
-* `&f1;` will resolve to the string `"f1"`
+* `&s;` sẽ được resolve thành chuỗi `"s"`
+* `&f1;` sẽ được resolve thành chuỗi `"f1"`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -156,14 +157,14 @@ In the following example:
 </saml2p:Response>
 ```
 
-The SAML response is accepted by the service provider. Due to the vulnerability, the service provider application reports "taf" as the value of the "uid" attribute.
+SAML response được Service Provider chấp nhận. Do lỗ hổng, ứng dụng Service Provider báo cáo `"taf"` là giá trị của thuộc tính `"uid"`.
 
 ### Extensible Stylesheet Language Transformation
 
-An XSLT can be carried out by using the `transform` element.
+Một XSLT có thể được thực hiện bằng cách sử dụng phần tử `transform`.
 
 ![http://sso-attacks.org/images/4/49/XSLT1.jpg](http://sso-attacks.org/images/4/49/XSLT1.jpg)
-Picture from [http://sso-attacks.org/XSLT_Attack](http://sso-attacks.org/XSLT_Attack)
+Hình ảnh từ http://sso-attacks.org/XSLT_Attack
 
 ```xml
 <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
@@ -185,7 +186,7 @@ Picture from [http://sso-attacks.org/XSLT_Attack](http://sso-attacks.org/XSLT_At
 </ds:Signature>
 ```
 
-## References
+## Tài liệu tham khảo
 
 * [Attacking SSO: Common SAML Vulnerabilities and Ways to Find Them - Jem Jensen - March 7, 2017](https://web.archive.org/web/20171113204302/https://blog.netspi.com/attacking-sso-common-saml-vulnerabilities-ways-find/)
 * [How to Hunt Bugs in SAML; a Methodology - Part I - Ben Risher (@epi052) - March 7, 2019](https://web.archive.org/web/20260119151024/https://epi052.gitlab.io/notes-to-self/blog/2019-03-07-how-to-test-saml-a-methodology/)
