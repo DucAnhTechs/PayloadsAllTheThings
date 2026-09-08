@@ -1,61 +1,63 @@
 # Regular Expression
 
-> Regular Expression Denial of Service (ReDoS) is a type of attack that exploits the fact that certain regular expressions can take an extremely long time to process, causing applications or services to become unresponsive or crash.
+> Regular Expression Denial of Service (ReDoS) là một dạng tấn công khai thác thực tế rằng một số regular expression có thể mất thời gian cực kỳ lâu để xử lý, khiến ứng dụng hoặc dịch vụ không phản hồi hoặc bị crash.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-    * [Evil Regex](#evil-regex)
-    * [Backtrack Limit](#backtrack-limit)
-* [References](#references)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
 
-## Tools
+  * [Evil Regex](#evil-regex)
+  * [Giới hạn Backtrack](#backtrack-limit)
+* [Tài liệu tham khảo](#references)
 
-* [tjenkinson/redos-detector](https://github.com/tjenkinson/redos-detector) - A CLI and library which tests with certainty if a regex pattern is safe from ReDoS attacks. Supported in the browser, Node and Deno.
-* [doyensec/regexploit](https://github.com/doyensec/regexploit) - Find regular expressions which are vulnerable to ReDoS (Regular Expression Denial of Service)
-* [devina.io/redos-checker](https://devina.io/redos-checker) - Examine regular expressions for potential Denial of Service vulnerabilities
+## Công cụ
 
-## Methodology
+* https://github.com/tjenkinson/redos-detector - CLI và thư viện kiểm tra với độ chắc chắn liệu một regex pattern có an toàn trước các cuộc tấn công ReDoS hay không. Được hỗ trợ trên trình duyệt, Node và Deno.
+* https://github.com/doyensec/regexploit - Tìm các regular expression có khả năng tồn tại lỗ hổng ReDoS (Regular Expression Denial of Service).
+* [devina.io/redos-checker](https://devina.io/redos-checker) - Kiểm tra các regular expression để tìm những lỗ hổng Denial of Service tiềm ẩn.
+
+## Phương pháp
 
 ### Evil Regex
 
-Evil Regex contains:
+Evil Regex chứa:
 
-* Grouping with repetition
-* Inside the repeated group:
-    * Repetition
-    * Alternation with overlapping
+* Grouping kết hợp với repetition
+* Bên trong group được lặp lại:
 
-**Examples**:
+  * Repetition
+  * Alternation có sự chồng lấn
+
+**Ví dụ**:
 
 * `(a+)+`
 * `([a-zA-Z]+)*`
 * `(a|aa)+`
 * `(a|a?)+`
-* `(.*a){x}` for x \> 10
+* `(.*a){x}` với x > 10
 
-These regular expressions can be exploited with `aaaaaaaaaaaaaaaaaaaaaaaa!` (20 'a's followed by a '!').
+Các regular expression này có thể bị khai thác bằng `aaaaaaaaaaaaaaaaaaaaaaaa!` (20 ký tự 'a' theo sau bởi một ký tự '!').
 
 ```ps1
 aaaaaaaaaaaaaaaaaaaa! 
 ```
 
-For this input, the regex engine will try all possible ways to group the `a` characters before realizing that the match ultimately fails because of the `!`. This results in an explosion of backtracking attempts.
+Với input này, regex engine sẽ thử tất cả các cách có thể để nhóm các ký tự `a` trước khi nhận ra rằng việc match cuối cùng thất bại do ký tự `!`. Điều này dẫn đến sự bùng nổ số lượng lần thử backtracking.
 
-### Backtrack Limit
+### Giới hạn Backtrack
 
-Backtracking in regular expressions occurs when the regex engine tries to match a pattern and encounters a mismatch. The engine then backtracks to the previous matching position and tries an alternative path to find a match. This process can be repeated many times, especially with complex patterns and large input strings.  
+Backtracking trong regular expression xảy ra khi regex engine cố gắng match một pattern và gặp phải mismatch. Sau đó, engine sẽ quay ngược về vị trí match trước đó và thử một nhánh thay thế để tìm cách match. Quá trình này có thể được lặp lại rất nhiều lần, đặc biệt với các pattern phức tạp và chuỗi input lớn.
 
-**PHP PCRE configuration options**:
+**Các tùy chọn cấu hình PHP PCRE**:
 
-| Name                 | Default  | Note                     |
-| -------------------- | -------- | ------------------------ |
-| pcre.backtrack_limit |  1000000 | 100000 for `PHP < 5.3.7` |
-| pcre.recursion_limit |  100000  | /                        |
-| pcre.jit             | 1        | /                        |
+| Name                 | Default | Note                     |
+| -------------------- | ------- | ------------------------ |
+| pcre.backtrack_limit | 1000000 | 100000 for `PHP < 5.3.7` |
+| pcre.recursion_limit | 100000  | /                        |
+| pcre.jit             | 1       | /                        |
 
-Sometimes it is possible to force the regex to exceed more than 100 000 recursions which will cause a ReDOS and make `preg_match` returning false:
+Đôi khi có thể buộc regex vượt quá 100 000 lần recursion, dẫn đến ReDOS và khiến `preg_match` trả về `false`:
 
 ```php
 $pattern = '/(a+)+$/';
@@ -68,9 +70,9 @@ if (preg_match($pattern, $subject)) {
 }
 ```
 
-**Real-Word case: Adminer SQLite RCE**:
+**Trường hợp thực tế: Adminer SQLite RCE**:
 
-Adminer used a regular expression to prevent SQLite queries beginning with ATTACH:
+Adminer sử dụng regular expression để ngăn các SQLite query bắt đầu bằng ATTACH:
 
 ```php
 $pattern = "~^(?:\\s|/\\*[\s\S]*?\\*/|(?:#|--)[^\n]*\n?|--\r?\n)*+ATTACH\\b~i";
@@ -79,7 +81,7 @@ if(preg_match($pattern, $query, $match)){
 }
 ```
 
-The check treated both `0` (no match) and `false` (regular expression evaluation failure) as an allowed query. An attacker could prefix an `ATTACH` query with hundreds of thousands of empty SQL comments:
+Việc kiểm tra xử lý cả `0` (không match) và `false` (đánh giá regular expression thất bại) như một query được phép. Kẻ tấn công có thể thêm hàng trăm nghìn SQL comment rỗng vào trước một query `ATTACH`:
 
 ```php
 <?php
@@ -92,9 +94,9 @@ SQL;
 echo str_repeat("--\n", 350000) . $payload;
 ```
 
-Processing the comments exhausted PHP PCRE's backtracking limit. `preg_match()` returned `false`, which the application confused with a clean non-match. The blocked `ATTACH` query was consequently executed.
+Việc xử lý các comment đã làm cạn giới hạn backtracking của PHP PCRE. `preg_match()` trả về `false`, nhưng ứng dụng lại nhầm giá trị này với trạng thái không match hợp lệ. Do đó, query `ATTACH` vốn bị chặn cuối cùng vẫn được thực thi.
 
-## References
+## Tài liệu tham khảo
 
 * [Intigriti Challenge 1223 - Hackbook Of A Hacker - December 21, 2023](https://web.archive.org/web/20260210185049/https://simones-organization-4.gitbook.io/hackbook-of-a-hacker/ctf-writeups/intigriti-challenges/1223)
 * [MyBB Admin Panel RCE CVE-2023-41362 - SorceryIE - September 11, 2023](https://web.archive.org/web/20251115110845/https://blog.sorcery.ie/posts/mybb_acp_rce/)
