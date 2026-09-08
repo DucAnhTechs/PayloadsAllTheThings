@@ -1,41 +1,42 @@
 # Insecure Management Interface
 
-> Insecure Management Interface refers to vulnerabilities in administrative interfaces used for managing servers, applications, databases, or network devices. These interfaces often control sensitive settings and can have powerful access to system configurations, making them prime targets for attackers.
-> Insecure Management Interfaces may lack proper security measures, such as strong authentication, encryption, or IP restrictions, allowing unauthorized users to potentially gain control over critical systems. Common issues include using default credentials, unencrypted communications, or exposing the interface to the public internet.
+> Insecure Management Interface đề cập đến các lỗ hổng trong các giao diện quản trị được sử dụng để quản lý server, application, database hoặc network device. Các giao diện này thường kiểm soát những thiết lập nhạy cảm và có quyền truy cập mạnh vào cấu hình hệ thống, khiến chúng trở thành mục tiêu hấp dẫn đối với attacker.
+> Insecure Management Interface có thể thiếu các biện pháp bảo mật phù hợp, chẳng hạn như authentication mạnh, encryption hoặc giới hạn IP, cho phép user trái phép có khả năng giành quyền kiểm soát các hệ thống quan trọng. Các vấn đề phổ biến bao gồm sử dụng default credentials, giao tiếp không được mã hóa hoặc expose giao diện ra public internet.
 
-## Summary
+## Tóm tắt
 
-* [Methodology](#methodology)
-* [References](#references)
+* [Phương pháp](#methodology)
+* [Tài liệu tham khảo](#references)
 
-## Methodology
+## Phương pháp
 
-Insecure Management Interface vulnerabilities arise when administrative interfaces of systems or applications are improperly secured, allowing unauthorized or malicious users to gain access, modify configurations, or exploit sensitive operations. These interfaces are often critical for maintaining, monitoring, and controlling systems and must be secured rigorously.
+Các lỗ hổng Insecure Management Interface phát sinh khi các administrative interface của hệ thống hoặc application được bảo vệ không đúng cách, cho phép user trái phép hoặc malicious user truy cập, thay đổi cấu hình hoặc khai thác các hoạt động nhạy cảm. Những interface này thường đóng vai trò quan trọng trong việc duy trì, giám sát và kiểm soát hệ thống, do đó cần được bảo vệ nghiêm ngặt.
 
-* Lack of Authentication or Weak Authentication:
-    * Interfaces accessible without requiring credentials.
-    * Use of default or weak credentials (e.g., admin/admin).
+* Thiếu Authentication hoặc Authentication yếu:
 
-    ```ps1
-    nuclei -t http/default-logins -u https://example.com
-    ```
+  * Các interface có thể truy cập mà không yêu cầu credentials.
+  * Sử dụng default credentials hoặc credentials yếu (ví dụ: admin/admin).
 
-* Exposure to the Public Internet
+  ```ps1
+  nuclei -t http/default-logins -u https://example.com
+  ```
 
-    ```ps1
-    nuclei -t http/exposed-panels -u https://example.com
-    nuclei -t http/exposures -u https://example.com
-    ```
+* Expose ra Public Internet
 
-* Sensitive data transmitted over plain HTTP or other unencrypted protocols
+  ```ps1
+  nuclei -t http/exposed-panels -u https://example.com
+  nuclei -t http/exposures -u https://example.com
+  ```
 
-**Examples**:
+* Dữ liệu nhạy cảm được truyền qua HTTP dạng plain-text hoặc các protocol khác không được mã hóa.
 
-* **Network Devices**: Routers, switches, or firewalls with default credentials or unpatched vulnerabilities.
-* **Web Applications**: Admin panels without authentication or exposed via predictable URLs (e.g., /admin).
-* **Cloud Services**: API endpoints without proper authentication or overly permissive roles.
+**Ví dụ**:
 
-## References
+* **Network Devices**: Router, switch hoặc firewall sử dụng default credentials hoặc có các lỗ hổng chưa được vá.
+* **Web Applications**: Admin panel không yêu cầu authentication hoặc bị expose thông qua các URL có thể dự đoán (ví dụ: `/admin`).
+* **Cloud Services**: API endpoint không có authentication phù hợp hoặc sử dụng các role có quyền quá mức.
+
+## Tài liệu tham khảo
 
 * [CAPEC-121: Exploit Non-Production Interfaces - CAPEC - July 30, 2020](https://web.archive.org/web/20260116113320/https://capec.mitre.org/data/definitions/121.html)
 * [Exploiting Spring Boot Actuators - Michael Stepankin - February 25, 2019](https://web.archive.org/web/20250116045001/https://www.veracode.com/blog/research/exploiting-spring-boot-actuators)
