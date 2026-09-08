@@ -1,88 +1,91 @@
 # MFA Bypasses
 
-> Multi-Factor Authentication (MFA) is a security measure that requires users to provide two or more verification factors to gain access to a system, application, or network. It combines something the user knows (like a password), something they have (like a phone or security token), and/or something they are (biometric verification). This layered approach enhances security by making unauthorized access more difficult, even if a password is compromised.
-> MFA Bypasses are techniques attackers use to circumvent MFA protections. These methods can include exploiting weaknesses in MFA implementations, intercepting authentication tokens, leveraging social engineering to manipulate users or support staff, or exploiting session-based vulnerabilities.
+> Xác thực đa yếu tố (MFA) là một biện pháp bảo mật yêu cầu người dùng cung cấp từ hai yếu tố xác minh trở lên để truy cập vào một hệ thống, ứng dụng hoặc mạng. Nó kết hợp thứ người dùng biết (chẳng hạn như mật khẩu), thứ người dùng có (chẳng hạn như điện thoại hoặc security token), và/hoặc thứ thuộc về người dùng (xác minh sinh trắc học). Phương pháp nhiều lớp này tăng cường bảo mật bằng cách khiến việc truy cập trái phép trở nên khó khăn hơn, ngay cả khi mật khẩu đã bị lộ.
+> MFA Bypasses là các kỹ thuật mà attacker sử dụng để vượt qua cơ chế bảo vệ MFA. Những phương pháp này có thể bao gồm khai thác điểm yếu trong quá trình triển khai MFA, chặn các authentication token, sử dụng social engineering để thao túng người dùng hoặc nhân viên hỗ trợ, hoặc khai thác các lỗ hổng liên quan đến session.
 
-## Summary
+## Tóm tắt
 
-* [Response Manipulation](#response-manipulation)
-* [Status Code Manipulation](#status-code-manipulation)
-* [2FA Code Leakage in Response](#2fa-code-leakage-in-response)
-* [JS File Analysis](#js-file-analysis)
-* [2FA Code Reusability](#2fa-code-reusability)
-* [Lack of Brute-Force Protection](#lack-of-brute-force-protection)
-* [Missing 2FA Code Integrity Validation](#missing-2fa-code-integrity-validation)
-* [CSRF on 2FA Disabling](#csrf-on-2fa-disabling)
-* [Password Reset Disable 2FA](#password-reset-disable-2fa)
-* [Backup Code Abuse](#backup-code-abuse)
-* [Clickjacking on 2FA Disabling Page](#clickjacking-on-2fa-disabling-page)
-* [Enabling 2FA doesn't expire Previously active Sessions](#enabling-2fa-doesnt-expire-previously-active-sessions)
-* [Bypass 2FA by Force Browsing](#bypass-2fa-by-force-browsing)
-* [Bypass 2FA with null or 000000](#bypass-2fa-with-null-or-000000)
-* [Bypass 2FA with array](#bypass-2fa-with-array)
+* [Thao túng Response](#response-manipulation)
+* [Thao túng Status Code](#status-code-manipulation)
+* [Rò rỉ mã 2FA trong Response](#2fa-code-leakage-in-response)
+* [Phân tích file JS](#js-file-analysis)
+* [Khả năng tái sử dụng mã 2FA](#2fa-code-reusability)
+* [Thiếu cơ chế bảo vệ Brute-Force](#lack-of-brute-force-protection)
+* [Thiếu kiểm tra tính toàn vẹn của mã 2FA](#missing-2fa-code-integrity-validation)
+* [CSRF khi vô hiệu hóa 2FA](#csrf-on-2fa-disabling)
+* [Password Reset vô hiệu hóa 2FA](#password-reset-disable-2fa)
+* [Lạm dụng Backup Code](#backup-code-abuse)
+* [Clickjacking trên trang vô hiệu hóa 2FA](#clickjacking-on-2fa-disabling-page)
+* [Bật 2FA không làm hết hạn các Session đang hoạt động trước đó](#enabling-2fa-doesnt-expire-previously-active-sessions)
+* [Bypass 2FA bằng Force Browsing](#bypass-2fa-by-force-browsing)
+* [Bypass 2FA bằng null hoặc 000000](#bypass-2fa-with-null-or-000000)
+* [Bypass 2FA bằng array](#bypass-2fa-with-array)
 
-## 2FA Bypasses
+## Bypass 2FA
 
-### Response Manipulation
+### Thao túng Response
 
-If response is `"success":false`
-Change it to `"success":true`
+Nếu response là `"success":false`
 
-### Status Code Manipulation
+Thay đổi thành `"success":true`
 
-If Status Code is **4xx**
-Try changing it to **200 OK** and see if it bypass restrictions
+### Thao túng Status Code
 
-### 2FA Code Leakage in Response
+Nếu Status Code là **4xx**
 
-Check the response of the 2FA Code Triggering Request for leaked code.
+Thử thay đổi thành **200 OK** và kiểm tra xem có thể vượt qua restriction hay không.
 
-### JS File Analysis
+### Rò rỉ mã 2FA trong Response
 
-Rare but some JS Files may contain info about the 2FA Code, worth giving a shot
+Kiểm tra response của request kích hoạt mã 2FA để tìm mã bị rò rỉ.
 
-### 2FA Code Reusability
+### Phân tích file JS
 
-Same code can be reused
+Trường hợp này hiếm gặp, nhưng một số file JS có thể chứa thông tin về mã 2FA, vì vậy đáng để kiểm tra.
 
-### Lack of Brute-Force Protection
+### Khả năng tái sử dụng mã 2FA
 
-Possible to brute-force any length 2FA Code
+Cùng một mã có thể được sử dụng lại.
 
-### Missing 2FA Code Integrity Validation
+### Thiếu cơ chế bảo vệ Brute-Force
 
-Code for any user account can be used to bypass the 2FA
+Có thể brute-force mã 2FA với bất kỳ độ dài nào.
 
-### CSRF on 2FA Disabling
+### Thiếu kiểm tra tính toàn vẹn của mã 2FA
 
-No CSRF Protection on disabling 2FA, also there is no auth confirmation
+Mã của bất kỳ user account nào cũng có thể được sử dụng để bypass 2FA.
 
-### Password Reset Disable 2FA
+### CSRF khi vô hiệu hóa 2FA
 
-2FA gets disabled on password change/email change
+Không có CSRF Protection khi vô hiệu hóa 2FA, đồng thời cũng không có bước xác nhận authentication.
 
-### Backup Code Abuse
+### Password Reset vô hiệu hóa 2FA
 
-Bypassing 2FA by abusing the Backup code feature
-Use the above-mentioned techniques to bypass the Backup Code to remove/reset 2FA restrictions
+2FA bị vô hiệu hóa khi thay đổi password/email.
 
-### Clickjacking on 2FA Disabling Page
+### Lạm dụng Backup Code
 
-Iframing the 2FA Disabling page and social engineering victim to disable the 2FA
+Bypass 2FA bằng cách lạm dụng tính năng Backup Code.
 
-### Enabling 2FA doesn't expire Previously active Sessions
+Sử dụng các kỹ thuật đã đề cập ở trên để bypass Backup Code nhằm xóa/reset các restriction của 2FA.
 
-If the session is already hijacked and there is a session timeout vulnerability
+### Clickjacking trên trang vô hiệu hóa 2FA
 
-### Bypass 2FA by Force Browsing
+Nhúng trang vô hiệu hóa 2FA bằng iframe và sử dụng social engineering để khiến nạn nhân vô hiệu hóa 2FA.
 
-If the application redirects to `/my-account` url upon login while 2FA is disabled, try replacing `/2fa/verify` with `/my-account` while 2FA is enabled to bypass verification.
+### Bật 2FA không làm hết hạn các Session đang hoạt động trước đó
 
-### Bypass 2FA with null or 000000
+Nếu session đã bị hijack và tồn tại session timeout vulnerability.
 
-Enter the code **000000** or **null** to bypass 2FA protection.
+### Bypass 2FA bằng Force Browsing
 
-### Bypass 2FA with array
+Nếu ứng dụng redirect đến URL `/my-account` sau khi đăng nhập khi 2FA bị vô hiệu hóa, hãy thử thay `/2fa/verify` bằng `/my-account` khi 2FA được bật để bypass bước xác minh.
+
+### Bypass 2FA bằng null hoặc 000000
+
+Nhập mã **000000** hoặc **null** để bypass cơ chế bảo vệ 2FA.
+
+### Bypass 2FA bằng array
 
 ```json
 {
