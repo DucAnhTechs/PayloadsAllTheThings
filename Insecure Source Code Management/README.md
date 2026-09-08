@@ -1,36 +1,38 @@
 # Insecure Source Code Management
 
-> Insecure Source Code Management (SCM) can lead to several critical vulnerabilities in web applications and services. Developers often rely on SCM systems like Git and Subversion (SVN) to manage their source code versions. However, poor security practices, such as leaving .git and .svn folders in production environments exposed to the internet, can pose significant risks.
+> Source Code Management (SCM) không an toàn có thể dẫn đến nhiều lỗ hổng nghiêm trọng trong các ứng dụng và dịch vụ web. Developer thường sử dụng các hệ thống SCM như Git và Subversion (SVN) để quản lý các phiên bản source code. Tuy nhiên, các thực hành bảo mật kém, chẳng hạn như để lộ các thư mục `.git` và `.svn` trong môi trường production và cho phép chúng có thể được truy cập từ Internet, có thể tạo ra những rủi ro đáng kể.
 
-## Summary
+## Tóm tắt
 
-* [Methodology](#methodology)
-    * [Bazaar](./Bazaar.md)
-    * [Git](./Git.md)
-    * [Mercurial](./Mercurial.md)
-    * [Subversion](./Subversion.md)
+* [Phương pháp](#methodology)
+
+  * [Bazaar](./Bazaar.md)
+  * [Git](./Git.md)
+  * [Mercurial](./Mercurial.md)
+  * [Subversion](./Subversion.md)
 * [Labs](#labs)
-* [References](#references)
+* [Tài liệu tham khảo](#references)
 
-## Methodology
+## Phương pháp
 
-Exposing the version control system folders on a web server can lead to severe security risks, including:
+Việc để lộ các thư mục của hệ thống quản lý phiên bản trên web server có thể dẫn đến những rủi ro bảo mật nghiêm trọng, bao gồm:
 
-* **Source Code Leaks** : Attackers can download the entire source code repository, gaining access to the application's logic.
-* **Sensitive Information Exposure** : Embedded secrets, configuration files, and credentials might be present within the codebase.
-* **Commit History Exposure** : Attackers can view past changes, revealing sensitive information that might have been previously exposed and later mitigated.
+* **Rò rỉ Source Code** : Attacker có thể tải xuống toàn bộ source code của repository, từ đó có được quyền truy cập vào logic của ứng dụng.
+* **Lộ thông tin nhạy cảm** : Secrets được nhúng trong code, các file cấu hình và credentials có thể tồn tại bên trong codebase.
+* **Lộ lịch sử Commit** : Attacker có thể xem các thay đổi trong quá khứ, từ đó phát hiện những thông tin nhạy cảm đã từng bị lộ và sau đó được khắc phục.
 
-The first step is to gather information about the target application. This can be done using various web reconnaissance tools and techniques.
+Bước đầu tiên là thu thập thông tin về ứng dụng mục tiêu. Việc này có thể được thực hiện bằng nhiều công cụ và kỹ thuật web reconnaissance khác nhau.
 
-* **Manual Inspection** : Check URLs manually by navigating to common SCM paths.
-    * Git: `http://target.com/.git/`
-    * SVN: `http://target.com/.svn/`
+* **Kiểm tra thủ công** : Kiểm tra URL thủ công bằng cách truy cập các đường dẫn SCM phổ biến.
 
-* **Automated Tools** : Refer to the page related to the specific technology.
+  * Git: `http://target.com/.git/`
+  * SVN: `http://target.com/.svn/`
 
-Once a potential SCM folder is identified, check the HTTP response codes and contents. You might need to bypass `.htaccess` or Reverse Proxy rules.
+* **Công cụ tự động** : Tham khảo trang tương ứng với công nghệ cụ thể.
 
-The NGINX rule below returns a `403 (Forbidden)` response instead of `404 (Not Found)` when hitting the `/.git` endpoint.
+Sau khi xác định được một thư mục SCM tiềm năng, hãy kiểm tra HTTP response code và nội dung trả về. Có thể cần bypass các rule của `.htaccess` hoặc Reverse Proxy.
+
+Rule NGINX bên dưới trả về response `403 (Forbidden)` thay vì `404 (Not Found)` khi truy cập endpoint `/.git`.
 
 ```ps1
 location /.git {
@@ -38,12 +40,12 @@ location /.git {
 }
 ```
 
-For example in Git, the exploitation technique doesn't require to list the content of the `.git` folder (`http://target.com/.git/`), the data extraction can still be conducted when files can be read.
+Ví dụ với Git, kỹ thuật khai thác không yêu cầu phải liệt kê được nội dung của thư mục `.git` (`http://target.com/.git/`); việc trích xuất dữ liệu vẫn có thể được thực hiện nếu các file có thể được đọc.
 
 ## Labs
 
-* [Root Me - Insecure Code Management](https://www.root-me.org/fr/Challenges/Web-Serveur/Insecure-Code-Management)
+* [Root Me - Quản lý Code Không An Toàn](https://www.root-me.org/fr/Challenges/Web-Serveur/Insecure-Code-Management)
 
-## References
+## Tài liệu tham khảo
 
-* [Hidden directories and files as a source of sensitive information about web application - bl4de - April 30, 2017](https://github.com/bl4de/research/tree/master/hidden_directories_leaks)
+* [Thư mục và file ẩn như một nguồn thông tin nhạy cảm về ứng dụng web - bl4de - April 30, 2017](https://github.com/bl4de/research/tree/master/hidden_directories_leaks)
